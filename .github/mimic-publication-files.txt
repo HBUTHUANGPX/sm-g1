@@ -51,3 +51,4 @@ mimic_baseline/tests/g1/test_kinematics.py
 mimic_baseline/tests/g1/test_lafan1.py
 mimic_baseline/tests/g1/test_run_config.py
 mimic_baseline/tests/g1/test_backend.py
+mimic_baseline/tests/g1/test_motion_goal_widths.py
