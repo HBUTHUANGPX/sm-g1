@@ -214,3 +214,27 @@ for measured reset rates, clearance, protection boundaries, self-contact and
 checkpoint hashes. These checks validate execution and semantics, not learned recovery.
 
 The iteration-12 smoke checkpoint was evaluated across all 40 LAFAN1 clips: 0/40 completed. This is an evaluation-entry check, not evidence of learned recovery. No training process remains running.
+
+## Pinned train-then-evaluate jobs
+
+Export a release from a committed revision on the development machine:
+
+```bash
+python mimic_baseline/scripts/supermimic/export_g1_release.py --output g1-release.tar
+```
+
+Extract it into a new deployment directory on the training machine. The archive
+contains only committed publication-allowlisted files and `release-manifest.json`.
+Use the printed full source revision with the Isaac Lab Python interpreter:
+
+```bash
+python mimic_baseline/scripts/supermimic/run_g1_experiment.py --data-root DATA_ROOT --run-dir NEW_RUN_DIRECTORY --num-envs VALIDATED_ENV_COUNT --iterations 3000 --source-revision FULL_SOURCE_SHA
+```
+
+The runner refuses an existing run directory, verifies deployed source hashes
+before training and evaluation, saves checkpoints every 100 iterations, and only
+runs evaluation after a successful final checkpoint with finite model parameters.
+It requires exactly the 40 source clip names in the evaluation output; completion
+of the pipeline does not mean completion of every motion. `status.json` records
+training/evaluation failure or completion, while `experiment.json` preserves the
+commands and source manifest. Runtime logs and checkpoints remain outside Git.
