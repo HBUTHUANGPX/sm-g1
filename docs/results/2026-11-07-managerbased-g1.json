@@ -1,0 +1,168 @@
+{
+  "date": "2026-11-07",
+  "torch": "2.11.0+cu130",
+  "gpu": "NVIDIA GeForce RTX 5070 Ti",
+  "environment": {
+    "environment": "SuperMimicRLEnv",
+    "managerbased": true,
+    "num_envs": 4,
+    "action_dim": 29,
+    "observation_dim": 93,
+    "fk_position_max_m": 8.537012945453171e-07,
+    "fk_rotation_max": 2.212822437286377e-06,
+    "partial_reset_max_error": 0.0,
+    "real_imagined_reward_max_error": 7.450580596923828e-09,
+    "terminal_transitions": 11,
+    "terminal_state_preserved": true
+  },
+  "runs": {
+    "smoke": {
+      "sha256": "27642c7104c5af2f1b4bf8b1ab54cb8600e4b45db38c0834448cb38bff1963b4",
+      "iteration": 10,
+      "format": "supermimic-g1-v1",
+      "config": {
+        "num_envs": 64,
+        "horizon": 8,
+        "wm_batch": 32,
+        "policy_batch": 32,
+        "wm_batches": 1,
+        "iterations": 10
+      },
+      "optimizer_steps": {
+        "opt_wm": [
+          10
+        ],
+        "opt_policy": [
+          10
+        ],
+        "opt_critic": [
+          10
+        ]
+      },
+      "all_finite": true,
+      "checkpoint_keys": [
+        "format",
+        "policy",
+        "wm",
+        "critic",
+        "opt_policy",
+        "opt_wm",
+        "opt_critic",
+        "iteration",
+        "sim_steps",
+        "transitions",
+        "windows",
+        "local_counts",
+        "global_counts",
+        "optimizer_steps",
+        "step_accumulator",
+        "config",
+        "provenance",
+        "environment_stats",
+        "rng",
+        "sampler"
+      ]
+    },
+    "resume": {
+      "sha256": "3e1297c49af315ba4342566936e17f4bbafa8b0a025f1bbced4c18f7646ce6b8",
+      "iteration": 12,
+      "format": "supermimic-g1-v1",
+      "config": {
+        "num_envs": 64,
+        "horizon": 8,
+        "wm_batch": 32,
+        "policy_batch": 32,
+        "wm_batches": 1,
+        "iterations": 12
+      },
+      "optimizer_steps": {
+        "opt_wm": [
+          12
+        ],
+        "opt_policy": [
+          12
+        ],
+        "opt_critic": [
+          12
+        ]
+      },
+      "all_finite": true,
+      "checkpoint_keys": [
+        "format",
+        "policy",
+        "wm",
+        "critic",
+        "opt_policy",
+        "opt_wm",
+        "opt_critic",
+        "iteration",
+        "sim_steps",
+        "transitions",
+        "windows",
+        "local_counts",
+        "global_counts",
+        "optimizer_steps",
+        "step_accumulator",
+        "config",
+        "provenance",
+        "environment_stats",
+        "rng",
+        "sampler"
+      ]
+    },
+    "full-model": {
+      "sha256": "2cf865ede51933f998775784e34a6d5bf898311f27e2cb57fa13a023a14b85da",
+      "iteration": 2,
+      "format": "supermimic-g1-v1",
+      "config": {
+        "num_envs": 64,
+        "horizon": 32,
+        "wm_batch": 32,
+        "policy_batch": 32,
+        "wm_batches": 1,
+        "iterations": 2
+      },
+      "optimizer_steps": {
+        "opt_wm": [
+          2
+        ],
+        "opt_policy": [
+          2
+        ],
+        "opt_critic": [
+          2
+        ]
+      },
+      "all_finite": true,
+      "checkpoint_keys": [
+        "format",
+        "policy",
+        "wm",
+        "critic",
+        "opt_policy",
+        "opt_wm",
+        "opt_critic",
+        "iteration",
+        "sim_steps",
+        "transitions",
+        "windows",
+        "local_counts",
+        "global_counts",
+        "optimizer_steps",
+        "step_accumulator",
+        "config",
+        "provenance",
+        "environment_stats",
+        "rng",
+        "sampler"
+      ]
+    }
+  },
+  "evaluation": {
+    "clips": 40,
+    "completed": 0,
+    "mean_normalized_return": 0.002161453048071813,
+    "protocol": "from source first frame to original unpadded endpoint, stop scoring at failure",
+    "policy": "smoke resumed to iteration 12"
+  }
+}

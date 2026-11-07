@@ -32,3 +32,11 @@ __pycache__/
 /supermimic_g1/data/
 /supermimic_g1/logs/
 /supermimic_g1/outputs/
+
+!/docs/superpowers/
+/docs/superpowers/*
+!/docs/superpowers/plans/
+/docs/superpowers/plans/*
+!/docs/superpowers/plans/2026-11-07-g1-managerbased.md
+
+!/docs/managerbased-g1.md
