@@ -28,6 +28,50 @@ def validate_results(payload, expected_names):
     }
 
 
+def preflight_inputs(saved, data_root):
+    """CPU validation of source data, required assets and strict policy ABI."""
+    import numpy as np
+    import torch
+    from ..learning.config import TrainingConfig
+    from ..learning.models import Policy
+    from ..runtime.configuration import restore_run_config, resolve_backend
+
+    values, small = restore_run_config(saved, {"device": "cpu"})
+    cfg = TrainingConfig(**values)
+    cfg.validate()
+    resolve_backend(None, saved)
+    with torch.random.fork_rng(devices=[]):
+        kwargs = {"hidden": (64, 64)} if small else {}
+        policy = Policy(
+            93,
+            73 * cfg.goal_frames,
+            hist=cfg.hist,
+            action_dim=29,
+            actor_relative_orientation=cfg.actor_relative_orientation,
+            **kwargs,
+        )
+        policy.load_state_dict(saved["policy"], strict=True)
+    for relative in (
+        "g1_description/g1_29dof_rev_1_0.urdf",
+        "g1_usd/g1_29dof/g1_29dof.usda",
+        "ground/default_ground_plane.usda",
+    ):
+        asset = data_root / relative
+        if not asset.is_file() or asset.stat().st_size == 0:
+            raise ValueError(f"Missing or empty required asset: {relative}")
+    for source in sorted((data_root / "lafan1_g1").glob("*.csv")):
+        raw = np.loadtxt(source, delimiter=",", dtype=np.float64)
+        if (
+            raw.ndim != 2
+            or raw.shape[1] != 36
+            or raw.shape[0] < 2
+            or not np.isfinite(raw).all()
+        ):
+            raise ValueError(f"Expected finite [T>=2,36] G1 LAFAN1 CSV: {source.name}")
+        if (np.linalg.norm(raw[:, 3:7], axis=1) < 1e-8).any():
+            raise ValueError(f"Zero root quaternion: {source.name}")
+
+
 def evaluate(checkpoint, data_root, output, *, dry_run=False):
     import torch
 
@@ -49,6 +93,7 @@ def evaluate(checkpoint, data_root, output, *, dry_run=False):
         torch.isfinite(v).all() for v in saved["policy"].values()
     ):
         raise ValueError("Missing or nonfinite policy parameters")
+    preflight_inputs(saved, data_root)
     metadata = {
         "checkpoint": checkpoint.name,
         "checkpoint_iteration": saved["iteration"],
