@@ -32,3 +32,11 @@ gym.register(
     disable_env_checker=True,
     kwargs={"env_cfg_entry_point": f"{_CFG}:SuperMimicErpEnvCfg"},
 )
+
+# G1 uses the same ManagerBased environment and model-based Trainer.
+gym.register(
+    id="SuperMimic-Flat-G1-v0",
+    entry_point=f"{_ENTRY}:SuperMimicRLEnv",
+    disable_env_checker=True,
+    kwargs={"env_cfg_entry_point": "mimic_baseline.tasks.supermimic.g1_env:G1SuperMimicEnvCfg"},
+)

@@ -20,6 +20,8 @@ def main():
     p.add_argument('--resume',type=Path)
     p.add_argument('--small-model',action='store_true',help='64-wide WM/policy for integration checks, not quality claims')
     p.add_argument('--clip-limit',type=int,default=0)
+    for name in ('buffer_steps','wm_batch','wm_batches','policy_batch','horizon','warmup_steps','critic_epochs','critic_minibatches','save_every','log_every'):
+        p.add_argument('--'+name.replace('_','-'),type=int,default=None)
     args=p.parse_args()
     import torch
     from mimic_baseline.tasks.supermimic.lafan1 import convert_clip
@@ -53,6 +55,10 @@ def main():
     if args.small_model:
         cfg.buffer_steps=64;cfg.warmup_steps=16;cfg.wm_batches=1;cfg.wm_batch=32
         cfg.policy_batch=32;cfg.horizon=8;cfg.critic_epochs=1;cfg.critic_minibatches=1
+    for name in ('buffer_steps','wm_batch','wm_batches','policy_batch','horizon','warmup_steps','critic_epochs','critic_minibatches','save_every','log_every'):
+        value=getattr(args,name)
+        if value is not None:setattr(cfg,name,value)
+    cfg.validate()
     torch.manual_seed(cfg.seed)
     kin=G1Kinematics(urdf,cfg.device);motion=MotionLib(paths,kin,cfg.device)
     if args.mode=='evaluate': cfg.num_envs=len(paths)
@@ -65,7 +71,8 @@ def main():
     env_cfg.sim.device=cfg.device
     if args.mode=='check': env_cfg.episode_length_s=.04;env_cfg.reset_noise=False
     with launch_simulation(env_cfg.sim,{"viz":"none","device":cfg.device}):
-        managed=SuperMimicRLEnv(env_cfg,motion=motion,mdp=mdp)
+        import gymnasium as gym
+        managed=gym.make("SuperMimic-Flat-G1-v0",cfg=env_cfg,motion=motion,mdp=mdp).unwrapped
         env=SuperMimicTrainingEnv(managed)
         try:
             env.reset()
