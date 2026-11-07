@@ -21,6 +21,10 @@ The commands above prepare shared robot/data assets under `data/g1/`. Each tool 
 
 Existing local datasets and checkpoints are preserved; pass their existing directory with `--data-root` when needed.
 
+## Fixed evaluation command
+
+Use `python scripts/run_g1_evaluation.py --config /local/evaluation.json` for the current G1 recovery policy. It selects the latest checkpoint (or accepts `--checkpoint`), runs both full 40-clip protocols, reports progress and writes/prints the validated result table. See [configuration and outputs](docs/evaluation-job.md). Keep machine paths in the ignored local config.
+
 ## Results and management
 
 The recovery continuation was stopped by user request at logged iteration 6640 (latest saved checkpoint 6600). [Protocol-v2 evaluation of all 40 clips](docs/results/2026-11-08-g1-6600-evaluation.md): strict tracking completion **6/40**, mean normalized return **0.32985**; full-clean trajectory coverage **40/40**, mean normalized return **0.70355**. Full-clean coverage is not tracking success. Training remains stopped.

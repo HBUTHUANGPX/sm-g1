@@ -123,3 +123,23 @@ def test_clean_uses_resampled_source_length_not_claimed_output_length(
     assert (out / "failure.json").exists() and not (out / "summary.json").exists()
     manifest = json.loads((out / "evaluation_manifest.json").read_text())
     assert manifest["expected_steps"]["clip0"] == 5
+
+
+def test_grouped_execution_is_explicit_in_child_command(tmp_path):
+    ck, data, out = fixture(tmp_path)
+    result = cli.evaluate(
+        ck, data, out, profile="both", execution="grouped", dry_run=True
+    )
+    for entry in result["profiles"].values():
+        command = entry["command"]
+        assert command[command.index("--evaluation-execution") + 1] == "grouped"
+        assert entry["execution"] == "grouped"
+
+
+def test_grouped_rejects_unsupported_actuator_before_starting_job(tmp_path):
+    import torch
+    ck,data,out=fixture(tmp_path)
+    saved=torch.load(ck,weights_only=False);saved['config']['actuator_type']='implicit';torch.save(saved,ck)
+    with pytest.raises(ValueError,match='delayed_pd'):
+        cli.evaluate(ck,data,out,execution='grouped',dry_run=True)
+    assert not out.exists()

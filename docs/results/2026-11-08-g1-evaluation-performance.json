@@ -1,0 +1,54 @@
+{
+  "hardware": "NVIDIA RTX 5070 Ti, Windows, Newton MJWarp",
+  "checkpoint_iteration": 6600,
+  "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+  "evaluated_source_revision": "1c50bb87c19f2ffcffa1d737ef1a962670f345e9",
+  "full_job": {
+    "reference_seconds": 1114.9817615,
+    "reference_timing_method": "Original manifest creation to final summary modification time",
+    "grouped_seconds": 437.625,
+    "grouped_timing_method": "Fixed runner monotonic total elapsed including validation and report",
+    "speedup": 2.5478017972008,
+    "reference_strict_seconds": 568.0283922,
+    "reference_full_clean_seconds": 545.9891428,
+    "grouped_strict_seconds": 215.78345779999654,
+    "grouped_full_clean_seconds": 221.64180150000175
+  },
+  "profiled_256_steps": {
+    "reference_seconds": 14.26,
+    "grouped_seconds": 5.863,
+    "reference_actuator_write_seconds": 8.736,
+    "grouped_actuator_write_seconds": 0.392,
+    "includes_profiler_overhead": true
+  },
+  "validation": {
+    "mac_cpu_passed": 109,
+    "windows_release_cpu_passed": 107,
+    "windows_release_cpu_skipped": 1,
+    "native_cuda_exact_joint_transition_comparisons": 92800,
+    "rng_state_identical": true,
+    "short_newton_trace": {
+      "steps": 128,
+      "reference_repeat": {
+        "initial_max_abs": 0.0,
+        "states_max_abs": 0.702193558216095,
+        "actions_max_abs": 0.13428550958633423,
+        "per_joint_gains_equal": true,
+        "per_joint_lags_equal": true
+      },
+      "reference_grouped": {
+        "initial_max_abs": 0.0,
+        "states_max_abs": 0.08283375948667526,
+        "actions_max_abs": 0.000110626220703125,
+        "per_joint_gains_equal": true,
+        "per_joint_lags_equal": true
+      }
+    }
+  },
+  "limitations": [
+    "One hardware/checkpoint measurement, not a general latency guarantee.",
+    "Full Newton trajectories are not bitwise repeatable; reference-repeat already differs. Raw state maximum mixes units and is not a physical distance metric.",
+    "No new learning-performance gain is claimed. Full-clean coverage is not tracking success.",
+    "Operational deployment pins the fully evaluated release; project-source and checkpoint hashes do not hash all installed packages or external assets."
+  ]
+}

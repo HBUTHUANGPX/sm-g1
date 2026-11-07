@@ -49,3 +49,6 @@ __pycache__/
 !/licenses/supermimic_vibed-MIT.txt
 !/docs/repository-layout.md
 /data/
+
+# Evaluation machine paths are local-only.
+*.local.json

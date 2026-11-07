@@ -15,6 +15,9 @@ def main():
     p.add_argument(
         "--evaluation-profile", choices=["strict", "full_clean"], default="strict"
     )
+    p.add_argument(
+        "--evaluation-execution", choices=["reference", "grouped"], default="reference"
+    )
     p.add_argument("--data-root", type=Path, required=True)
     p.add_argument(
         "--mode", choices=["prepare", "check", "train", "evaluate"], default="check"
@@ -222,6 +225,7 @@ def main():
         eval_mode=args.mode == "evaluate",
     )
     if args.mode == "evaluate":
+        env_cfg.evaluation_execution = args.evaluation_execution
         env_cfg.evaluation_profile = args.evaluation_profile
         env_cfg.evaluation_clip_steps = int(
             (motion.original_clip_end - motion.clip_start).max().item()
@@ -288,6 +292,10 @@ def main():
                 )
 
                 audit = runtime_profile(managed, args.evaluation_profile)
+                from mimic_baseline.tasks.supermimic.evaluation.progress import (
+                    RolloutProgress,
+                )
+
                 records = evaluate_tracking(
                     env,
                     motion,
@@ -297,6 +305,7 @@ def main():
                     hist=cfg.hist,
                     use_original_lengths=True,
                     no_termination=args.evaluation_profile == "full_clean",
+                    progress_callback=RolloutProgress(args.log_dir),
                 )
                 audit["after_rollout"] = runtime_profile(
                     managed, args.evaluation_profile
