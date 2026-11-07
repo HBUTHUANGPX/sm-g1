@@ -26,7 +26,7 @@ class JointDelayBuffer:
         return self.buffer.time_lags.view(self.shape)
 
     def set_time_lag(self, lags, env_ids=None):
-        self.time_lags[slice(None) if env_ids is None else env_ids] = lags
+        self.time_lags[slice(None) if env_ids is None else env_ids] = lags.to(self.time_lags)
 
     def reset(self, env_ids=None):
         self.buffer.reset(None if env_ids is None else self.ids[env_ids].reshape(-1))

@@ -43,3 +43,11 @@ def test_delay_sampling_keeps_original_rng_order_in_arbitrary_joint_order():
         actual, torch.stack([expected[name] for name in resolved], 1), rtol=0, atol=0
     )
     torch.testing.assert_close(torch.rand(3), next_expected, rtol=0, atol=0)
+
+
+def test_native_int32_partial_reset_delay_assignment():
+    buffer=JointDelayBuffer(4,7,29,'cpu')
+    ids=torch.tensor([1,4])
+    values=torch.ones(2,29,dtype=torch.int32)
+    buffer.set_time_lag(values,ids)
+    assert torch.all(buffer.time_lags[ids]==1)
