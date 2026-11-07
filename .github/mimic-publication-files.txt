@@ -61,3 +61,5 @@ mimic_baseline/tests/g1/test_recovery_contracts.py
 mimic_baseline/scripts/supermimic/run_g1_experiment.py
 mimic_baseline/tests/g1/test_experiment_runner.py
 mimic_baseline/scripts/supermimic/export_g1_release.py
+mimic_baseline/scripts/supermimic/evaluate_g1.py
+mimic_baseline/tests/g1/test_evaluation_cli.py
