@@ -134,3 +134,12 @@ def test_grouped_execution_is_explicit_in_child_command(tmp_path):
         command = entry["command"]
         assert command[command.index("--evaluation-execution") + 1] == "grouped"
         assert entry["execution"] == "grouped"
+
+
+def test_grouped_rejects_unsupported_actuator_before_starting_job(tmp_path):
+    import torch
+    ck,data,out=fixture(tmp_path)
+    saved=torch.load(ck,weights_only=False);saved['config']['actuator_type']='implicit';torch.save(saved,ck)
+    with pytest.raises(ValueError,match='delayed_pd'):
+        cli.evaluate(ck,data,out,execution='grouped',dry_run=True)
+    assert not out.exists()

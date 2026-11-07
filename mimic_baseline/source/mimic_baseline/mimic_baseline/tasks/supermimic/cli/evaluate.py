@@ -159,6 +159,8 @@ def evaluate(
         torch.isfinite(v).all() for v in saved["policy"].values()
     ):
         raise ValueError("Missing or nonfinite policy parameters")
+    if execution == "grouped" and saved["config"].get("actuator_type") != "delayed_pd":
+        raise ValueError("Grouped evaluation requires delayed_pd; use reference for other actuators")
     expected_steps = preflight_inputs(saved, data_root)
     metadata = {
         "checkpoint": checkpoint.name,

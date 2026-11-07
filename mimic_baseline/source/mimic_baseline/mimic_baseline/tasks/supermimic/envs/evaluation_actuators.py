@@ -43,7 +43,7 @@ def group_evaluation_actuators(cfg):
     if not cfg.eval_mode:
         raise ValueError("Grouped actuators are evaluation-only")
     if cfg.actuator_type != "delayed_pd":
-        return
+        raise ValueError("Grouped evaluation requires delayed_pd actuators")
     old = cfg.scene.robot.actuators
     if not old or any(
         a.class_type is not G1DelayedPDActuator or a.joint_names_expr != [name]
