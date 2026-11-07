@@ -86,6 +86,7 @@ def evaluate_tracking(
     record_rollouts: bool = False,
     rollout_sink: list[dict[str, Any]] | None = None,
     archive_sink: list[dict[str, torch.Tensor]] | None = None,
+    progress_callback=None,
 ) -> list[dict[str, Any]]:
     """Evaluate all selected trials in one vectorized simulator rollout."""
     if goal_mode not in ("reference", "state_relative"):
@@ -174,6 +175,8 @@ def evaluate_tracking(
     history: torch.Tensor | None = None
     policy_observation = getattr(env, "policy_observation", None)
 
+    if progress_callback is not None:
+        progress_callback(0, transition_limit, active, steps)
     with torch.no_grad():
         for step_index in range(transition_limit):
             state = env.state()
@@ -284,10 +287,14 @@ def evaluate_tracking(
             reached_boundary.logical_or_(boundary)
             stopping = boundary if no_termination else (boundary | term_now)
             active = active & ~stopping
+            if progress_callback is not None and (step_index + 1) % 256 == 0:
+                progress_callback(step_index + 1, transition_limit, active, steps)
             # Check once per 32 steps, avoiding a device sync at every tick.
             if (step_index + 1) % 32 == 0 and not active.any():
                 break
 
+    if progress_callback is not None:
+        progress_callback(step_index + 1, transition_limit, active, steps)
     reported_speeds = (
         push_speeds
         if push_speeds is not None

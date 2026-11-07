@@ -292,6 +292,10 @@ def main():
                 )
 
                 audit = runtime_profile(managed, args.evaluation_profile)
+                from mimic_baseline.tasks.supermimic.evaluation.progress import (
+                    RolloutProgress,
+                )
+
                 records = evaluate_tracking(
                     env,
                     motion,
@@ -301,6 +305,7 @@ def main():
                     hist=cfg.hist,
                     use_original_lengths=True,
                     no_termination=args.evaluation_profile == "full_clean",
+                    progress_callback=RolloutProgress(args.log_dir),
                 )
                 audit["after_rollout"] = runtime_profile(
                     managed, args.evaluation_profile

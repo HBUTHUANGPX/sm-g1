@@ -123,3 +123,14 @@ def test_clean_uses_resampled_source_length_not_claimed_output_length(
     assert (out / "failure.json").exists() and not (out / "summary.json").exists()
     manifest = json.loads((out / "evaluation_manifest.json").read_text())
     assert manifest["expected_steps"]["clip0"] == 5
+
+
+def test_grouped_execution_is_explicit_in_child_command(tmp_path):
+    ck, data, out = fixture(tmp_path)
+    result = cli.evaluate(
+        ck, data, out, profile="both", execution="grouped", dry_run=True
+    )
+    for entry in result["profiles"].values():
+        command = entry["command"]
+        assert command[command.index("--evaluation-execution") + 1] == "grouped"
+        assert entry["execution"] == "grouped"

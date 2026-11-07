@@ -7,6 +7,8 @@ import json
 import math
 import subprocess
 import sys
+import time
+import threading
 from ..runtime.paths import training_entry
 from ..evaluation.profiles import PROFILES, PROTOCOL_VERSION
 
@@ -106,7 +108,18 @@ def preflight_inputs(saved, data_root):
     return expected_steps
 
 
-def evaluate(checkpoint, data_root, output, *, dry_run=False, profile="strict"):
+def evaluate(
+    checkpoint,
+    data_root,
+    output,
+    *,
+    dry_run=False,
+    profile="strict",
+    execution="reference",
+):
+    started = time.perf_counter()
+    if execution not in ("reference", "grouped"):
+        raise ValueError("Unknown evaluation execution mode")
     import torch
 
     checkpoint, data_root, output = (
@@ -125,11 +138,13 @@ def evaluate(checkpoint, data_root, output, *, dry_run=False, profile="strict"):
                 output / selected,
                 dry_run=dry_run,
                 profile=selected,
+                execution=execution,
             )
         return {
             "profile": "both",
             "protocol_version": PROTOCOL_VERSION,
             "profiles": results,
+            "elapsed_seconds": time.perf_counter() - started,
         }
     names = sorted(p.stem for p in (data_root / "lafan1_g1").glob("*.csv"))
     if len(names) != 40:
@@ -152,6 +167,7 @@ def evaluate(checkpoint, data_root, output, *, dry_run=False, profile="strict"):
         "backend": saved.get("provenance", {}).get("backend", "ovphysx"),
         "expected_clips": names,
         "profile": profile,
+        "execution": execution,
         "protocol_version": PROTOCOL_VERSION,
         "protocol": (
             "native tracking failure termination; original unpadded clip lengths"
@@ -181,6 +197,8 @@ def evaluate(checkpoint, data_root, output, *, dry_run=False, profile="strict"):
         str(data_root),
         "--log-dir",
         str(output),
+        "--evaluation-execution",
+        execution,
         "--evaluation-profile",
         profile,
     ]
@@ -191,8 +209,36 @@ def evaluate(checkpoint, data_root, output, *, dry_run=False, profile="strict"):
         json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
     )
     try:
-        with (output / "evaluation.log").open("w", encoding="utf-8") as log:
-            subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
+        stop = threading.Event()
+
+        def show_progress():
+            previous = None
+            while not stop.wait(1.0):
+                path = output / "progress.json"
+                if path.exists():
+                    try:
+                        value = path.read_text(encoding="utf-8")
+                        if value != previous:
+                            print(
+                                json.dumps(
+                                    {"profile": profile, "progress": json.loads(value)}
+                                ),
+                                flush=True,
+                            )
+                            previous = value
+                    except (OSError, ValueError):
+                        pass
+
+        watcher = threading.Thread(target=show_progress, daemon=True)
+        watcher.start()
+        try:
+            with (output / "evaluation.log").open("w", encoding="utf-8") as log:
+                subprocess.run(
+                    command, stdout=log, stderr=subprocess.STDOUT, check=True
+                )
+        finally:
+            stop.set()
+            watcher.join()
         summary = validate_results(
             json.loads((output / "perclip.json").read_text(encoding="utf-8")),
             names,
@@ -200,6 +246,7 @@ def evaluate(checkpoint, data_root, output, *, dry_run=False, profile="strict"):
             expected_steps=expected_steps,
         )
         summary.update(metadata)
+        summary["elapsed_seconds"] = time.perf_counter() - started
         (output / "summary.json").write_text(
             json.dumps(summary, indent=2) + "\n", encoding="utf-8"
         )
@@ -213,6 +260,9 @@ def evaluate(checkpoint, data_root, output, *, dry_run=False, profile="strict"):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--execution", choices=["reference", "grouped"], default="reference"
+    )
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)

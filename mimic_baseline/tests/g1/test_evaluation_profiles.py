@@ -230,3 +230,29 @@ def test_clean_reports_do_not_label_coverage_as_tracking_completion(tmp_path):
         not in json.loads((tmp_path / "perclip.json").read_text())["clips"][0]
     )
     assert "completed" not in (tmp_path / "perclip.csv").read_text()
+
+
+def test_progress_does_not_change_rollout_results(tmp_path):
+    from mimic_baseline.tasks.supermimic.evaluation.progress import RolloutProgress
+    import json
+
+    motion = make_motion(tmp_path)
+
+    def run(callback=None):
+        return evaluate_tracking(
+            FollowingEnv(motion),
+            motion,
+            None,
+            lambda h, g: torch.zeros(2, 29),
+            goal_frames=1,
+            hist=1,
+            use_original_lengths=True,
+            progress_callback=callback,
+        )
+
+    baseline = run()
+    observed = run(RolloutProgress(tmp_path))
+    assert observed == baseline
+    progress = json.loads((tmp_path / "progress.json").read_text())
+    assert progress["phase"] == "rollout_complete" and progress["step"] == 10
+    assert progress["active_clips"] == 0 and progress["evaluated_transitions"] == 15
