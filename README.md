@@ -23,6 +23,8 @@ Existing local datasets and checkpoints are preserved; pass their existing direc
 
 ## Results and management
 
+The recovery continuation was stopped by user request at logged iteration 6640 (latest saved checkpoint 6600). [Protocol-v2 evaluation of all 40 clips](docs/results/2026-11-08-g1-6600-evaluation.md): strict tracking completion **6/40**, mean normalized return **0.32985**; full-clean trajectory coverage **40/40**, mean normalized return **0.70355**. Full-clean coverage is not tracking success. Training remains stopped.
+
 A prior **standalone-implementation** 4,096-environment Newton run completed 40/40 training clips at iteration 13,000 with normalized return 0.8265. This result does not validate the ManagerBased migration or its new policy. See [the result and evidence limits](docs/results/2026-11-05-newton-lafan1.md).
 
 Every validated independent change is immediately committed and pushed on a task branch. Completed work reaches main through a pull request. See [AGENTS.md](AGENTS.md) and [the workflow](docs/engineering-management.md).
