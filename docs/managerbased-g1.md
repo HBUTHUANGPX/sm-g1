@@ -262,3 +262,17 @@ See [capacity evidence and launch snapshot](results/2026-11-07-g1-recovery-forma
 ## Source layout
 
 See [architecture and evaluation](architecture.md) for canonical modules, stable command wrappers, compatibility contracts and release validation.
+
+
+## Recovery 3000-iteration result (2026-11-07)
+
+The separate Newton recovery run completed 3000 iterations with 2560 environments
+on pinned source `1bf1a4e9d788316046bad25bb97ba2018fe0cc01`. The automatic
+evaluator processed all 40 LAFAN1 clips: **0/40 completed**, mean normalized return
+**0.06922115**. All ended in native tracking termination. This is a completed
+experiment with unsuccessful full-clip tracking, not evidence of convergence.
+The source architecture refactor was not deployed into this run.
+
+See [all 40 per-clip results](results/2026-11-07-g1-recovery-lafan1-3000.json)
+for durations, error metrics, outcomes and checkpoint SHA256. No training settings
+were changed in response to this result as part of the architecture task.

@@ -265,5 +265,14 @@
     "checkpoint_iteration": 60,
     "evaluated_clips": 40,
     "completed_clips": 0
+  },
+  "final_result": {
+    "phase": "complete",
+    "iteration": 3000,
+    "evaluated_clips": 40,
+    "completed_clips": 0,
+    "mean_normalized_return": 0.06922115268821379,
+    "checkpoint_sha256": "045ff26b09e1e184664bf2748b104c09ce642b52d06ecb81af87466ac03eab53",
+    "per_clip_results": "2026-11-07-g1-recovery-lafan1-3000.json"
   }
 }
