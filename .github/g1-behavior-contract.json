@@ -1227,7 +1227,7 @@
       "sha256": "556499f3fa800d067c7949689620c0e55da47bf27e66ec99dd065d7517ee47c1"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/legacy.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/simulation.py",
       "symbol": "make_sim",
       "sha256": "624a68209881edb5cd67842d8c1ec2ff84fb8f9020ec93d3808adc29c7d1476d"
     },
@@ -1302,22 +1302,22 @@
       "sha256": "0699d671c4c6f923b28e0be5b533a25a521e3a91269792236a0a7db7c8f07032"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/configs/base.py",
       "symbol": "SuperMimicEnvCfg.__post_init__",
       "sha256": "3b0f514dd466edb57baa62de7d2f1c61f3dc0053d578faf363e6a666259de31f"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/managers.py",
       "symbol": "SuperMimicRewardManager.compute",
       "sha256": "20ec74ab7e4b02250c56a2198be2bc148c827f52b5c5df20da90109a3293fd6f"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/managers.py",
       "symbol": "SuperMimicTerminationManager.__init__",
       "sha256": "3e34dc5310961d90c61eda253dc8580cb18ded6826fffa018bc59cf1b900e966"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/managers.py",
       "symbol": "SuperMimicTerminationManager.compute",
       "sha256": "65b9c08a75fa86e6afe73790eecc66ce2ece3a11881b8e976f1a3d5e77f9a423"
     },
@@ -1452,107 +1452,107 @@
       "sha256": "f3aa01f9561f06893b5b3e801b2d04bf86f266dbfc24a58e9dda6953c83eec62"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/perception.py",
       "symbol": "SuperMimicErpRLEnv.__init__",
       "sha256": "4bd80483f52f8bdaec57eb99e08ad3c93cc7c1614efd4f78dde3975deb4d7495"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/perception.py",
       "symbol": "SuperMimicErpRLEnv.close",
       "sha256": "e838a7098a7578f9e4fae8352e205142ab3c8b1b165c6e2165885148540cf592"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/perception.py",
       "symbol": "SuperMimicErpRLEnv.camera_geometry",
       "sha256": "08239ad030f7ec50a74d4c95f02deb2f291c13ae69de55bdf5ddff1d905f91a7"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/perception.py",
       "symbol": "SuperMimicErpRLEnv.camera_transport",
       "sha256": "b1a31017ff237f32458bbff4fdccd0eb5db4593e27bc1c03ad2909ee5c6e766a"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/perception.py",
       "symbol": "SuperMimicErpRLEnv._configure_scene",
       "sha256": "e0aa5e2329965dd36d2a96f6e50741690d82a11b1cf9e8803bcc41e8405e8f4f"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/perception.py",
       "symbol": "SuperMimicErpRLEnv.bind_motion_terrain",
       "sha256": "921522b7e6214d2c030167c1e535d98314189891086e61c2aa71ee0e2b4c2809"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/perception.py",
       "symbol": "SuperMimicErpRLEnv.perception",
       "sha256": "fc425a87f21c3d24c69519da6d4b71344c599ecffa28161695887a28f2f0f845"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/perception.py",
       "symbol": "SuperMimicErpRLEnv._capture_start_perception",
       "sha256": "587b1a1b02a936798eabc8688be0cb9b7fa60704d6672fcbe41b44ecbc343504"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/perception.py",
       "symbol": "SuperMimicErpRLEnv._capture_end_perception",
       "sha256": "507c95c971afe3259c915f5481292cd15e5d706db555c95078bd4cbfed99472e"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/perception.py",
       "symbol": "SuperMimicErpRLEnv._reset_sensors",
       "sha256": "c11b7946c98071a2211bd4c4aa62223982fab0d1a31c4ad9ec12082b7b3b49ab"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/adapter.py",
       "symbol": "SuperMimicTrainingEnv.__init__",
       "sha256": "16f01016f94f90a29c720b1d19d350886ad37a59f908fa4cf3f1849a998b62de"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/adapter.py",
       "symbol": "SuperMimicTrainingEnv.__getattr__",
       "sha256": "80e9c509acf8eadc09ee8147a7822452f3b1c591f2472fb99b1a9f147579b278"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/adapter.py",
       "symbol": "SuperMimicTrainingEnv.reference",
       "sha256": "b83c6bab37350c74d5092312fd50ee76e6c407a9a910cfec73facece4179199a"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/adapter.py",
       "symbol": "SuperMimicTrainingEnv.reference_address",
       "sha256": "a17c6cce0f457b7ad398abaf8008ab85d571bbfd4bbd04499cb7c0fc713d78a7"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/adapter.py",
       "symbol": "SuperMimicTrainingEnv.reference_batch",
       "sha256": "96aa967e449b62a62fa017f505ec0c3d388e481f06f6b7994a82eb8e51e243f9"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/adapter.py",
       "symbol": "SuperMimicTrainingEnv.ep_step",
       "sha256": "a9118ac1f5d44db59f55f823771bed1190fa335694648aff815b87a8f5d9f597"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/adapter.py",
       "symbol": "SuperMimicTrainingEnv.step",
       "sha256": "781f841b216e19ec4efafb0d4e16740f47d22d025ba6fa8ac3e80fd2f2f66192"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/adapter.py",
       "symbol": "SuperMimicTrainingEnv.policy_observation",
       "sha256": "24f79d8a816cb2761d6b5ce446fa3afc336ab313a528ab49e3e11c48ceba3785"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/adapter.py",
       "symbol": "SuperMimicTrainingEnv.policy_relative_orientation",
       "sha256": "005fe8349593b3b75f8b8353ea84a19e964b552bc517475ea5f6152903c03bee"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/adapter.py",
       "symbol": "SuperMimicTrainingEnv.reset",
       "sha256": "72a320f9df2f8b3886bedc82b747e71cfd26a347c858632d915e1d32e8fa75ab"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/manager_based.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/adapter.py",
       "symbol": "SuperMimicTrainingEnv.close",
       "sha256": "d0397b94d5bf14bc0efcd600494b56b3d0bd212f0a9a44c172eedf92ac6b526b"
     },

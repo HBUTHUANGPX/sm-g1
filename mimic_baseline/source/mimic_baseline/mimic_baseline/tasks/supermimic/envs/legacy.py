@@ -23,22 +23,9 @@ from mimic_baseline.tasks.supermimic.core.rotations import mat_to_quat, quat_to_
 PHYSICS_DT = 0.005
 DECIMATION = 4
 ENV_SPACING = 2.5
-GROUND_PLANE_USD = str(Path(ASSET_DIR) / "terrains/isaac_sim_6_grid/default_environment.usd")
 
 
-def make_sim(device: str, args: Any = None):
-    """Create the RX-P2 PhysX simulation config at an explicit 200 Hz."""
-    del args
-    if not isinstance(device, str):
-        raise TypeError(f"device must be a string, got {type(device).__name__}.")
-    import isaaclab.sim as sim_utils
-    from isaaclab_physx.physics import PhysxCfg
-
-    return sim_utils.SimulationCfg(
-        dt=PHYSICS_DT,
-        device=device,
-        physics=PhysxCfg(),
-    )
+from .simulation import make_sim, GROUND_PLANE_USD
 
 
 def _make_scene_cfg(num_envs: int, robot_cfg):

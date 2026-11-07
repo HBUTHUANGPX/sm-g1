@@ -1,7 +1,7 @@
 """G1 configuration of the original SuperMimic ManagerBased environment."""
 
 from isaaclab.utils.configclass import configclass
-from mimic_baseline.tasks.supermimic.envs.manager_based import SuperMimicEnvCfg
+from mimic_baseline.tasks.supermimic.envs.configs.base import SuperMimicEnvCfg
 
 
 @configclass
