@@ -27,7 +27,12 @@ from mimic_baseline.tasks.supermimic.data.reference import (
 from mimic_baseline.tasks.supermimic.core.rotations import mat_to_quat
 
 
-from .constants import PUSH_UPRIGHT_THRESHOLD, PUSH_ROOT_HEIGHT_TOLERANCE, PUSH_FINAL_DWELL_STEPS, METRIC_KEYS
+from .constants import (
+    PUSH_UPRIGHT_THRESHOLD,
+    PUSH_ROOT_HEIGHT_TOLERANCE,
+    PUSH_FINAL_DWELL_STEPS,
+    METRIC_KEYS,
+)
 from .metrics import _step_metrics, normalized_clip_return
 from .reporting import motion_category
 
@@ -184,7 +189,7 @@ def evaluate_tracking(
             reference = motion.sample(*motion.locate(env.f), goal_frames=goal_frames)
             goal = reference.goal(mode=goal_mode, rotation=state[1])
             raw_action = policy_action(policy, history, goal, state, reference)
-            if archive is not None and not torch.isfinite(raw_action).all():
+            if not torch.isfinite(raw_action[active]).all():
                 raise FloatingPointError(
                     "Nonfinite policy action during rollout export"
                 )
@@ -205,6 +210,20 @@ def evaluate_tracking(
                 env.write_root_link_velocity(velocity, env_ids.to(dtype=torch.int32))
 
             executed = env.step(action)
+            if (
+                not torch.isfinite(executed["s1"][active]).all()
+                or not torch.isfinite(executed["r"][active]).all()
+            ):
+                raise FloatingPointError(
+                    "Nonfinite simulation state/reward during evaluation"
+                )
+            if getattr(env, "evaluation_profile", None) == "full_clean":
+                if executed["done"].any() or not torch.all(
+                    env.ep_step == step_index + 1
+                ):
+                    raise RuntimeError(
+                        "Clean evaluation terminated, truncated or autoreset"
+                    )
             reference = motion.sample(*motion.locate(env.f))
             if archive is not None:
                 archive.append(
@@ -244,7 +263,11 @@ def evaluate_tracking(
             term_now = executed["term"].bool() & was_active
             first_termination.logical_or_(term_now)
             if suite == "tracking":
-                boundary = reference.expiry.episode_end
+                boundary = (
+                    steps >= trial_ends - trial_starts
+                    if use_original_lengths
+                    else reference.expiry.episode_end
+                )
             else:
                 boundary = steps >= max_recovery_steps
                 actual = unflatten_state(executed["s1"])
@@ -344,6 +367,8 @@ def evaluate_tracking(
             ),
             "terminated": terminated,
             "completed": completed,
+            "covered_to_end": reached_end,
+            "tracking_success": None if no_termination else completed,
             "outcome": outcome,
             "termination_policy": "disabled_diagnostic"
             if no_termination

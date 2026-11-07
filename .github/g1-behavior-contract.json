@@ -1907,16 +1907,6 @@
       "sha256": "c59f61a6fd88e9b6212785ed6f4f602febd7aa6bc808c03418697b3116b5c080"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/rollout.py",
-      "symbol": "evaluate_tracking",
-      "sha256": "2b741d76cee29bc394a1b10023ae55ee2e82eeb64888435c739c7cf92b2fd3b3"
-    },
-    {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/cli/train.py",
-      "symbol": "main",
-      "sha256": "644acff58c620c2f9aea171f5a60771b9a147a5fc121bbd108eb4fad267b2d4e"
-    },
-    {
       "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/configs/base.py",
       "symbol": "SuperMimicObservationsCfg",
       "sha256": "a7d4fa3ffe6bd5ac74b8ebe373f41818289efb3e12fc87b4776aa64ccc280e9c"
@@ -1975,6 +1965,22 @@
       "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/config.py",
       "symbol": "TrainingConfig",
       "sha256": "876939784fcce7f8ad7a76e1d1caabaacc39f40d58f6ab7ef1e495675da9733d"
+    }
+  ],
+  "intentional_evaluation_changes": [
+    {
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/rollout.py",
+      "symbol": "evaluate_tracking",
+      "sha256": "2b741d76cee29bc394a1b10023ae55ee2e82eeb64888435c739c7cf92b2fd3b3",
+      "reason": "Authorized evaluation protocol v2: exact original endpoints, separate clean evaluation environment and runtime assertions; training algorithms unchanged.",
+      "regression_tests": "mimic_baseline/tests/g1/test_evaluation_profiles.py"
+    },
+    {
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/cli/train.py",
+      "symbol": "main",
+      "sha256": "644acff58c620c2f9aea171f5a60771b9a147a5fc121bbd108eb4fad267b2d4e",
+      "reason": "Authorized evaluation protocol v2: exact original endpoints, separate clean evaluation environment and runtime assertions; training algorithms unchanged.",
+      "regression_tests": "mimic_baseline/tests/g1/test_evaluation_profiles.py"
     }
   ]
 }

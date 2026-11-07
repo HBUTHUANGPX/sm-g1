@@ -2,10 +2,10 @@
 
 The original ManagerBased SuperMimic implementation is the sole active training path.
 
-- `mimic_baseline/tasks/supermimic/`: environment, managers and Trainer, including G1 adaptations.
+- `mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/`: environment, managers and Trainer, including G1 adaptations.
 - `mimic_baseline/source/`: shared source dependencies reviewed for publication.
 - `scripts/`: public training, evaluation and experiment entry points.
-- `mimic_baseline/scripts/`: ManagerBased training and evaluation implementations.
+- `mimic_baseline/scripts/`: compatibility entry-point wrappers; implementations are in the source package `cli/`.
 - `mimic_baseline/tests/g1/`: CPU validation of the G1 integration and preparation tools.
 - `tools/assets/`: pinned LAFAN1 download, URDF-to-MJCF and MJCF-to-USD preparation tools.
 - `data/g1/`: default local preparation output; ignored by Git.

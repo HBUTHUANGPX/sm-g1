@@ -48,3 +48,11 @@ gym.register(
     disable_env_checker=True,
     kwargs={"env_cfg_entry_point": "mimic_baseline.tasks.supermimic.envs.configs.g1:G1RecoveryEnvCfg"},
 )
+
+
+gym.register(
+    id="SuperMimic-Evaluation-G1-v0",
+    entry_point="mimic_baseline.tasks.supermimic.envs.evaluation:G1EvaluationEnv",
+    disable_env_checker=True,
+    kwargs={"env_cfg_entry_point": "mimic_baseline.tasks.supermimic.envs.evaluation:G1EvaluationEnvCfg"},
+)

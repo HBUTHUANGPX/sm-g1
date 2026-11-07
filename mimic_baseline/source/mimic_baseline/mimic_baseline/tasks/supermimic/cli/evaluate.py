@@ -8,9 +8,12 @@ import math
 import subprocess
 import sys
 from ..runtime.paths import training_entry
+from ..evaluation.profiles import PROFILES, PROTOCOL_VERSION
 
 
-def validate_results(payload, expected_names):
+def validate_results(payload, expected_names, *, profile="strict", expected_steps=None):
+    if profile not in PROFILES:
+        raise ValueError(f"Unknown evaluation profile: {profile}")
     rows = payload["clips"]
     if len(rows) != 40 or {r["name"] for r in rows} != set(expected_names):
         raise ValueError("Evaluation must contain exactly all 40 source clips")
@@ -19,6 +22,33 @@ def validate_results(payload, expected_names):
             isinstance(v, (int, float)) and not math.isfinite(v) for v in row.values()
         ):
             raise ValueError(f"Nonfinite evaluation metrics: {row['name']}")
+    if profile == "full_clean":
+        if expected_steps is None or set(expected_steps) != set(expected_names):
+            raise ValueError(
+                "Clean evaluation requires original source trajectory lengths"
+            )
+        for row in rows:
+            expected = expected_steps[row["name"]]
+            if (
+                row.get("steps") != expected
+                or row.get("full_clip_frames") != expected + 1
+                or row.get("terminated") is not False
+                or row.get("covered_to_end") is not True
+                or "tracking_success" not in row
+                or row["tracking_success"] is not None
+            ):
+                raise ValueError(
+                    f"Invalid full-clean trajectory coverage: {row['name']}"
+                )
+        return {
+            "clips": len(rows),
+            "covered_clips": len(rows),
+            "coverage_rate": 1.0,
+            "tracking_success": None,
+            "full_trajectory_is_tracking_success": False,
+            "mean_normalized_return": sum(r["normalized_return"] for r in rows)
+            / len(rows),
+        }
     return {
         "clips": len(rows),
         "completed": sum(bool(r["completed"]) for r in rows),
@@ -59,6 +89,7 @@ def preflight_inputs(saved, data_root):
         asset = data_root / relative
         if not asset.is_file() or asset.stat().st_size == 0:
             raise ValueError(f"Missing or empty required asset: {relative}")
+    expected_steps = {}
     for source in sorted((data_root / "lafan1_g1").glob("*.csv")):
         raw = np.loadtxt(source, delimiter=",", dtype=np.float64)
         if (
@@ -70,16 +101,36 @@ def preflight_inputs(saved, data_root):
             raise ValueError(f"Expected finite [T>=2,36] G1 LAFAN1 CSV: {source.name}")
         if (np.linalg.norm(raw[:, 3:7], axis=1) < 1e-8).any():
             raise ValueError(f"Zero root quaternion: {source.name}")
+        # Same original 30 Hz -> 50 Hz endpoint convention as convert_clip.
+        expected_steps[source.stem] = int(np.floor((len(raw) - 1) / 30 / 0.02 + 1e-9))
+    return expected_steps
 
 
-def evaluate(checkpoint, data_root, output, *, dry_run=False):
+def evaluate(checkpoint, data_root, output, *, dry_run=False, profile="strict"):
     import torch
 
     checkpoint, data_root, output = (
         Path(p).resolve() for p in (checkpoint, data_root, output)
     )
+    if profile not in (*PROFILES, "both"):
+        raise ValueError(f"Unknown evaluation profile: {profile}")
     if output.exists():
         raise FileExistsError(f"Refusing to reuse evaluation output: {output}")
+    if profile == "both":
+        results = {}
+        for selected in PROFILES:
+            results[selected] = evaluate(
+                checkpoint,
+                data_root,
+                output / selected,
+                dry_run=dry_run,
+                profile=selected,
+            )
+        return {
+            "profile": "both",
+            "protocol_version": PROTOCOL_VERSION,
+            "profiles": results,
+        }
     names = sorted(p.stem for p in (data_root / "lafan1_g1").glob("*.csv"))
     if len(names) != 40:
         raise ValueError("Expected exactly 40 LAFAN1 source clips")
@@ -93,18 +144,27 @@ def evaluate(checkpoint, data_root, output, *, dry_run=False):
         torch.isfinite(v).all() for v in saved["policy"].values()
     ):
         raise ValueError("Missing or nonfinite policy parameters")
-    preflight_inputs(saved, data_root)
+    expected_steps = preflight_inputs(saved, data_root)
     metadata = {
         "checkpoint": checkpoint.name,
         "checkpoint_iteration": saved["iteration"],
         "checkpoint_sha256": hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
         "backend": saved.get("provenance", {}).get("backend", "ovphysx"),
         "expected_clips": names,
-        "protocol": "original deterministic tracking failures; original unpadded clip lengths",
+        "profile": profile,
+        "protocol_version": PROTOCOL_VERSION,
+        "protocol": (
+            "native tracking failure termination; original unpadded clip lengths"
+            if profile == "strict"
+            else "full original trajectories; termination and random actuator delay disabled; coverage is not tracking success"
+        ),
+        "expected_steps": expected_steps,
         "recovery_enabled": saved["config"].get("recovery_enabled", False),
         "action_delay": {
             "actuator_type": saved["config"].get("actuator_type"),
-            "max_delay": saved["config"].get("max_delay"),
+            "max_delay": 0
+            if profile == "full_clean"
+            else saved["config"].get("max_delay"),
         },
         "seed": saved["config"].get("seed", 0),
     }
@@ -121,6 +181,8 @@ def evaluate(checkpoint, data_root, output, *, dry_run=False):
         str(data_root),
         "--log-dir",
         str(output),
+        "--evaluation-profile",
+        profile,
     ]
     if dry_run:
         return {"preflight_passed": True, "command": command, **metadata}
@@ -132,7 +194,10 @@ def evaluate(checkpoint, data_root, output, *, dry_run=False):
         with (output / "evaluation.log").open("w", encoding="utf-8") as log:
             subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
         summary = validate_results(
-            json.loads((output / "perclip.json").read_text(encoding="utf-8")), names
+            json.loads((output / "perclip.json").read_text(encoding="utf-8")),
+            names,
+            profile=profile,
+            expected_steps=expected_steps,
         )
         summary.update(metadata)
         (output / "summary.json").write_text(
@@ -151,6 +216,12 @@ def main():
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--profile",
+        choices=(*PROFILES, "both"),
+        default="strict",
+        help="Strict tracking or full clean trajectory coverage; both runs sequentially",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
