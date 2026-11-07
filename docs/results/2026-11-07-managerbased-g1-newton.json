@@ -99,7 +99,7 @@
     }
   ],
   "formal_run": {
-    "status": "not_started",
+    "status": "stopped_by_user",
     "planned_iterations": 3000,
     "num_envs": 512,
     "wm_batch": 2048,
@@ -107,7 +107,9 @@
     "policy_batch": 4096,
     "horizon": 32,
     "buffer_steps": 1000,
-    "save_every": 100
+    "save_every": 100,
+    "latest_saved_iteration": 2300,
+    "evaluation": "cancelled"
   },
   "environment_check": {
     "environment": "SuperMimicRLEnv",

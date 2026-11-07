@@ -143,7 +143,7 @@ migration. No hardware validation has been performed. All training jobs are boun
 
 ## Newton formal experiment
 
-The following run is in progress, not an achieved tracking result. It uses the
+The initial run was stopped at user request on 2026-11-07. Its latest saved checkpoint is model_2300.pt; the automatic final evaluation was cancelled. This is not a completed 3000-iteration or evaluated tracking result. The following commands document that initial run. It uses the
 original full networks and optimization settings (WM batch 2048, 10 WM updates,
 policy batch 4096, 32-step horizon, replay 1000 steps, seed 0). A 512-environment
 capacity trial passed three iterations at approximately 0.53 iterations/s after
