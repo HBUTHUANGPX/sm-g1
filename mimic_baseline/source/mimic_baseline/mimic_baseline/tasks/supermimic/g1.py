@@ -58,7 +58,7 @@ G1_TRACKED_BODY_NAMES = (
 class G1Kinematics(RXP2Kinematics):
     """G1 configuration of the existing URDF FK, with all 29 joints actuated."""
 
-    recovery_required_bodies = ("pelvis", "torso_link")
+    recovery_required_bodies = ("pelvis_contour_link", "torso_link")
 
     def __init__(self, urdf_path, device):
         super().__init__(

@@ -15,7 +15,7 @@ def read_collision_bounds(usd_path, *, physics_variant=None):
                 variants.SetVariantSelection(physics_variant)
     cache = UsdGeom.BBoxCache(Usd.TimeCode.Default(), ["default", "render", "proxy", "guide"], False, True)
     bounds = {}
-    for prim in stage.Traverse():
+    for prim in Usd.PrimRange(stage.GetPseudoRoot(), Usd.TraverseInstanceProxies()):
         if not prim.HasAPI(UsdPhysics.CollisionAPI):
             continue
         body = prim
