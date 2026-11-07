@@ -160,3 +160,8 @@ The second command must run only after training completes. Evaluation includes a
 checks actual MJWarp geometry friction after model updates, the ground coefficient,
 COM rebasing, partial resets, reward parity and pre-autoreset terminal states.
 See [Newton evidence](results/2026-11-07-managerbased-g1-newton.json).
+
+The formal run is pinned to source revision `282a555`. Its disabled recovery
+provenance contains legacy descriptive action/observation widths 27/91; actual
+policy, replay and observations are verified as G1 29/93. The subsequent metadata
+fix affects future checkpoints only. It does not change learning or this run.

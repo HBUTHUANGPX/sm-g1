@@ -54,3 +54,12 @@ def test_observation_noise_uses_robot_device_not_global_default_device():
     with torch.device("meta"):
         mdp = MDP(kin, motion, default_q)
     assert mdp.obs_noise.device.type == "cpu"
+
+
+def test_checkpoint_provenance_uses_robot_dimensions():
+    from mimic_baseline.tasks.supermimic.recovery import recovery_provenance
+
+    old = recovery_provenance(False)
+    assert old['action_dim'] == 27 and old['actor_observation_dim'] == 91
+    g1 = recovery_provenance(False, action_dim=29)
+    assert g1['action_dim'] == 29 and g1['actor_observation_dim'] == 93
