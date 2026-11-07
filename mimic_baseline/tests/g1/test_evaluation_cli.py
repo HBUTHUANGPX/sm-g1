@@ -5,8 +5,7 @@ import subprocess
 import torch
 import pytest
 
-spec=importlib.util.spec_from_file_location('evaluation_cli',Path(__file__).parents[2]/'scripts/supermimic/evaluate_g1.py')
-cli=importlib.util.module_from_spec(spec);spec.loader.exec_module(cli)
+from mimic_baseline.tasks.supermimic.cli import evaluate as cli
 
 
 def fixture(tmp_path):

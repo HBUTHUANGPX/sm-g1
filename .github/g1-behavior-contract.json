@@ -1910,6 +1910,11 @@
       "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/rollout.py",
       "symbol": "evaluate_tracking",
       "sha256": "2b741d76cee29bc394a1b10023ae55ee2e82eeb64888435c739c7cf92b2fd3b3"
+    },
+    {
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/cli/train.py",
+      "symbol": "main",
+      "sha256": "644acff58c620c2f9aea171f5a60771b9a147a5fc121bbd108eb4fad267b2d4e"
     }
   ]
 }

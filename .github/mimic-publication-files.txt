@@ -127,3 +127,13 @@ mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/metrics.py
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/reporting.py
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/rollout.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/cli/__init__.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/cli/evaluate.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/cli/experiment.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/cli/release.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/cli/train.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/runtime/paths.py
+scripts/evaluate_g1.py
+scripts/export_g1_release.py
+scripts/run_g1_experiment.py
+scripts/train_g1.py

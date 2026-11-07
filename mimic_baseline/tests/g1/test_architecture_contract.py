@@ -40,3 +40,20 @@ def test_real_package_import_does_not_load_simulator():
     env=dict(os.environ,PYTHONPATH=str(ROOT/'mimic_baseline/source/mimic_baseline'))
     code='import sys; from mimic_baseline.tasks.supermimic.learning.trainer import Trainer; assert not any(k.startswith(("isaaclab", "omni.")) for k in sys.modules)'
     subprocess.run([sys.executable,'-c',code],env=env,check=True)
+
+
+def test_public_and_legacy_cli_help_do_not_launch_simulator():
+    for base in (ROOT / "scripts", ROOT / "mimic_baseline/scripts/supermimic"):
+        for script in ("train_g1", "evaluate_g1", "run_g1_experiment", "export_g1_release"):
+            result = subprocess.run([sys.executable, str(base / (script + ".py")), "--help"],
+                                    capture_output=True, text=True, check=True)
+            assert "usage:" in result.stdout
+
+
+def test_registered_g1_tasks_use_canonical_manager_environment():
+    import gymnasium
+    import mimic_baseline.tasks.supermimic
+    for task in ("SuperMimic-Flat-G1-v0", "SuperMimic-Recovery-G1-v0"):
+        spec = gymnasium.spec(task)
+        assert spec.entry_point.endswith("envs.manager_based:SuperMimicRLEnv")
+        assert "envs.configs.g1:" in spec.kwargs["env_cfg_entry_point"]

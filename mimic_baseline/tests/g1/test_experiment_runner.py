@@ -6,9 +6,7 @@ import subprocess
 import torch
 import pytest
 
-spec = importlib.util.spec_from_file_location('runner', Path(__file__).parents[2] / 'scripts/supermimic/run_g1_experiment.py')
-runner = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(runner)
+from mimic_baseline.tasks.supermimic.cli import experiment as runner
 
 
 @pytest.mark.parametrize('failure', [None, 'training', 'checkpoint', 'evaluating', 'clip_set', 'source_drift'])

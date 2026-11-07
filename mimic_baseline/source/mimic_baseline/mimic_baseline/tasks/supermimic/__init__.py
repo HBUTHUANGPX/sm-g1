@@ -14,8 +14,8 @@ The original TrackingSim remains available for baseline checkpoint evaluation.
 
 import gymnasium as gym
 
-_ENTRY = "mimic_baseline.tasks.supermimic.env_managed"
-_CFG = "mimic_baseline.tasks.supermimic.env_managed"
+_ENTRY = "mimic_baseline.tasks.supermimic.envs.manager_based"
+_CFG = "mimic_baseline.tasks.supermimic.envs.configs.base"
 
 gym.register(
     id="SuperMimic-Flat-RXP2-v0",
@@ -28,9 +28,9 @@ gym.register(
 
 gym.register(
     id="SuperMimic-ERP-RXP2-v0",
-    entry_point=f"{_ENTRY}:SuperMimicErpRLEnv",
+    entry_point="mimic_baseline.tasks.supermimic.envs.perception:SuperMimicErpRLEnv",
     disable_env_checker=True,
-    kwargs={"env_cfg_entry_point": f"{_CFG}:SuperMimicErpEnvCfg"},
+    kwargs={"env_cfg_entry_point": "mimic_baseline.tasks.supermimic.envs.perception:SuperMimicErpEnvCfg"},
 )
 
 # G1 uses the same ManagerBased environment and model-based Trainer.
@@ -38,7 +38,7 @@ gym.register(
     id="SuperMimic-Flat-G1-v0",
     entry_point=f"{_ENTRY}:SuperMimicRLEnv",
     disable_env_checker=True,
-    kwargs={"env_cfg_entry_point": "mimic_baseline.tasks.supermimic.g1_env:G1SuperMimicEnvCfg"},
+    kwargs={"env_cfg_entry_point": "mimic_baseline.tasks.supermimic.envs.configs.g1:G1SuperMimicEnvCfg"},
 )
 
 
@@ -46,5 +46,5 @@ gym.register(
     id="SuperMimic-Recovery-G1-v0",
     entry_point=f"{_ENTRY}:SuperMimicRLEnv",
     disable_env_checker=True,
-    kwargs={"env_cfg_entry_point": "mimic_baseline.tasks.supermimic.g1_env:G1RecoveryEnvCfg"},
+    kwargs={"env_cfg_entry_point": "mimic_baseline.tasks.supermimic.envs.configs.g1:G1RecoveryEnvCfg"},
 )
