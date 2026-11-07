@@ -79,7 +79,10 @@ class SuperMimicMotionCommand(CommandTerm):
         self.recovery_role = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         if self.recovery_enabled and self.reset_noise:
             from ..recovery import RecoveryPlacement
-            self._recovery_placement = RecoveryPlacement(self.mdp.kin, self.robot.cfg.spawn.usd_path)
+            self._recovery_placement = RecoveryPlacement(
+                self.mdp.kin, self.robot.cfg.spawn.usd_path,
+                physics_variant="mujoco" if getattr(env.cfg, "backend", None) == "newton" else None,
+            )
             self._recovery_roll_axis = self.default_q.new_tensor((1., 0., 0.))
             self._recovery_pitch_axis = self.default_q.new_tensor((0., 1., 0.))
 

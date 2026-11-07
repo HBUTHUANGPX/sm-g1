@@ -53,3 +53,6 @@ mimic_baseline/tests/g1/test_run_config.py
 mimic_baseline/tests/g1/test_backend.py
 mimic_baseline/tests/g1/test_motion_goal_widths.py
 mimic_baseline/tests/g1_gpu/test_delay.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/utils/__init__.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/utils/collision_bounds.py
+mimic_baseline/tests/g1/test_recovery_geometry.py
