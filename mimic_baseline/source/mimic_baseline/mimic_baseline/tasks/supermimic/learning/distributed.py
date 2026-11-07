@@ -27,7 +27,9 @@ def default_lr_scale(world_size: int) -> float:
     return 1.0
 
 
-def resolve_device(requested: str | torch.device, *, local_rank: int, world_size: int) -> str:
+def resolve_device(
+    requested: str | torch.device, *, local_rank: int, world_size: int
+) -> str:
     """Resolve one process to its CUDA device without sharing another rank's GPU."""
     if local_rank < 0:
         raise ValueError(f"local_rank must be non-negative, got {local_rank}")
@@ -64,7 +66,9 @@ class DistributedContext:
         self.world_size = int(world_size)
         self.local_rank = int(local_rank)
         self.device = torch.device(
-            resolve_device(device, local_rank=self.local_rank, world_size=self.world_size)
+            resolve_device(
+                device, local_rank=self.local_rank, world_size=self.world_size
+            )
         )
         self.backend = backend
         self._owns_group = False
@@ -199,9 +203,13 @@ class DistributedContext:
         square_sums: list[torch.Tensor] = []
         counts: list[torch.Tensor] = []
         for normalizer, sample in zip(normalizers, samples, strict=True):
-            value = sample.detach().reshape(-1, normalizer.dim).to(
-                device=normalizer.mean.device,
-                dtype=normalizer.mean.dtype,
+            value = (
+                sample.detach()
+                .reshape(-1, normalizer.dim)
+                .to(
+                    device=normalizer.mean.device,
+                    dtype=normalizer.mean.dtype,
+                )
             )
             sums.append(value.sum(0))
             square_sums.append(value.square().sum(0))
@@ -254,7 +262,9 @@ class DistributedContext:
             return [], []
         packed = torch.cat(
             tuple(
-                value.detach().reshape(1).to(
+                value.detach()
+                .reshape(1)
+                .to(
                     device=self.device,
                     dtype=torch.float32,
                 )

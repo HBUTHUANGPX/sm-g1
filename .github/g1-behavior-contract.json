@@ -677,67 +677,67 @@
       "sha256": "7c41412f39f7601dedaf23c439d5b75f71c6d026f50ae71eedefb8a19ca9bc34"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/common.py",
       "symbol": "_valid_depth",
       "sha256": "64c162820df38793dd776814c6ceed1b363f0bfcc81d9c5487a76386c399fb48"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/common.py",
       "symbol": "_as_modules",
       "sha256": "51cd8c0b20c2a9c61b976f5757011c3651fc1ae6bc5f94d2212e42e9a30c0eca"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/config.py",
       "symbol": "TrainingConfig.height_scan_shape",
       "sha256": "da097b11526d4ed69594628d093a00d7661f5f686fd01664b16f13ea7402c893"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/config.py",
       "symbol": "TrainingConfig.height_scan_dim",
       "sha256": "1ebefd5c388c82f9048a3f8b906be3a9b76e376ddbaf5271c532b00a1c73c7d1"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/config.py",
       "symbol": "TrainingConfig.effective_height_raycast_backend",
       "sha256": "54604a1899975606a8e1b81528d2bfd5ab1f5d9d4e5d10b0d062345de6e4dd3e"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/config.py",
       "symbol": "TrainingConfig.validate",
       "sha256": "5b403242fa37deca4a81dbb7efa03254de7b9fb7abfcc73459c31d85dfee89d6"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/config.py",
       "symbol": "TrainingConfig.as_dict",
       "sha256": "7acc2dec03bd95b8189dfd046b04bc8b8b948783fdbe376e0539e4e1fdca3522"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/instrumentation.py",
       "symbol": "Profiler.__init__",
       "sha256": "33a08404cc2a2428684fcf9badb060b1cd7de5261a102183349428b9ac9efbeb"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/instrumentation.py",
       "symbol": "Profiler.record",
       "sha256": "f76958f1234c5daa1ebfcc6a323ecc33b883947770b23a3308ac9effa85e3841"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/instrumentation.py",
       "symbol": "Profiler.drain",
       "sha256": "ed4c96e85109c062efda90567aa4fa733b8edf444b49efa3f7801d61c2c434ff"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/instrumentation.py",
       "symbol": "JsonlLogger.__init__",
       "sha256": "df371ec38dcf2e35ad444f1666181271193c70b6cae913145a45717ce5c56745"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/instrumentation.py",
       "symbol": "JsonlLogger.log",
       "sha256": "6a9a371bfebc39f1328af4fe2e1983ffce5a32f694121664039c26f4b0752da9"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/instrumentation.py",
       "symbol": "JsonlLogger.close",
       "sha256": "a15073976a846901f4010fb99216240e8e56b6c6bb35e40a73376acb956ce909"
     },
@@ -812,93 +812,93 @@
       "sha256": "604cfebcdcd5d70705b33633aea08848b9c78345e5a62569ea7be6f0c9cac426"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._check_physics",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/collection.py",
+      "symbol": "CollectionMixin._check_physics",
       "sha256": "bd078956630cb9171157b695b180fb237c6e887f3d3a3ed3939c7866f14d9127"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer.collect",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/collection.py",
+      "symbol": "CollectionMixin.collect",
       "sha256": "a57559ee3747e42feac7990df2b87e05ed5c5d2102495311d061d3961e3d3539"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._encode_clean_perception",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
+      "symbol": "WorldModelUpdateMixin._encode_clean_perception",
       "sha256": "aea9af12b619401b506363ab862e9d84fed2f0d15fbcc08707133f436fae79d0"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._burnin_hidden",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
+      "symbol": "WorldModelUpdateMixin._burnin_hidden",
       "sha256": "4ddf8a5e521220cef53b5bf0b6cd1fc37f85e4f068746a0f1cd9b07ad8d8b430"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._clean_prediction",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
+      "symbol": "WorldModelUpdateMixin._clean_prediction",
       "sha256": "2fb7cc3529124f28bb4c4ad4be4186b7dd13a7dcc70042677892124ddeef981d"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._perception_errors",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
+      "symbol": "WorldModelUpdateMixin._perception_errors",
       "sha256": "1d87408ec2f7d59d2e9496290bc93c18e388c02e476a51dc693880eea91ec82f"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._clean_world_model_rollout",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
+      "symbol": "WorldModelUpdateMixin._clean_world_model_rollout",
       "sha256": "c3e52bd1bef3e54dc9c7bbea635941635a1b0aff61cdfdfa2273c3873811f455"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._world_model_rollout",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
+      "symbol": "WorldModelUpdateMixin._world_model_rollout",
       "sha256": "8166d5886c6da01f8aa6e25d10689b98467da127a1588b1db7b99a36d6258fd3"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._latent_at",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
+      "symbol": "WorldModelUpdateMixin._latent_at",
       "sha256": "86bee6a703b4d13a9bd2f74420db8f36f218c80e584b8765efbdc8cac152ed3b"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._reconstruction_loss",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
+      "symbol": "WorldModelUpdateMixin._reconstruction_loss",
       "sha256": "946edceecb29879e882603c2fb57028405e4035b5521962df8b8231d8d95577e"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._scan_metrics",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
+      "symbol": "WorldModelUpdateMixin._scan_metrics",
       "sha256": "e10009055f457055095c0f9c0b7401b29d60b86d4b0a27e9c2157b5c7d1a16d0"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer.update_world_model",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
+      "symbol": "WorldModelUpdateMixin.update_world_model",
       "sha256": "2d4f3a805db572601f694fbc33963370ae0a2862726d21d6c13a2a5c26dd6567"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._critic_input",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/policy_update.py",
+      "symbol": "PolicyUpdateMixin._critic_input",
       "sha256": "fb8c492eb96a3b7aa3b069b9bb7bfe06728f1287b43293e9e2a41581ab5f4878"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._wm_modules",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/policy_update.py",
+      "symbol": "PolicyUpdateMixin._wm_modules",
       "sha256": "97eb0875577669798fc4a626f30aee3c4450bc1fc2e739254e44aa94546ca245"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._set_requires_grad",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/policy_update.py",
+      "symbol": "PolicyUpdateMixin._set_requires_grad",
       "sha256": "b1e492e074f95ae458466f7ce36df86abd4c4ebfdd4a45bc1fcf6fc6625ce7d3"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._bootstrap_value",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/policy_update.py",
+      "symbol": "PolicyUpdateMixin._bootstrap_value",
       "sha256": "a26d7c250619c0335907c816cf1d6eb3281373f04682befc7d37f1e03f626014"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer.update_policy_and_critic",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/policy_update.py",
+      "symbol": "PolicyUpdateMixin.update_policy_and_critic",
       "sha256": "70a7ea0a4922e37667e31b72a33c4c75e455db14467568b7825fa10e994dad57"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer.world_model_diagnostics",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
+      "symbol": "WorldModelUpdateMixin.world_model_diagnostics",
       "sha256": "22333391127fc9fe8cbdcb14d76cdc559fd165e614292d13debc4dfca58e250e"
     },
     {
@@ -917,28 +917,28 @@
       "sha256": "53c68f40647877ecd29229f7b11a9201a9a42124547a81ab0861ce917112d025"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer._environment_stats",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/checkpoint.py",
+      "symbol": "CheckpointMixin._environment_stats",
       "sha256": "d0b0621daad8794bdcc199fcddbd9216ccef3b1aacaea3ff40f6a1888063cb22"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer.checkpoint",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/checkpoint.py",
+      "symbol": "CheckpointMixin.checkpoint",
       "sha256": "79cce4b623c5891820d038ef71469d6f0695e8485f3ab6773c2e1ebd84140a5e"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer.save_checkpoint",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/checkpoint.py",
+      "symbol": "CheckpointMixin.save_checkpoint",
       "sha256": "678113b1ddd82f1fcc09d3b0a5d171f4dae8fe7cd6b73e696c42a42b40efa9f8"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer.load_weights",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/checkpoint.py",
+      "symbol": "CheckpointMixin.load_weights",
       "sha256": "6d1184dd492df740e08e09ed4177ed2c7cbf243e024096b2f7c3f3991effcd27"
     },
     {
-      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/trainer.py",
-      "symbol": "Trainer.load_checkpoint",
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/checkpoint.py",
+      "symbol": "CheckpointMixin.load_checkpoint",
       "sha256": "1c1a24b53497efa4d3327fcbac81e80b63582cf66bcfc41785119fd85043f926"
     },
     {

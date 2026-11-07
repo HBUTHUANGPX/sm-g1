@@ -72,17 +72,28 @@ def height_scan_shape(
     """Endpoint-inclusive (nx, ny); the native xy pattern flattens X fastest."""
     if not isinstance(size, (tuple, list)) or len(size) != 2:
         raise ValueError("height_scan_size must contain two lengths in metres")
-    if any(isinstance(value, bool) or not isinstance(value, Real)
-           or not math.isfinite(value) or value <= 0 for value in (*size, resolution)):
-        raise ValueError("height_scan_size and height_scan_resolution must be finite and positive")
+    if any(
+        isinstance(value, bool)
+        or not isinstance(value, Real)
+        or not math.isfinite(value)
+        or value <= 0
+        for value in (*size, resolution)
+    ):
+        raise ValueError(
+            "height_scan_size and height_scan_resolution must be finite and positive"
+        )
     counts = []
     for length in size:
         intervals = length / resolution
         if not math.isfinite(intervals) or intervals < 1:
-            raise ValueError("height_scan_size must cover at least one resolution interval per axis")
+            raise ValueError(
+                "height_scan_size must cover at least one resolution interval per axis"
+            )
         rounded = round(intervals)
         if not math.isclose(intervals, rounded, rel_tol=1e-9, abs_tol=1e-9):
-            raise ValueError("height_scan_size must be an integer multiple of height_scan_resolution")
+            raise ValueError(
+                "height_scan_size must be an integer multiple of height_scan_resolution"
+            )
         counts.append(rounded + 1)
     return counts[0], counts[1]
 
@@ -113,9 +124,7 @@ def depth_features(
         raise ValueError(f"clip_m must be finite and positive, got {clip_m}")
     shape = depth.shape[-2:]
     if tuple(shape) != DEPTH_SHAPE:
-        raise ValueError(
-            f"depth must end in {DEPTH_SHAPE}, got {tuple(depth.shape)}"
-        )
+        raise ValueError(f"depth must end in {DEPTH_SHAPE}, got {tuple(depth.shape)}")
     measured = torch.isfinite(depth) & (depth >= 0.0)
     if valid is None:
         valid = measured
@@ -147,15 +156,20 @@ class DepthEncoder(nn.Module):
         self.latent_dim = int(latent_dim)
         self.clip_m = float(clip_m)
         self.conv = nn.Sequential(
-            nn.Conv2d(DEPTH_CHANNELS, 16, 5, 2, 2), nn.ELU(),
-            nn.Conv2d(16, 32, 3, 2, 1), nn.ELU(),
-            nn.Conv2d(32, 64, 3, 2, 1), nn.ELU(),
-            nn.Conv2d(64, 64, 3, 2, 1), nn.ELU(),
+            nn.Conv2d(DEPTH_CHANNELS, 16, 5, 2, 2),
+            nn.ELU(),
+            nn.Conv2d(16, 32, 3, 2, 1),
+            nn.ELU(),
+            nn.Conv2d(32, 64, 3, 2, 1),
+            nn.ELU(),
+            nn.Conv2d(64, 64, 3, 2, 1),
+            nn.ELU(),
         )
         # 40 -> 20 -> 10 -> 5 -> 3, so the flattened map is 64 * 3 * 3.
         self.projection = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(64 * 3 * 3, 64), nn.ELU(),
+            nn.Linear(64 * 3 * 3, 64),
+            nn.ELU(),
             nn.Linear(64, self.latent_dim),
         )
 
@@ -165,14 +179,19 @@ class DepthEncoder(nn.Module):
         # Replay stays float16 on device; convolution uses the model's dtype in
         # both training and evaluation without requiring caller-side casts.
         depth = depth.to(dtype=self.conv[0].weight.dtype)
-        return torch.tanh(self.projection(self.conv(depth_features(depth, valid, self.clip_m))))
+        return torch.tanh(
+            self.projection(self.conv(depth_features(depth, valid, self.clip_m)))
+        )
 
 
 class HeightEncoder(nn.Module):
     """Encode masked height and hit probability without discretizing soft hits."""
 
     def __init__(
-        self, latent_dim: int = LATENT_DIM, *, world_frame: bool = False,
+        self,
+        latent_dim: int = LATENT_DIM,
+        *,
+        world_frame: bool = False,
         scan_dim: int = HEIGHT_SCAN_DIM,
     ):
         super().__init__()
@@ -184,11 +203,18 @@ class HeightEncoder(nn.Module):
         self.scan_dim = scan_dim
         self.world_frame = bool(world_frame)
         self.net = nn.Sequential(
-            nn.Linear(2 * self.scan_dim + (6 if self.world_frame else 0), 128), nn.ELU(),
-            nn.Linear(128, self.latent_dim), nn.Tanh(),
+            nn.Linear(2 * self.scan_dim + (6 if self.world_frame else 0), 128),
+            nn.ELU(),
+            nn.Linear(128, self.latent_dim),
+            nn.Tanh(),
         )
 
-    def forward(self, scan: torch.Tensor, hit: torch.Tensor, orientation: torch.Tensor | None = None) -> torch.Tensor:
+    def forward(
+        self,
+        scan: torch.Tensor,
+        hit: torch.Tensor,
+        orientation: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         if scan.shape[-1] != self.scan_dim or hit.shape != scan.shape:
             raise ValueError(
                 f"scan and hit must have matching shapes ending in {self.scan_dim}, "
@@ -196,13 +222,18 @@ class HeightEncoder(nn.Module):
             )
         scan = scan.to(dtype=self.net[0].weight.dtype)
         hit = hit.to(dtype=scan.dtype)
-        height = torch.where(torch.isfinite(scan), scan, 0.0).clamp(
-            -HEIGHT_SCAN_CLIP_M, HEIGHT_SCAN_CLIP_M
-        ) / HEIGHT_SCAN_CLIP_M
+        height = (
+            torch.where(torch.isfinite(scan), scan, 0.0).clamp(
+                -HEIGHT_SCAN_CLIP_M, HEIGHT_SCAN_CLIP_M
+            )
+            / HEIGHT_SCAN_CLIP_M
+        )
         features = [height * hit, hit]
         if self.world_frame:
             if orientation is None or orientation.shape != scan.shape[:-1] + (6,):
-                raise ValueError("world height input requires matching 6-D scan-to-body orientation")
+                raise ValueError(
+                    "world height input requires matching 6-D scan-to-body orientation"
+                )
             features.append(orientation.to(dtype=scan.dtype))
         elif orientation is not None:
             raise ValueError("legacy yaw height input does not accept scan orientation")
@@ -225,8 +256,10 @@ class HeightScanDecoder(nn.Module):
         self.latent_dim = int(latent_dim)
         self.scan_dim = int(scan_dim)
         self.trunk = nn.Sequential(
-            nn.Linear(self.latent_dim, 256), nn.ELU(),
-            nn.Linear(256, 128), nn.ELU(),
+            nn.Linear(self.latent_dim, 256),
+            nn.ELU(),
+            nn.Linear(256, 128),
+            nn.ELU(),
         )
         self.height = nn.Linear(128, self.scan_dim)
         self.hit = nn.Linear(128, self.scan_dim)
@@ -248,11 +281,13 @@ class DepthDecoder(nn.Module):
             raise ValueError(f"hidden_dim must be positive, got {hidden_dim}")
         self.hidden_dim = int(hidden_dim)
         self.projection = nn.Linear(self.hidden_dim, 64 * 5 * 5)
-        self.convs = nn.ModuleList((
-            nn.Conv2d(64, 32, 3, padding=1),
-            nn.Conv2d(32, 16, 3, padding=1),
-            nn.Conv2d(16, 16, 3, padding=1),
-        ))
+        self.convs = nn.ModuleList(
+            (
+                nn.Conv2d(64, 32, 3, padding=1),
+                nn.Conv2d(32, 16, 3, padding=1),
+                nn.Conv2d(16, 16, 3, padding=1),
+            )
+        )
         self.depth = nn.Conv2d(16, 1, 3, padding=1)
 
     def forward(self, hidden: torch.Tensor) -> torch.Tensor:
@@ -262,7 +297,9 @@ class DepthDecoder(nn.Module):
         # Tensor values, parameter layout and the checkpoint format are unchanged.
         features = features.contiguous(memory_format=torch.channels_last)
         for size, conv in zip((10, 20, 40), self.convs, strict=True):
-            features = F.interpolate(features, size=(size, size), mode="bilinear", align_corners=False)
+            features = F.interpolate(
+                features, size=(size, size), mode="bilinear", align_corners=False
+            )
             features = F.elu(conv(features))
         return torch.sigmoid(self.depth(features)).squeeze(1) * CLEAN_DEPTH_CLIP_M
 
@@ -276,8 +313,12 @@ class RecurrentPerception(nn.Module):
     """
 
     def __init__(
-        self, latent_dim: int = LATENT_DIM, hidden_dim: int = 256, *,
-        world_frame: bool = False, scan_dim: int = HEIGHT_SCAN_DIM,
+        self,
+        latent_dim: int = LATENT_DIM,
+        hidden_dim: int = 256,
+        *,
+        world_frame: bool = False,
+        scan_dim: int = HEIGHT_SCAN_DIM,
     ):
         super().__init__()
         if latent_dim <= 0 or hidden_dim <= 0:
@@ -286,18 +327,30 @@ class RecurrentPerception(nn.Module):
         self.hidden_dim = int(hidden_dim)
         self.scan_dim = scan_dim
         self.world_frame = bool(world_frame)
-        self.height_encoder = HeightEncoder(self.latent_dim, world_frame=self.world_frame, scan_dim=scan_dim)
+        self.height_encoder = HeightEncoder(
+            self.latent_dim, world_frame=self.world_frame, scan_dim=scan_dim
+        )
         self.depth_encoder = DepthEncoder(self.latent_dim, clip_m=CLEAN_DEPTH_CLIP_M)
         self.gru = nn.GRUCell(3 * self.latent_dim, self.hidden_dim)
         self.height_decoder = HeightScanDecoder(self.hidden_dim, scan_dim)
         self.depth_decoder = DepthDecoder(self.hidden_dim)
 
-    def encode(self, scan: torch.Tensor, hit: torch.Tensor, depth: torch.Tensor,
-               orientation: torch.Tensor | None = None) -> torch.Tensor:
-        return torch.cat((self.height_encoder(scan, hit, orientation), self.depth_encoder(depth)), dim=-1)
+    def encode(
+        self,
+        scan: torch.Tensor,
+        hit: torch.Tensor,
+        depth: torch.Tensor,
+        orientation: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        return torch.cat(
+            (self.height_encoder(scan, hit, orientation), self.depth_encoder(depth)),
+            dim=-1,
+        )
 
     def initial_hidden(self, batch: int, device: torch.device | str) -> torch.Tensor:
-        return torch.zeros(batch, self.hidden_dim, device=device, dtype=self.gru.weight_ih.dtype)
+        return torch.zeros(
+            batch, self.hidden_dim, device=device, dtype=self.gru.weight_ih.dtype
+        )
 
     def advance_hidden(
         self,
@@ -322,7 +375,8 @@ class RecurrentPerception(nn.Module):
         # parameters during WM updates and preserves actor input gradients.
         depth1 = (
             checkpoint(self.depth_decoder, hidden1, use_reentrant=False)
-            if torch.is_grad_enabled() else self.depth_decoder(hidden1)
+            if torch.is_grad_enabled()
+            else self.depth_decoder(hidden1)
         )
         if valid.shape != depth1.shape:
             raise ValueError(
@@ -353,7 +407,9 @@ class Perception(nn.Module):
         self.encoder = DepthEncoder(self.latent_dim)
         self.decoder = HeightScanDecoder(self.latent_dim, self.scan_dim)
 
-    def encode(self, depth: torch.Tensor, valid: torch.Tensor | None = None) -> torch.Tensor:
+    def encode(
+        self, depth: torch.Tensor, valid: torch.Tensor | None = None
+    ) -> torch.Tensor:
         return self.encoder(depth, valid)
 
     def decode(self, latent: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:

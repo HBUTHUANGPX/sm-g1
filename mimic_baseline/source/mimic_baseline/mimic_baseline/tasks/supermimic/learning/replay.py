@@ -15,7 +15,10 @@ import torch
 import torch.distributed as dist
 
 from mimic_baseline.tasks.supermimic.core.mdp import ACT_DIM, OBS_DIM, STATE_DIM, XI_DIM
-from mimic_baseline.tasks.supermimic.learning.perception import DEPTH_SHAPE, HEIGHT_SCAN_DIM
+from mimic_baseline.tasks.supermimic.learning.perception import (
+    DEPTH_SHAPE,
+    HEIGHT_SCAN_DIM,
+)
 
 
 Fields = dict[str, tuple[tuple[int, ...], torch.dtype]]
@@ -97,7 +100,9 @@ class ReplayBuffer:
         action_dim: int = ACT_DIM,
     ):
         if steps <= 0 or num_envs <= 0:
-            raise ValueError(f"steps and num_envs must be positive, got {steps}, {num_envs}")
+            raise ValueError(
+                f"steps and num_envs must be positive, got {steps}, {num_envs}"
+            )
         self.T = int(steps)
         self.N = int(num_envs)
         self.device = torch.device(device)
@@ -110,8 +115,12 @@ class ReplayBuffer:
         if isinstance(scan_dim, bool) or not isinstance(scan_dim, int) or scan_dim <= 0:
             raise ValueError("scan_dim must be a positive integer")
         self.scan_dim = scan_dim
-        if self.recurrent and (not self.perception or self.burn_in < 1 or self.camera_capacity < 1):
-            raise ValueError("recurrent replay needs perception and positive history lengths")
+        if self.recurrent and (
+            not self.perception or self.burn_in < 1 or self.camera_capacity < 1
+        ):
+            raise ValueError(
+                "recurrent replay needs perception and positive history lengths"
+            )
         self.ptr = 0
         self.size = 0
         self._schema_checked = False
@@ -133,11 +142,14 @@ class ReplayBuffer:
         if self.recovery_enabled:
             schema["recovery_role"] = ((), torch.bool)
         self._perception_fields = tuple(
-            name for name in PERCEPTION_FIELDS
+            name
+            for name in PERCEPTION_FIELDS
             if not self.recurrent or name not in ("depth", "depth1")
         )
         if self.perception:
-            schema.update({name: PERCEPTION_FIELDS[name] for name in self._perception_fields})
+            schema.update(
+                {name: PERCEPTION_FIELDS[name] for name in self._perception_fields}
+            )
             for name in ("scan", "scan1", "hit", "hit1"):
                 schema[name] = ((self.scan_dim,), PERCEPTION_FIELDS[name][1])
         if self.recurrent:
@@ -156,25 +168,43 @@ class ReplayBuffer:
         elif pmg_fraction != 0.0:
             raise ValueError("pmg_fraction requires a PMG reference")
 
-    def attach_pmg(self, reference, actor_fraction, goal_frames=10, capture_steps=5) -> None:
+    def attach_pmg(
+        self, reference, actor_fraction, goal_frames=10, capture_steps=5
+    ) -> None:
         """Attach ownership/routing before collection; static-off storage is unchanged."""
         if self.size:
             raise RuntimeError("attach_pmg requires an empty buffer")
         if reference is None or not 0.0 <= actor_fraction <= 1.0 or goal_frames < 0:
-            raise ValueError("PMG requires a reference, actor_fraction in [0,1], and nonnegative goal_frames")
+            raise ValueError(
+                "PMG requires a reference, actor_fraction in [0,1], and nonnegative goal_frames"
+            )
         self.reference = reference
         self.pmg_fraction = float(actor_fraction)
         self._pmg_goal_frames = int(goal_frames)
         self._pmg_capture_steps = int(capture_steps)
         if "generated_source" not in self.data:
-            self.data["generated_source"] = torch.empty((self.T, self.N), device=self.device, dtype=torch.bool)
-            self.data["policy_obs"] = torch.empty((self.T, self.N, 64 + self.action_dim), device=self.device, dtype=torch.float32)
-        for name, tail, dtype in (("decision_ref_id", (), torch.long), ("decision_ref_phase", (), torch.long),
-                                  ("pmg_decision", (), torch.bool), ("task_command", (2,), torch.float32)):
+            self.data["generated_source"] = torch.empty(
+                (self.T, self.N), device=self.device, dtype=torch.bool
+            )
+            self.data["policy_obs"] = torch.empty(
+                (self.T, self.N, 64 + self.action_dim),
+                device=self.device,
+                dtype=torch.float32,
+            )
+        for name, tail, dtype in (
+            ("decision_ref_id", (), torch.long),
+            ("decision_ref_phase", (), torch.long),
+            ("pmg_decision", (), torch.bool),
+            ("task_command", (2,), torch.float32),
+        ):
             if name not in self.data:
-                self.data[name] = torch.empty((self.T, self.N, *tail), device=self.device, dtype=dtype)
+                self.data[name] = torch.empty(
+                    (self.T, self.N, *tail), device=self.device, dtype=dtype
+                )
         if self.perception and "depth" not in self.data:
-            self.data["depth"] = torch.empty((self.T, self.N, *DEPTH_SHAPE), device=self.device, dtype=torch.float16)
+            self.data["depth"] = torch.empty(
+                (self.T, self.N, *DEPTH_SHAPE), device=self.device, dtype=torch.float16
+            )
         self._fields = tuple(self.data)
         self._schema_checked = False
         self._sampling_cache.clear()
@@ -186,7 +216,9 @@ class ReplayBuffer:
         if self.reference is not None and self.size:
             rows = self._rows_for_ages(torch.arange(self.size, device=self.device))
             self.reference.release(self.data["ref_id"][rows])
-            self.reference.release(self.data["decision_ref_id"][rows][self.data["pmg_decision"][rows]])
+            self.reference.release(
+                self.data["decision_ref_id"][rows][self.data["pmg_decision"][rows]]
+            )
         self.ptr = self.size = 0
         self._schema_checked = False
         self._generation += 1
@@ -216,8 +248,14 @@ class ReplayBuffer:
             value = out[name]
             expected = (self.N, *tail)
             if not torch.is_tensor(value) or tuple(value.shape) != expected:
-                actual = tuple(value.shape) if torch.is_tensor(value) else type(value).__name__
-                raise ValueError(f"replay field '{name}' must have shape {expected}, got {actual}")
+                actual = (
+                    tuple(value.shape)
+                    if torch.is_tensor(value)
+                    else type(value).__name__
+                )
+                raise ValueError(
+                    f"replay field '{name}' must have shape {expected}, got {actual}"
+                )
             if value.device != self.device:
                 raise RuntimeError(
                     f"replay field '{name}' is on {value.device}, expected {self.device}"
@@ -234,7 +272,11 @@ class ReplayBuffer:
             self.reference.retain(out["decision_ref_id"][out["pmg_decision"]])
             if self.size == self.T:
                 self.reference.release(self.data["ref_id"][self.ptr])
-                self.reference.release(self.data["decision_ref_id"][self.ptr][self.data["pmg_decision"][self.ptr]])
+                self.reference.release(
+                    self.data["decision_ref_id"][self.ptr][
+                        self.data["pmg_decision"][self.ptr]
+                    ]
+                )
         for name in self._fields:
             self.data[name][self.ptr].copy_(out[name], non_blocking=True)
         self.ptr = (self.ptr + 1) % self.T
@@ -255,8 +297,10 @@ class ReplayBuffer:
             if self.recurrent:
                 required = max(self.burn_in, self.camera_capacity - 1)
                 eligible &= (steps <= ages[:, None]) | (ages[:, None] >= required)
-                capture_step = ((steps.long() - self.data["camera_lag"][rows].long()).clamp_min(0)
-                                // self._pmg_capture_steps) * self._pmg_capture_steps
+                capture_step = (
+                    (steps.long() - self.data["camera_lag"][rows].long()).clamp_min(0)
+                    // self._pmg_capture_steps
+                ) * self._pmg_capture_steps
                 eligible &= steps - capture_step <= ages[:, None]
             self._decision_cache = eligible.flatten().nonzero(as_tuple=False).flatten()
         return self._decision_cache
@@ -267,7 +311,9 @@ class ReplayBuffer:
 
     def _rows_for_ages(self, ages: torch.Tensor) -> torch.Tensor:
         if self.size == 0:
-            raise RuntimeError("replay is empty; collect warmup transitions before sampling")
+            raise RuntimeError(
+                "replay is empty; collect warmup transitions before sampling"
+            )
         # Callers construct ages from metadata-known bounds. Do not inspect age
         # values here: a tensor reduction would force a GPU/CPU synchronization.
         return (self.ptr - self.size + ages) % self.T
@@ -277,13 +323,25 @@ class ReplayBuffer:
     ) -> dict[str, torch.Tensor]:
         return {name: self.data[name][rows, envs] for name in fields}
 
-    def _burnin(self, age: torch.Tensor, env: torch.Tensor, ep_step: torch.Tensor) -> dict[str, torch.Tensor]:
+    def _burnin(
+        self, age: torch.Tensor, env: torch.Tensor, ep_step: torch.Tensor
+    ) -> dict[str, torch.Tensor]:
         back = torch.arange(self.burn_in, 0, -1, device=self.device)
         available = torch.minimum(age, ep_step.long())
         valid = back[None, :] <= available[:, None]
         ages = age[:, None] - torch.minimum(back[None, :], available[:, None])
         rows = self._rows_for_ages(ages)
-        fields = ("s", "a", "a_prev", "xi", "f", "ep_step", "clean_depth", "scan", "hit")
+        fields = (
+            "s",
+            "a",
+            "a_prev",
+            "xi",
+            "f",
+            "ep_step",
+            "clean_depth",
+            "scan",
+            "hit",
+        )
         result = self._gather(fields, rows, env[:, None].expand_as(rows))
         result["mask"] = valid
         return result
@@ -295,7 +353,9 @@ class ReplayBuffer:
         locally capped proposal need not be proportional to the global target.
         Insertion clears these values; call after sampling, before the next add.
         """
-        consumer = {"wm": "wm", "actor": "actor", "windows": "wm", "starts": "actor"}[kind]
+        consumer = {"wm": "wm", "actor": "actor", "windows": "wm", "starts": "actor"}[
+            kind
+        ]
         return self.sampling_metrics[f"Sampling/{consumer}_loss_scale"]
 
     def _weighted_logical(
@@ -314,12 +374,20 @@ class ReplayBuffer:
         bin-space projection caps each rank's actual proposal. Cached bin
         importance weights recover the global target after DDP averaging.
         """
-        if not torch.is_tensor(probabilities) or probabilities.ndim != 1 or probabilities.numel() == 0:
+        if (
+            not torch.is_tensor(probabilities)
+            or probabilities.ndim != 1
+            or probabilities.numel() == 0
+        ):
             raise ValueError("bin_probabilities must be a nonempty rank-one tensor")
         if probabilities.device != self.device:
             raise RuntimeError("bin_probabilities must be on the replay device")
         frame_bin = getattr(motion, "frame_bin", None)
-        if not torch.is_tensor(frame_bin) or frame_bin.ndim != 1 or frame_bin.dtype != torch.long:
+        if (
+            not torch.is_tensor(frame_bin)
+            or frame_bin.ndim != 1
+            or frame_bin.dtype != torch.long
+        ):
             raise TypeError("motion must expose a rank-one long tensor frame_bin")
         if frame_bin.device != self.device:
             raise RuntimeError("motion.frame_bin must be on the replay device")
@@ -327,9 +395,19 @@ class ReplayBuffer:
             raise ValueError("bin_probabilities must have motion.num_bins entries")
         references = (probabilities, frame_bin, motion.clip_id, motion.clip_end)
         # Inference tensors have no mutation counter: never reuse their CDF.
-        versions = tuple(None if value.is_inference() else value._version for value in references)
-        key = (self._generation, window, self.recurrent, self.burn_in, self.camera_capacity, self.distributed,
-               tuple(id(value) for value in references), versions)
+        versions = tuple(
+            None if value.is_inference() else value._version for value in references
+        )
+        key = (
+            self._generation,
+            window,
+            self.recurrent,
+            self.burn_in,
+            self.camera_capacity,
+            self.distributed,
+            tuple(id(value) for value in references),
+            versions,
+        )
         cached = self._sampling_cache.get(kind)
         if cached is not None and cached[0] == key and None not in versions:
             cdf = cached[1]
@@ -345,8 +423,14 @@ class ReplayBuffer:
             eligible = frames < self._motion_clip_end(motion, frames)
             if self.recurrent:
                 episode_steps = self.data["ep_step"][rows]
-                required = self.burn_in if kind == "windows" else max(self.burn_in, self.camera_capacity - 1)
-                eligible &= (episode_steps <= ages[:, None]) | (ages[:, None] >= required)
+                required = (
+                    self.burn_in
+                    if kind == "windows"
+                    else max(self.burn_in, self.camera_capacity - 1)
+                )
+                eligible &= (episode_steps <= ages[:, None]) | (
+                    ages[:, None] >= required
+                )
             bins = frame_bin[frames].flatten()
             valid = eligible.flatten().to(torch.float64)
             local_counts = torch.zeros_like(q).scatter_add_(0, bins, valid)
@@ -361,16 +445,22 @@ class ReplayBuffer:
             target = q * supported
             supported_mass = target.sum()
             count = counts.sum()
-            self.sampling_metrics.update({
-                f"{prefix}_unsupported_mass": (q * ~supported).sum(),
-                f"{prefix}_eligible_candidates": local_count,
-                f"{prefix}_global_candidates": count,
-                f"{prefix}_supported_bins": supported.sum(),
-            })
-            torch._assert_async((count > 0) & (supported_mass > 0),
-                                f"no eligible {kind} candidates with supported bin probability mass")
+            self.sampling_metrics.update(
+                {
+                    f"{prefix}_unsupported_mass": (q * ~supported).sum(),
+                    f"{prefix}_eligible_candidates": local_count,
+                    f"{prefix}_global_candidates": count,
+                    f"{prefix}_supported_bins": supported.sum(),
+                }
+            )
+            torch._assert_async(
+                (count > 0) & (supported_mass > 0),
+                f"no eligible {kind} candidates with supported bin probability mass",
+            )
 
-            from mimic_baseline.tasks.supermimic.data.sampling import bounded_probabilities
+            from mimic_baseline.tasks.supermimic.data.sampling import (
+                bounded_probabilities,
+            )
 
             # Solve once in bin space, not once per replay row or minibatch.
             # upper_i / n_i = 8/N bounds each eligible row after redistribution.
@@ -383,16 +473,25 @@ class ReplayBuffer:
             target_per_candidate = mass / counts.clamp_min(1)
             local_target = target_per_candidate * local_counts
             local_mass = local_target.sum()
-            torch._assert_async(local_mass > 0, f"no local eligible {kind} candidates with positive mass")
+            torch._assert_async(
+                local_mass > 0,
+                f"no local eligible {kind} candidates with positive mass",
+            )
             if world_size > 1:
                 local_target = local_target / local_mass
                 local_upper = 8 * local_counts / local_count
-                local_projected = bounded_probabilities(local_target, torch.zeros_like(q), local_upper)
-                proposal = torch.where((local_target <= local_upper).all(), local_target, local_projected)
+                local_projected = bounded_probabilities(
+                    local_target, torch.zeros_like(q), local_upper
+                )
+                proposal = torch.where(
+                    (local_target <= local_upper).all(), local_target, local_projected
+                )
                 proposal_per_candidate = proposal / local_counts.clamp_min(1)
                 importance_per_bin = torch.where(
                     local_counts > 0,
-                    world_size * target_per_candidate / proposal_per_candidate.clamp_min(torch.finfo(q.dtype).tiny),
+                    world_size
+                    * target_per_candidate
+                    / proposal_per_candidate.clamp_min(torch.finfo(q.dtype).tiny),
                     0.0,
                 )
             else:
@@ -402,18 +501,24 @@ class ReplayBuffer:
                 importance_per_bin = torch.ones_like(q)
             weights = proposal_per_candidate[bins] * valid
             cdf = weights.cumsum(0, dtype=torch.float64)
-            self.sampling_metrics.update({
-                f"{prefix}_max_candidate_probability": proposal_per_candidate.max(),
-                f"{prefix}_max_target_candidate_probability": target_per_candidate.max(),
-                f"{prefix}_local_mass": local_mass,
-                f"{prefix}_loss_scale": world_size * local_mass,
-            })
+            self.sampling_metrics.update(
+                {
+                    f"{prefix}_max_candidate_probability": proposal_per_candidate.max(),
+                    f"{prefix}_max_target_candidate_probability": target_per_candidate.max(),
+                    f"{prefix}_local_mass": local_mass,
+                    f"{prefix}_loss_scale": world_size * local_mass,
+                }
+            )
             # Retain inputs so Python cannot reuse their ids while cached.
             self._sampling_cache[kind] = (key, cdf, references, importance_per_bin)
 
-        uniform = torch.rand(B, device=self.device, dtype=cdf.dtype, generator=generator)
+        uniform = torch.rand(
+            B, device=self.device, dtype=cdf.dtype, generator=generator
+        )
         # right=True skips zero-probability plateaus, including a leading one.
-        draws = torch.minimum(uniform * cdf[-1], torch.nextafter(cdf[-1], cdf.new_zeros(())))
+        draws = torch.minimum(
+            uniform * cdf[-1], torch.nextafter(cdf[-1], cdf.new_zeros(()))
+        )
         return torch.searchsorted(cdf, draws, right=True), importance_per_bin
 
     def _require_mixed_support(self, ready, message):
@@ -423,35 +528,74 @@ class ReplayBuffer:
         if not ready.nonzero(as_tuple=False).numel():
             raise NoMixedReplayCandidates(message)
 
-    def _mixed_logical(self, B, kind, window, horizon, motion, probabilities, generator, *, decision_only=False,
-                       decision_weight=None):
+    def _mixed_logical(
+        self,
+        B,
+        kind,
+        window,
+        horizon,
+        motion,
+        probabilities,
+        generator,
+        *,
+        decision_only=False,
+        decision_weight=None,
+    ):
         if decision_only:
             candidates = self._decision_candidates()
             if not candidates.numel():
-                raise NoPMGDecisionSeeds("no generated decision seeds; collect beyond PMG warmup")
-            draw = torch.randint(candidates.numel(), (B,), device=self.device, generator=generator)
+                raise NoPMGDecisionSeeds(
+                    "no generated decision seeds; collect beyond PMG warmup"
+                )
+            draw = torch.randint(
+                candidates.numel(), (B,), device=self.device, generator=generator
+            )
             weight = torch.ones(B, device=self.device)
             # Decision counts are independent of sharded static bin layouts.
             if decision_weight is not None:
                 weight = torch.as_tensor(decision_weight, device=self.device).expand(B)
             elif dist.is_initialized() and dist.get_world_size() > 1:
-                local_count = torch.tensor(candidates.numel(), device=self.device, dtype=torch.long)
+                local_count = torch.tensor(
+                    candidates.numel(), device=self.device, dtype=torch.long
+                )
                 global_count = local_count.clone()
                 dist.all_reduce(global_count, op=dist.ReduceOp.SUM)
-                weight = (dist.get_world_size() * local_count.double() / global_count).expand(B)
+                weight = (
+                    dist.get_world_size() * local_count.double() / global_count
+                ).expand(B)
             return candidates[draw], weight
 
         if probabilities is not None:
-            if probabilities.ndim != 1 or probabilities.numel() == 0 or probabilities.numel() != motion.num_bins:
+            if (
+                probabilities.ndim != 1
+                or probabilities.numel() == 0
+                or probabilities.numel() != motion.num_bins
+            ):
                 raise ValueError("bin_probabilities must have motion.num_bins entries")
             if probabilities.device != self.device:
                 raise RuntimeError("bin_probabilities must be on the replay device")
-        refs = tuple(value for value in (probabilities, getattr(motion, "frame_bin", None),
-                                         getattr(motion, "clip_id", None), getattr(motion, "clip_end", None))
-                     if isinstance(value, torch.Tensor))
-        versions = tuple(None if value.is_inference() else value._version for value in refs)
-        key = (self._generation, window, horizon, self.pmg_fraction, self._pmg_goal_frames,
-               tuple(id(value) for value in refs), versions)
+        refs = tuple(
+            value
+            for value in (
+                probabilities,
+                getattr(motion, "frame_bin", None),
+                getattr(motion, "clip_id", None),
+                getattr(motion, "clip_end", None),
+            )
+            if isinstance(value, torch.Tensor)
+        )
+        versions = tuple(
+            None if value.is_inference() else value._version for value in refs
+        )
+        key = (
+            self._generation,
+            window,
+            horizon,
+            self.pmg_fraction,
+            self._pmg_goal_frames,
+            tuple(id(value) for value in refs),
+            versions,
+        )
         cache_name = "pmg:" + kind
         cached = self._sampling_cache.get(cache_name)
         if cached is not None and cached[0] == key and None not in versions:
@@ -464,11 +608,19 @@ class ReplayBuffer:
             eligible = torch.ones_like(generated)
             if self.recurrent:
                 steps = self.data["ep_step"][rows]
-                required = self.burn_in if kind == "windows" else max(self.burn_in, self.camera_capacity - 1)
-                eligible &= ((steps <= ages[:, None]) | (ages[:, None] >= required)).flatten()
+                required = (
+                    self.burn_in
+                    if kind == "windows"
+                    else max(self.burn_in, self.camera_capacity - 1)
+                )
+                eligible &= (
+                    (steps <= ages[:, None]) | (ages[:, None] >= required)
+                ).flatten()
             if kind == "starts":
                 phases = self.data["ref_phase"][rows].flatten()
-                eligible &= ~generated | ((phases >= 0) & (phases + horizon + self._pmg_goal_frames <= 62))
+                eligible &= ~generated | (
+                    (phases >= 0) & (phases + horizon + self._pmg_goal_frames <= 62)
+                )
 
             bins = probabilities.numel() if probabilities is not None else 1
             groups = torch.full_like(frames, bins)
@@ -477,16 +629,26 @@ class ReplayBuffer:
                 static_frames = frames[static]
                 if probabilities is not None or kind == "starts":
                     ends = self._motion_clip_end(motion, static_frames)
-                    in_clip = static_frames < ends if probabilities is not None else static_frames + horizon <= ends
+                    in_clip = (
+                        static_frames < ends
+                        if probabilities is not None
+                        else static_frames + horizon <= ends
+                    )
                     if kind == "windows":
                         in_clip |= self.data["generated_source"][rows].flatten()[static]
                     eligible[static] &= in_clip
-                groups[static] = motion.frame_bin[static_frames] if probabilities is not None else 0
+                groups[static] = (
+                    motion.frame_bin[static_frames] if probabilities is not None else 0
+                )
             local = torch.zeros(bins + 1, device=self.device, dtype=torch.float64)
             local.scatter_add_(0, groups, eligible.double())
             global_counts = local.clone()
             world_size = 1
-            sharded_sources = not self.distributed and dist.is_initialized() and dist.get_world_size() > 1
+            sharded_sources = (
+                not self.distributed
+                and dist.is_initialized()
+                and dist.get_world_size() > 1
+            )
             if self.distributed:
                 world_size = dist.get_world_size()
                 dist.all_reduce(global_counts, op=dist.ReduceOp.SUM)
@@ -496,7 +658,9 @@ class ReplayBuffer:
             ls, lg = local[:-1].sum(), local[-1]
             tiny = torch.finfo(local.dtype).tiny
 
-            from mimic_baseline.tasks.supermimic.data.sampling import bounded_probabilities
+            from mimic_baseline.tasks.supermimic.data.sampling import (
+                bounded_probabilities,
+            )
 
             if probabilities is None:
                 supported_mass = local.new_ones(())
@@ -508,68 +672,123 @@ class ReplayBuffer:
                 target_static = q * supported
                 supported_mass = target_static.sum()
                 target_static = target_static / supported_mass.clamp_min(tiny)
-                upper = torch.where(ns > 0, 8 * global_counts[:-1] / ns.clamp_min(1), torch.ones_like(q))
-                projected = bounded_probabilities(target_static, torch.zeros_like(q), upper)
-                target_static = torch.where((target_static <= upper).all(), target_static, projected)
+                upper = torch.where(
+                    ns > 0, 8 * global_counts[:-1] / ns.clamp_min(1), torch.ones_like(q)
+                )
+                projected = bounded_probabilities(
+                    target_static, torch.zeros_like(q), upper
+                )
+                target_static = torch.where(
+                    (target_static <= upper).all(), target_static, projected
+                )
             target_per_static = target_static / global_counts[:-1].clamp_min(1)
             local_static_mass = (target_per_static * local[:-1]).sum()
             static_rank_count = None
             if sharded_sources:
                 # Static bin IDs are rank-local; only source cardinalities align.
-                source_counts = torch.stack((ls, lg, ((ls > 0) & (supported_mass > 0)).double()))
+                source_counts = torch.stack(
+                    (ls, lg, ((ls > 0) & (supported_mass > 0)).double())
+                )
                 dist.all_reduce(source_counts, op=dist.ReduceOp.SUM)
                 ns, ng, static_rank_count = source_counts.unbind()
             if world_size == 1:
                 proposal_per_static = target_per_static
             else:
-                conditional = torch.where(local_static_mass > 0,
-                                          target_per_static * local[:-1] / local_static_mass.clamp_min(tiny),
-                                          local[:-1] / ls.clamp_min(1))
-                upper = torch.where(ls > 0, 8 * local[:-1] / ls.clamp_min(1), torch.ones_like(conditional))
-                projected = bounded_probabilities(conditional, torch.zeros_like(conditional), upper)
-                conditional = torch.where((conditional <= upper).all(), conditional, projected)
+                conditional = torch.where(
+                    local_static_mass > 0,
+                    target_per_static * local[:-1] / local_static_mass.clamp_min(tiny),
+                    local[:-1] / ls.clamp_min(1),
+                )
+                upper = torch.where(
+                    ls > 0,
+                    8 * local[:-1] / ls.clamp_min(1),
+                    torch.ones_like(conditional),
+                )
+                projected = bounded_probabilities(
+                    conditional, torch.zeros_like(conditional), upper
+                )
+                conditional = torch.where(
+                    (conditional <= upper).all(), conditional, projected
+                )
                 proposal_per_static = conditional / local[:-1].clamp_min(1)
 
             occupancy = ng / (ns + ng).clamp_min(1)
-            target_g = occupancy if kind == "windows" else local.new_tensor(self.pmg_fraction)
-            static_support = static_rank_count > 0 if sharded_sources else (ns > 0) & (supported_mass > 0)
+            target_g = (
+                occupancy if kind == "windows" else local.new_tensor(self.pmg_fraction)
+            )
+            static_support = (
+                static_rank_count > 0
+                if sharded_sources
+                else (ns > 0) & (supported_mass > 0)
+            )
             target_g = torch.where(static_support, target_g, torch.ones_like(target_g))
             target_g = torch.where(ng > 0, target_g, torch.zeros_like(target_g))
             proposal_g = torch.where(ls > 0, target_g, torch.ones_like(target_g))
             proposal_g = torch.where(lg > 0, proposal_g, torch.zeros_like(proposal_g))
             proposal_s = (1 - proposal_g) * proposal_per_static
-            proposal_per_group = torch.cat((proposal_s, (proposal_g / lg.clamp_min(1)).reshape(1)))
-            importance_s = torch.where(proposal_s > 0,
-                                       world_size * (1 - target_g) * target_per_static / proposal_s.clamp_min(tiny), 0.)
+            proposal_per_group = torch.cat(
+                (proposal_s, (proposal_g / lg.clamp_min(1)).reshape(1))
+            )
+            importance_s = torch.where(
+                proposal_s > 0,
+                world_size
+                * (1 - target_g)
+                * target_per_static
+                / proposal_s.clamp_min(tiny),
+                0.0,
+            )
             if sharded_sources:
                 importance_s = importance_s / static_rank_count.clamp_min(1)
-            importance_g = torch.where(proposal_g > 0,
-                                       world_size * target_g * lg / (proposal_g * ng).clamp_min(tiny), 0.)
+            importance_g = torch.where(
+                proposal_g > 0,
+                world_size * target_g * lg / (proposal_g * ng).clamp_min(tiny),
+                0.0,
+            )
             importance_group = torch.cat((importance_s, importance_g.reshape(1)))
             cdf = (proposal_per_group[groups] * eligible).cumsum(0, dtype=torch.float64)
             importance = importance_group[groups]
             prefix = f"Sampling/{'wm' if kind == 'windows' else 'actor'}"
-            self.sampling_metrics.update({
-                f"{prefix}_eligible_candidates": local.sum(),
-                # Training._log sums this metric for sharded catalogs.
-                f"{prefix}_global_candidates": local.sum() if sharded_sources else global_counts.sum(),
-                f"{prefix}_unsupported_mass": 1 - supported_mass,
-                f"{prefix}_pmg_fraction": proposal_g,
-                f"{prefix}_pmg_occupancy": occupancy,
-                f"{prefix}_pmg_candidates": lg,
-                f"{prefix}_loss_scale": world_size * ((1 - target_g) * local_static_mass + target_g * lg / ng.clamp_min(1)),
-            })
+            self.sampling_metrics.update(
+                {
+                    f"{prefix}_eligible_candidates": local.sum(),
+                    # Training._log sums this metric for sharded catalogs.
+                    f"{prefix}_global_candidates": local.sum()
+                    if sharded_sources
+                    else global_counts.sum(),
+                    f"{prefix}_unsupported_mass": 1 - supported_mass,
+                    f"{prefix}_pmg_fraction": proposal_g,
+                    f"{prefix}_pmg_occupancy": occupancy,
+                    f"{prefix}_pmg_candidates": lg,
+                    f"{prefix}_loss_scale": world_size
+                    * (
+                        (1 - target_g) * local_static_mass
+                        + target_g * lg / ng.clamp_min(1)
+                    ),
+                }
+            )
             if sharded_sources:
-                self.sampling_metrics.update({
-                    f"{prefix}_pmg_target_fraction": target_g,
-                    f"{prefix}_loss_scale": world_size * (
-                        (1 - target_g) * local_static_mass / static_rank_count.clamp_min(1)
-                        + target_g * lg / ng.clamp_min(1)),
-                })
+                self.sampling_metrics.update(
+                    {
+                        f"{prefix}_pmg_target_fraction": target_g,
+                        f"{prefix}_loss_scale": world_size
+                        * (
+                            (1 - target_g)
+                            * local_static_mass
+                            / static_rank_count.clamp_min(1)
+                            + target_g * lg / ng.clamp_min(1)
+                        ),
+                    }
+                )
             self._sampling_cache[cache_name] = (key, cdf, refs, importance)
-        self._require_mixed_support(cdf[-1] > 0, f"no eligible mixed {kind} candidates on at least one rank")
-        uniform = torch.rand(B, device=self.device, dtype=cdf.dtype, generator=generator)
-        draws = torch.minimum(uniform * cdf[-1], torch.nextafter(cdf[-1], cdf.new_zeros(())))
+        self._require_mixed_support(
+            cdf[-1] > 0, f"no eligible mixed {kind} candidates on at least one rank"
+        )
+        uniform = torch.rand(
+            B, device=self.device, dtype=cdf.dtype, generator=generator
+        )
+        draws = torch.minimum(
+            uniform * cdf[-1], torch.nextafter(cdf[-1], cdf.new_zeros(()))
+        )
         logical = torch.searchsorted(cdf, draws, right=True)
         return logical, importance[logical]
 
@@ -583,7 +802,9 @@ class ReplayBuffer:
             valid.flatten()[positions] = frames < self._motion_clip_end(motion, frames)
             clips.flatten()[positions] = motion.clip_id[frames]
         if static.shape[1] > 1:
-            valid[:, 1:] &= ~(static[:, 1:] & static[:, :-1]) | (clips[:, 1:] == clips[:, :-1])
+            valid[:, 1:] &= ~(static[:, 1:] & static[:, :-1]) | (
+                clips[:, 1:] == clips[:, :-1]
+            )
         return valid.float().cumprod(1)
 
     @torch.no_grad()
@@ -609,33 +830,49 @@ class ReplayBuffer:
         if B <= 0 or k <= 0:
             raise ValueError(f"B and k must be positive, got {B}, {k}")
         if self.reference is not None:
-            self._require_mixed_support(self.size >= k, "mixed replay window unavailable on at least one rank")
+            self._require_mixed_support(
+                self.size >= k, "mixed replay window unavailable on at least one rank"
+            )
         if self.size < k:
             raise RuntimeError(
                 f"replay has {self.size} transitions but a {k}-transition "
                 f"window is required"
             )
         if self.reference is not None:
-            logical, mixed_weight = self._mixed_logical(B, "windows", k, 0, motion, bin_probabilities, generator)
+            logical, mixed_weight = self._mixed_logical(
+                B, "windows", k, 0, motion, bin_probabilities, generator
+            )
             t0, env = logical // self.N, logical % self.N
         elif bin_probabilities is not None:
-            logical, importance = self._weighted_logical(B, "windows", k, motion, bin_probabilities, generator)
+            logical, importance = self._weighted_logical(
+                B, "windows", k, motion, bin_probabilities, generator
+            )
             t0, env = logical // self.N, logical % self.N
         elif self.recurrent:
             ages0 = torch.arange(self.size - k + 1, device=self.device)
             episode_steps = self.data["ep_step"][self._rows_for_ages(ages0)]
-            eligible = (episode_steps <= ages0[:, None]) | (ages0[:, None] >= self.burn_in)
-            logical = torch.multinomial(eligible.flatten().float(), B, replacement=True, generator=generator)
+            eligible = (episode_steps <= ages0[:, None]) | (
+                ages0[:, None] >= self.burn_in
+            )
+            logical = torch.multinomial(
+                eligible.flatten().float(), B, replacement=True, generator=generator
+            )
             t0, env = logical // self.N, logical % self.N
         else:
-            t0 = torch.randint(0, self.size - k + 1, (B,), device=self.device, generator=generator)
-            env = torch.randint(0, self.N, (B,), device=self.device, generator=generator)
+            t0 = torch.randint(
+                0, self.size - k + 1, (B,), device=self.device, generator=generator
+            )
+            env = torch.randint(
+                0, self.N, (B,), device=self.device, generator=generator
+            )
         ages = t0[:, None] + torch.arange(k, device=self.device)[None]
         rows = self._rows_for_ages(ages)
         envs = env[:, None].expand_as(rows)
         fields = ["s", "s1", "a", "a_prev", "xi", "f", "ep_step", "done"]
         if self.reference is not None:
-            fields.extend(("ref_id", "ref_phase", "scene_id", "generated_source", "policy_obs"))
+            fields.extend(
+                ("ref_id", "ref_phase", "scene_id", "generated_source", "policy_obs")
+            )
         if self.recovery_enabled:
             fields.append("recovery_role")
         if self.perception:
@@ -668,15 +905,15 @@ class ReplayBuffer:
         out["mask"] = mask
         return out
 
-    def _motion_clip_end(
-        self, motion: object, frames: torch.Tensor
-    ) -> torch.Tensor:
+    def _motion_clip_end(self, motion: object, frames: torch.Tensor) -> torch.Tensor:
         clip_id = getattr(motion, "clip_id", None)
         clip_end = getattr(motion, "clip_end", None)
         if not torch.is_tensor(clip_id) or not torch.is_tensor(clip_end):
             raise TypeError("motion must expose tensor clip_id and clip_end")
         if clip_id.device != self.device or clip_end.device != self.device:
-            raise RuntimeError("motion.clip_id and motion.clip_end must be on the replay device")
+            raise RuntimeError(
+                "motion.clip_id and motion.clip_end must be on the replay device"
+            )
         if clip_id.ndim != 1 or clip_end.ndim != 1:
             raise ValueError("motion.clip_id and motion.clip_end must be rank one")
         # Tensor indexing reports invalid simulator-provided indices without a
@@ -715,7 +952,9 @@ class ReplayBuffer:
                 f"got {B}, {hist}, {horizon}"
             )
         if self.reference is not None and not decision_only:
-            self._require_mixed_support(self.size > 0, "mixed replay is empty on at least one rank")
+            self._require_mixed_support(
+                self.size > 0, "mixed replay is empty on at least one rank"
+            )
         if self.size == 0:
             if decision_only and self.reference is not None:
                 raise NoPMGDecisionSeeds("no generated decision seeds; replay is empty")
@@ -726,10 +965,21 @@ class ReplayBuffer:
         if decision_only and self.reference is None:
             raise RuntimeError("decision_only requires attach_pmg")
         if self.reference is not None:
-            logical, mixed_weight = self._mixed_logical(B, "starts", 1, horizon, motion, bin_probabilities, generator,
-                                                        decision_only=decision_only, decision_weight=decision_weight)
+            logical, mixed_weight = self._mixed_logical(
+                B,
+                "starts",
+                1,
+                horizon,
+                motion,
+                bin_probabilities,
+                generator,
+                decision_only=decision_only,
+                decision_weight=decision_weight,
+            )
         elif bin_probabilities is not None:
-            logical, importance = self._weighted_logical(B, "starts", 1, motion, bin_probabilities, generator)
+            logical, importance = self._weighted_logical(
+                B, "starts", 1, motion, bin_probabilities, generator
+            )
         else:
             ages = torch.arange(self.size, device=self.device)
             rows = self._rows_for_ages(ages)
@@ -743,7 +993,9 @@ class ReplayBuffer:
             if self.recurrent:
                 episode_steps = self.data["ep_step"][candidate_rows, envs]
                 required = max(self.burn_in, self.camera_capacity - 1)
-                eligible &= (episode_steps <= ages[:, None]) | (ages[:, None] >= required)
+                eligible &= (episode_steps <= ages[:, None]) | (
+                    ages[:, None] >= required
+                )
             eligible = eligible.reshape(-1).to(torch.float32)
 
             # Reusing eligible candidates is GPU-side and avoids an unbounded Python
@@ -764,12 +1016,24 @@ class ReplayBuffer:
             fields += ("generated_source", "policy_obs")
         if self.recovery_enabled:
             fields += ("recovery_role",)
-        seed = self._gather(fields + ("ref_id", "ref_phase", "scene_id"), seed_rows, env)
+        seed = self._gather(
+            fields + ("ref_id", "ref_phase", "scene_id"), seed_rows, env
+        )
         if self.reference is not None:
             seed["sampling_weight"] = mixed_weight
             if decision_only:
-                seed.update(self._gather(("decision_ref_id", "decision_ref_phase", "pmg_decision", "task_command"),
-                                         seed_rows, env))
+                seed.update(
+                    self._gather(
+                        (
+                            "decision_ref_id",
+                            "decision_ref_phase",
+                            "pmg_decision",
+                            "task_command",
+                        ),
+                        seed_rows,
+                        env,
+                    )
+                )
                 seed["command"] = seed["task_command"]
         elif bin_probabilities is not None:
             seed["sampling_weight"] = importance[motion.frame_bin[seed["f"]]]
@@ -778,15 +1042,25 @@ class ReplayBuffer:
             # of the frame the policy actually saw at that step.
             seed.update(self._gather(("depth",), seed_rows, env))
         if self.recurrent:
-            seed.update(self._gather(("clean_depth", "scan", "hit", "camera_lag"), seed_rows, env))
+            seed.update(
+                self._gather(
+                    ("clean_depth", "scan", "hit", "camera_lag"), seed_rows, env
+                )
+            )
             seed["burnin"] = self._burnin(age, env, seed["ep_step"])
-            camera_back = torch.arange(self.camera_capacity - 1, -1, -1, device=self.device)
-            camera_back = torch.minimum(camera_back[None], torch.minimum(age, seed["ep_step"].long())[:, None])
+            camera_back = torch.arange(
+                self.camera_capacity - 1, -1, -1, device=self.device
+            )
+            camera_back = torch.minimum(
+                camera_back[None], torch.minimum(age, seed["ep_step"].long())[:, None]
+            )
             camera_rows = self._rows_for_ages(age[:, None] - camera_back)
             seed["camera_frames"] = self.data["camera_frame"][camera_rows, env[:, None]]
             if decision_only:
-                capture_step = ((seed["ep_step"].long() - seed["camera_lag"].long()).clamp_min(0)
-                                // self._pmg_capture_steps) * self._pmg_capture_steps
+                capture_step = (
+                    (seed["ep_step"].long() - seed["camera_lag"].long()).clamp_min(0)
+                    // self._pmg_capture_steps
+                ) * self._pmg_capture_steps
                 capture_age = seed["ep_step"].long() - capture_step
                 captured = self._rows_for_ages(age - capture_age)
                 seed["capture_state"] = self.data["s"][captured, env]

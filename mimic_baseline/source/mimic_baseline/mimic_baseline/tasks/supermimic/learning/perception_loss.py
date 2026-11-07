@@ -27,10 +27,12 @@ def cap_decoder_physics_gradients(
     """
     groups = [(name, tuple(module.parameters())) for name, module in decoders.items()]
     parameters = tuple(p for _, group in groups for p in group)
-    reconstruction = torch.cat(tuple(
-        (torch.zeros_like(p) if g is None else g).reshape(-1)
-        for p, g in zip(parameters, reconstruction_gradients, strict=True)
-    ))
+    reconstruction = torch.cat(
+        tuple(
+            (torch.zeros_like(p) if g is None else g).reshape(-1)
+            for p, g in zip(parameters, reconstruction_gradients, strict=True)
+        )
+    )
     # Include unused parameters as zeros so all ranks have the same layout,
     # including explicitly disabled reconstruction terms.
     if distributed is not None and distributed.enabled:
@@ -42,9 +44,12 @@ def cap_decoder_physics_gradients(
     for name, group in groups:
         count = sum(p.numel() for p in group)
         gr = reconstruction[offset : offset + count]
-        total = torch.cat(tuple(
-            (torch.zeros_like(p) if p.grad is None else p.grad).reshape(-1) for p in group
-        ))
+        total = torch.cat(
+            tuple(
+                (torch.zeros_like(p) if p.grad is None else p.grad).reshape(-1)
+                for p in group
+            )
+        )
         gp = total - gr
         pnorm = torch.linalg.vector_norm(gp)
         rnorm = torch.linalg.vector_norm(gr)
@@ -57,10 +62,12 @@ def cap_decoder_physics_gradients(
                 parameter.grad.copy_(capped[cursor : cursor + size].view_as(parameter))
             cursor += size
         offset += count
-        metrics.update({
-            f"Gradient/{name}_decoder_physics_norm": pnorm,
-            f"Gradient/{name}_decoder_reconstruction_norm": rnorm,
-            f"Gradient/{name}_decoder_physics_scale": scale,
-            f"Gradient/{name}_decoder_capped_physics_norm": scale * pnorm,
-        })
+        metrics.update(
+            {
+                f"Gradient/{name}_decoder_physics_norm": pnorm,
+                f"Gradient/{name}_decoder_reconstruction_norm": rnorm,
+                f"Gradient/{name}_decoder_physics_scale": scale,
+                f"Gradient/{name}_decoder_capped_physics_norm": scale * pnorm,
+            }
+        )
     return metrics

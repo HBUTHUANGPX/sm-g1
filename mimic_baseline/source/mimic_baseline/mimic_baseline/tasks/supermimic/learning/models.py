@@ -12,11 +12,27 @@ from collections.abc import Sequence
 import torch
 from torch import nn
 
-from mimic_baseline.tasks.supermimic.core.mdp import ACT_DIM, INV_DIM, NUM_J, XI_DIM, RELATIVE_ORIENTATION_DIM
+from mimic_baseline.tasks.supermimic.core.mdp import (
+    ACT_DIM,
+    INV_DIM,
+    NUM_J,
+    XI_DIM,
+    RELATIVE_ORIENTATION_DIM,
+)
 from mimic_baseline.tasks.supermimic.data.motion import CONTROL_DT
-from mimic_baseline.tasks.supermimic.learning.perception import DEPTH_CLIP_M, HEIGHT_SCAN_DIM, LATENT_DIM, DepthEncoder, HeightEncoder
+from mimic_baseline.tasks.supermimic.learning.perception import (
+    DEPTH_CLIP_M,
+    HEIGHT_SCAN_DIM,
+    LATENT_DIM,
+    DepthEncoder,
+    HeightEncoder,
+)
 from mimic_baseline.tasks.supermimic.core.recovery import recovery_yaw_mat
-from mimic_baseline.tasks.supermimic.core.rotations import mat_to_6d, rot6d_to_mat, yaw_mat
+from mimic_baseline.tasks.supermimic.core.rotations import (
+    mat_to_6d,
+    rot6d_to_mat,
+    yaw_mat,
+)
 
 
 class RunningNorm(nn.Module):
@@ -61,9 +77,7 @@ class RunningNorm(nn.Module):
         batch_var = batch_var.detach().to(
             device=self.mean.device, dtype=self.mean.dtype
         )
-        n = torch.as_tensor(
-            batch_count, device=self.mean.device, dtype=self.mean.dtype
-        )
+        n = torch.as_tensor(batch_count, device=self.mean.device, dtype=self.mean.dtype)
         total = self.count + n
         delta = batch_mean - self.mean
         candidate_mean = self.mean + delta * (n / total)
@@ -172,7 +186,10 @@ class WorldModel(nn.Module):
     ) -> torch.Tensor:
         from mimic_baseline.tasks.supermimic.core.mdp import invariant_features
 
-        features = torch.cat((invariant_features(S, heading=self._heading(S[1])), a, a_prev, xi_n), dim=-1)
+        features = torch.cat(
+            (invariant_features(S, heading=self._heading(S[1])), a, a_prev, xi_n),
+            dim=-1,
+        )
         if self.latent_dim:
             if latent is None or latent.shape[-1] != self.latent_dim:
                 got = None if latent is None else tuple(latent.shape)
@@ -217,7 +234,9 @@ class WorldModel(nn.Module):
         target = self.physical_targets(S, S1)
         if not self.latent_dim:
             if latent is not None or latent1 is not None:
-                raise ValueError("this world model was built without a perception latent")
+                raise ValueError(
+                    "this world model was built without a perception latent"
+                )
             return target
         if latent is None or latent1 is None:
             raise ValueError(
@@ -244,8 +263,7 @@ class WorldModel(nn.Module):
         return torch.cat(
             (
                 (
-                    heading.transpose(-1, -2)
-                    @ ((p1 - p) - dt * v1).unsqueeze(-1)
+                    heading.transpose(-1, -2) @ ((p1 - p) - dt * v1).unsqueeze(-1)
                 ).squeeze(-1),
                 mat_to_6d(body_from_world @ R1) - IDENTITY_6D.to(R1.device),
                 (body_from_world @ (v1 - v).unsqueeze(-1)).squeeze(-1),
@@ -287,9 +305,7 @@ class WorldModel(nn.Module):
     ) -> tuple[torch.Tensor, ...]:
         """Apply the shared 73-D physical transition for all WM variants."""
         p, R, v, w, q, qd = S
-        dp, dr6, dv, dw, dq, dqd = delta.split(
-            (3, 6, 3, 3, NUM_J, NUM_J), dim=-1
-        )
+        dp, dr6, dv, dw, dq, dqd = delta.split((3, 6, 3, 3, NUM_J, NUM_J), dim=-1)
         heading = self._heading(R)
         dt = CONTROL_DT if self.target_mode == "residual" else 0.0
         # Velocity first, then integrate position with the *updated* velocity:
@@ -443,7 +459,9 @@ class Policy(nn.Module):
         self.hist = int(hist)
         self.z_dim = int(z_dim)
         self.perception_dim = int(perception_dim)
-        self.relative_orientation_dim = RELATIVE_ORIENTATION_DIM if actor_relative_orientation else 0
+        self.relative_orientation_dim = (
+            RELATIVE_ORIENTATION_DIM if actor_relative_orientation else 0
+        )
         self.encoder = _mlp(
             self.goal_dim,
             hidden,
@@ -452,7 +470,10 @@ class Policy(nn.Module):
             layer_norm=False,
         )
         self.decoder = _mlp(
-            self.z_dim + self.obs_dim * self.hist + self.perception_dim + self.relative_orientation_dim,
+            self.z_dim
+            + self.obs_dim * self.hist
+            + self.perception_dim
+            + self.relative_orientation_dim,
             hidden,
             self.action_dim,
             activation=nn.ELU,
@@ -504,7 +525,10 @@ class Policy(nn.Module):
         elif perception is not None:
             raise ValueError("this policy was built without perception")
         if self.relative_orientation_dim:
-            if relative_orientation is None or relative_orientation.shape[-1] != self.relative_orientation_dim:
+            if (
+                relative_orientation is None
+                or relative_orientation.shape[-1] != self.relative_orientation_dim
+            ):
                 raise ValueError("this policy requires relative_orientation[...,6]")
             # Current feedback stays outside history and the reference encoder.
             parts.append(relative_orientation)
@@ -527,8 +551,15 @@ class DepthPolicy(Policy):
         *,
         actor_relative_orientation: bool = False,
     ):
-        super().__init__(obs_dim, goal_dim, hist, z_dim, hidden, perception_dim,
-                         actor_relative_orientation=actor_relative_orientation)
+        super().__init__(
+            obs_dim,
+            goal_dim,
+            hist,
+            z_dim,
+            hidden,
+            perception_dim,
+            actor_relative_orientation=actor_relative_orientation,
+        )
         self.depth_encoder = DepthEncoder(self.perception_dim, clip_m=DEPTH_CLIP_M)
 
     def encode_perception(
@@ -543,7 +574,9 @@ class DepthPolicy(Policy):
         depth: torch.Tensor,
         relative_orientation: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        return super().forward(obs_hist, goal, self.encode_perception(depth), relative_orientation)
+        return super().forward(
+            obs_hist, goal, self.encode_perception(depth), relative_orientation
+        )
 
 
 class Critic(nn.Module):
@@ -571,7 +604,10 @@ class HeightCritic(Critic):
     """Privileged critic accepting raw base, scan and hit inputs on each call."""
 
     def __init__(
-        self, base_in_dim: int, *, world_frame: bool = False,
+        self,
+        base_in_dim: int,
+        *,
+        world_frame: bool = False,
         scan_dim: int = HEIGHT_SCAN_DIM,
     ):
         if base_in_dim <= 0:
@@ -580,13 +616,21 @@ class HeightCritic(Critic):
         self.base_in_dim = int(base_in_dim)
         self.scan_dim = scan_dim
         self.world_frame = bool(world_frame)
-        self.in_dim = self.base_in_dim + 2 * self.scan_dim + (6 if self.world_frame else 0)
-        self.height_encoder = HeightEncoder(world_frame=self.world_frame, scan_dim=scan_dim)
+        self.in_dim = (
+            self.base_in_dim + 2 * self.scan_dim + (6 if self.world_frame else 0)
+        )
+        self.height_encoder = HeightEncoder(
+            world_frame=self.world_frame, scan_dim=scan_dim
+        )
 
     def normalization_features(self, x: torch.Tensor) -> torch.Tensor:
         if x.shape[-1] != self.in_dim:
-            raise ValueError(f"critic input must end in {self.in_dim}, got {tuple(x.shape)}")
-        widths = (self.base_in_dim, self.scan_dim, self.scan_dim) + ((6,) if self.world_frame else ())
+            raise ValueError(
+                f"critic input must end in {self.in_dim}, got {tuple(x.shape)}"
+            )
+        widths = (self.base_in_dim, self.scan_dim, self.scan_dim) + (
+            (6,) if self.world_frame else ()
+        )
         parts = x.split(widths, dim=-1)
         base, scan, hit = parts[:3]
         orientation = parts[3] if self.world_frame else None
