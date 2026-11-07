@@ -28,3 +28,13 @@ Version 2 fixes the earlier evaluator's padded-end boundary: short clips could p
 Each profile writes `evaluation_manifest.json`, `runtime_profile.json`, `perclip.json`, `summary.json`, and its execution log. The checkpoint hash, iteration, protocol version, expected clips and effective delay are recorded. A clean trajectory reaching its end is **coverage, not tracking success**: a fallen robot may still run to the endpoint, so inspect tracking errors and return alongside the strict result.
 
 CPU checks do not establish Newton GPU compatibility. For the ongoing 20,000-iteration run, the user selected deferred GPU acceptance: a separate immutable evaluation release waits for the original run's complete status (including its original automatic evaluation) before starting the two new profiles. Until that job succeeds, GPU acceptance remains pending.
+
+## Automatic evaluation after an existing run
+
+Export this committed source into a **separate** release directory. Keep the running training release unchanged. Start the following in the separate release using its Python environment:
+
+```sh
+python scripts/evaluate_after_run.py --wait-run /path/to/existing/run --expected-training-revision TRAINING_FULL_SHA --source-revision EVALUATION_FULL_SHA --target-iteration 20000 --data-root /path/to/data --output runs/queued-eval-20000
+```
+
+The queue only reads the original run. It waits through `training` and `evaluating`, and launches no simulator until `complete`. It validates the two source pins, checkpoint iteration and SHA256 before loading the checkpoint on CPU, then launches both profiles. The evaluation release file hashes are checked before waiting and before launch. Waiting times out after 48 hours; an upstream failure, revision mismatch or bad checkpoint fails the queue instead of starting GPU work. The independent queue `status.json` records waiting/evaluating/complete/failed; each profile supplies its own runtime acceptance evidence and per-clip results.
