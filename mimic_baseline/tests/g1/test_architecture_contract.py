@@ -57,3 +57,10 @@ def test_registered_g1_tasks_use_canonical_manager_environment():
         spec = gymnasium.spec(task)
         assert spec.entry_point.endswith("envs.manager_based:SuperMimicRLEnv")
         assert "envs.configs.g1:" in spec.kwargs["env_cfg_entry_point"]
+
+
+def test_optional_rollout_archive_keeps_original_module_location():
+    path = ROOT / "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/rollout.py"
+    imports = [n for n in ast.walk(ast.parse(path.read_text())) if isinstance(n, ast.ImportFrom)]
+    archive = next(n for n in imports if any(a.name == "RolloutRecorder" for a in n.names))
+    assert archive.level == 0 and archive.module == PREFIX + ".rollout_archive"

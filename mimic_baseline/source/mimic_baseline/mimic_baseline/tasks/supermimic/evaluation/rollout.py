@@ -130,7 +130,7 @@ def evaluate_tracking(
     env.reset(env_ids, frames=trial_starts)
     archive = None
     if archive_sink is not None:
-        from .rollout_archive import RolloutRecorder
+        from mimic_baseline.tasks.supermimic.rollout_archive import RolloutRecorder
 
         reference = motion.sample(*motion.locate(env.f))
         archive = RolloutRecorder(
