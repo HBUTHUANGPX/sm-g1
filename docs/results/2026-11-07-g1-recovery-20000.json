@@ -95,5 +95,31 @@
       "evaluated_clips": 40,
       "phase": "complete"
     }
+  },
+  "first_checkpoint_verification": {
+    "checked_utc": "2026-11-07T14:22:41.679967+00:00",
+    "checkpoint_iteration": 3100,
+    "latest_logged_iteration": 3100,
+    "checkpoint_sha256": "90d502ac8cbe3c1423e366e2c2b700f419cd62ba1bc893e9ca328bee69392ec9",
+    "changed_config_fields": [
+      "iterations",
+      "log_dir"
+    ],
+    "finite_parameters": true,
+    "nonfinite_logged_metrics": 0,
+    "optimizer_steps": {
+      "opt_wm": [
+        31000
+      ],
+      "opt_policy": [
+        3100
+      ],
+      "opt_critic": [
+        62000
+      ]
+    },
+    "recent_mean_iterations_per_second": 0.5554877164825869,
+    "eta_hours_at_recent_rate": 8.451031958312624,
+    "peak_allocated_gib": 11.56795883178711
   }
 }
