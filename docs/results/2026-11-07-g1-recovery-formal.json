@@ -1,0 +1,269 @@
+{
+  "date": "2026-11-07",
+  "source_revision": "1bf1a4e9d788316046bad25bb97ba2018fe0cc01",
+  "selected_num_envs": 2560,
+  "reason": "2560 retained roughly 0.54-0.56 iterations/s through a 60-iteration full-batch trial; 3072 and 4096 degraded to roughly 0.03 and 0.017 iterations/s. No allocator/physics/learning settings changed.",
+  "capacity_trials": {
+    "1024": [
+      {
+        "iteration": 1,
+        "Performance/iterations_per_second": 0.08354916868577757,
+        "Memory/max_allocated_gib": 10.045014381408691,
+        "Memory/reserved_gib": 12.65625,
+        "Memory/allocated_gib": 1.8198847770690918,
+        "Train/reward": 0.24817202985286713,
+        "Model/loss": 1251.405884806026,
+        "Loss/actor": -0.3409981250998442,
+        "Loss/critic": 1.4461153608115094
+      },
+      {
+        "iteration": 2,
+        "Performance/iterations_per_second": 0.50403225806442,
+        "Memory/max_allocated_gib": 10.114692211151123,
+        "Memory/reserved_gib": 12.6640625,
+        "Memory/allocated_gib": 1.8206782341003418,
+        "Train/reward": 0.24402637779712677,
+        "Model/loss": 592.2111802613915,
+        "Loss/actor": -0.4696311662987114,
+        "Loss/critic": 0.3748665728063303
+      },
+      {
+        "iteration": 3,
+        "Performance/iterations_per_second": 0.5333333333333333,
+        "Memory/max_allocated_gib": 10.11872386932373,
+        "Memory/reserved_gib": 12.6640625,
+        "Memory/allocated_gib": 1.8170619010925293,
+        "Train/reward": 0.2418820559978485,
+        "Model/loss": 383.7310097515234,
+        "Loss/actor": -0.4942433827316677,
+        "Loss/critic": 0.2660113205757989
+      }
+    ],
+    "2048": [
+      {
+        "iteration": 1,
+        "Performance/iterations_per_second": 0.4775549188158596,
+        "Memory/max_allocated_gib": 10.999632835388184,
+        "Memory/reserved_gib": 13.62890625,
+        "Memory/allocated_gib": 2.771101474761963,
+        "Train/reward": 0.24994595348834991,
+        "Model/loss": 1237.886520025655,
+        "Loss/actor": -0.31327011060316323,
+        "Loss/critic": 2.163000541380673
+      },
+      {
+        "iteration": 2,
+        "Performance/iterations_per_second": 0.48473097430923445,
+        "Memory/max_allocated_gib": 11.07203197479248,
+        "Memory/reserved_gib": 13.634765625,
+        "Memory/allocated_gib": 2.773371696472168,
+        "Train/reward": 0.24735604226589203,
+        "Model/loss": 602.5844775222707,
+        "Loss/actor": -0.4878413639067105,
+        "Loss/critic": 0.4322197092068055
+      },
+      {
+        "iteration": 3,
+        "Performance/iterations_per_second": 0.5246589716681792,
+        "Memory/max_allocated_gib": 11.072866439819336,
+        "Memory/reserved_gib": 13.634765625,
+        "Memory/allocated_gib": 2.7738466262817383,
+        "Train/reward": 0.24566084146499634,
+        "Model/loss": 390.39745640595794,
+        "Loss/actor": -0.4626609148910461,
+        "Loss/critic": 0.23893287941552055
+      }
+    ],
+    "3072": [
+      {
+        "iteration": 1,
+        "Performance/iterations_per_second": 0.040764746647098164,
+        "Memory/max_allocated_gib": 11.9560546875,
+        "Memory/reserved_gib": 14.583984375,
+        "Memory/allocated_gib": 3.7265477180480957,
+        "Train/reward": 0.25096219778060913,
+        "Model/loss": 1234.2299166991609,
+        "Loss/actor": -0.33212227261674343,
+        "Loss/critic": 1.9156434549810621
+      },
+      {
+        "iteration": 2,
+        "Performance/iterations_per_second": 0.030857530780387676,
+        "Memory/max_allocated_gib": 12.03063154220581,
+        "Memory/reserved_gib": 14.591796875,
+        "Memory/allocated_gib": 3.725520610809326,
+        "Train/reward": 0.25032374262809753,
+        "Model/loss": 581.5280135391979,
+        "Loss/actor": -0.4615667406908699,
+        "Loss/critic": 0.35896483655326794
+      },
+      {
+        "iteration": 3,
+        "Performance/iterations_per_second": 0.029358229111620074,
+        "Memory/max_allocated_gib": 12.030998706817627,
+        "Memory/reserved_gib": 14.591796875,
+        "Memory/allocated_gib": 3.7290687561035156,
+        "Train/reward": 0.24891620874404907,
+        "Model/loss": 371.6577243438049,
+        "Loss/actor": -0.4952896545538792,
+        "Loss/critic": 0.28811989863651527
+      }
+    ],
+    "4096": [
+      {
+        "iteration": 1,
+        "Performance/iterations_per_second": 0.020922252908193033,
+        "Memory/max_allocated_gib": 12.91588020324707,
+        "Memory/reserved_gib": 15.5390625,
+        "Memory/allocated_gib": 4.686644554138184,
+        "Train/reward": 0.25358331203460693,
+        "Model/loss": 1225.7409625629837,
+        "Loss/actor": -0.36040888902212487,
+        "Loss/critic": 1.230283472353624
+      },
+      {
+        "iteration": 2,
+        "Performance/iterations_per_second": 0.01796719190757701,
+        "Memory/max_allocated_gib": 12.987895488739014,
+        "Memory/reserved_gib": 15.544921875,
+        "Memory/allocated_gib": 4.686641216278076,
+        "Train/reward": 0.25222861766815186,
+        "Model/loss": 576.3105744259549,
+        "Loss/actor": -0.4709718997241623,
+        "Loss/critic": 0.36416788966714536
+      },
+      {
+        "iteration": 3,
+        "Performance/iterations_per_second": 0.017121528610074054,
+        "Memory/max_allocated_gib": 12.987895488739014,
+        "Memory/reserved_gib": 15.544921875,
+        "Memory/allocated_gib": 4.685594081878662,
+        "Train/reward": 0.25059938430786133,
+        "Model/loss": 372.0321817206335,
+        "Loss/actor": -0.47992673277889253,
+        "Loss/critic": 0.33511056040286424
+      }
+    ],
+    "2560": [
+      {
+        "iteration": 3,
+        "Performance/iterations_per_second": 0.19978689397975996,
+        "Memory/max_allocated_gib": 11.55211353302002,
+        "Memory/reserved_gib": 14.103515625,
+        "Memory/allocated_gib": 3.2535343170166016,
+        "Train/reward": 0.24920879304409027,
+        "Model/loss": 738.9875948969022,
+        "Loss/actor": -0.4264608247759772,
+        "Loss/critic": 0.8909311942105451
+      }
+    ]
+  },
+  "stability_trial": [
+    {
+      "iteration": 10,
+      "Performance/iterations_per_second": 0.5437442227176448,
+      "Memory/max_allocated_gib": 11.55678653717041,
+      "Memory/reserved_gib": 14.103515625,
+      "Memory/allocated_gib": 3.2542285919189453,
+      "Train/reward": 0.2463880330324173,
+      "Model/loss": 385.3556750542608,
+      "Loss/actor": -0.4965674807398862,
+      "Loss/critic": 0.45018214045323557
+    },
+    {
+      "iteration": 20,
+      "Performance/iterations_per_second": 0.5465675557498825,
+      "Memory/max_allocated_gib": 11.558150291442871,
+      "Memory/reserved_gib": 14.10546875,
+      "Memory/allocated_gib": 3.2549686431884766,
+      "Train/reward": 0.23918595910072327,
+      "Model/loss": 155.11738873703928,
+      "Loss/actor": -0.6107041352356944,
+      "Loss/critic": 0.2195642920797117
+    },
+    {
+      "iteration": 30,
+      "Performance/iterations_per_second": 0.54144783150146,
+      "Memory/max_allocated_gib": 11.563628196716309,
+      "Memory/reserved_gib": 14.21875,
+      "Memory/allocated_gib": 3.2579784393310547,
+      "Train/reward": 0.22762945294380188,
+      "Model/loss": 118.47548181283477,
+      "Loss/actor": -0.7222378424674091,
+      "Loss/critic": 0.24913639156948958
+    },
+    {
+      "iteration": 40,
+      "Performance/iterations_per_second": 0.5409791723018493,
+      "Memory/max_allocated_gib": 11.563628196716309,
+      "Memory/reserved_gib": 14.21875,
+      "Memory/allocated_gib": 3.2595653533935547,
+      "Train/reward": 0.21761736273765564,
+      "Model/loss": 99.87757258337005,
+      "Loss/actor": -0.7812125920224261,
+      "Loss/critic": 0.270110836215124
+    },
+    {
+      "iteration": 50,
+      "Performance/iterations_per_second": 0.5541394214784355,
+      "Memory/max_allocated_gib": 11.563628196716309,
+      "Memory/reserved_gib": 14.220703125,
+      "Memory/allocated_gib": 3.257345199584961,
+      "Train/reward": 0.21538570523262024,
+      "Model/loss": 87.88982134252015,
+      "Loss/actor": -0.8258604590105477,
+      "Loss/critic": 0.2803430173046947
+    },
+    {
+      "iteration": 60,
+      "Performance/iterations_per_second": 0.5579734404642189,
+      "Memory/max_allocated_gib": 11.565333843231201,
+      "Memory/reserved_gib": 14.220703125,
+      "Memory/allocated_gib": 3.259157180786133,
+      "Train/reward": 0.2117329090833664,
+      "Model/loss": 78.06037997849766,
+      "Loss/actor": -0.837064577891546,
+      "Loss/critic": 0.29798066725337147
+    }
+  ],
+  "launcher_smoke": {
+    "phase": "complete",
+    "target_iteration": 3,
+    "source_revision": "1bf1a4e9d788316046bad25bb97ba2018fe0cc01",
+    "updated_utc": "2026-11-07T11:23:55.698235+00:00",
+    "checkpoint_sha256": "8b4e30754e360995d9ca97c683af8c9198444889527dc1927a44230af87bf9d4",
+    "checkpoint_iteration": 3,
+    "evaluated_clips": 40,
+    "completed_clips": 0
+  },
+  "formal": {
+    "target_iteration": 3000,
+    "backend": "newton",
+    "recovery_enabled": true,
+    "full_networks": true,
+    "wm_batch": 2048,
+    "wm_batches": 10,
+    "policy_batch": 4096,
+    "horizon": 32,
+    "buffer_steps": 1000,
+    "warmup_steps": 64,
+    "save_every": 100,
+    "log_every": 10,
+    "phase": "training",
+    "expected_evaluation_clips": 40,
+    "source_revision": "1bf1a4e9d788316046bad25bb97ba2018fe0cc01",
+    "updated_utc": "2026-11-07T11:27:21.209562+00:00",
+    "run_directory": "runs/newton-recovery-2560-3000",
+    "evaluation_policy": "Automatic only after verified model_3000.pt; deterministic original tracking evaluation of all 40 source clips"
+  },
+  "stability_completion": {
+    "phase": "complete",
+    "target_iteration": 60,
+    "source_revision": "1bf1a4e9d788316046bad25bb97ba2018fe0cc01",
+    "updated_utc": "2026-11-07T11:27:08.095402+00:00",
+    "checkpoint_sha256": "3878b7929cefc95be7e580d90ae577114ca5c0766c67374098fb0c42149ac562",
+    "checkpoint_iteration": 60,
+    "evaluated_clips": 40,
+    "completed_clips": 0
+  }
+}

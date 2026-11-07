@@ -6,7 +6,7 @@
 - PUBLIC repository: https://github.com/HBUTHUANGPX/sm-g1.
 - Isaac Lab is pinned to v3.0.0 as a submodule. Keep project adaptations outside it.
 - Historical RX-P2 code and company documents in this workspace are outside the publication allowlist.
-- On 2026-11-07 the user stopped the initial Newton run (last saved iteration 2300) and authorized G1 recovery migration: action delay, Newton self-collision, large-pose resets, four-group probabilistic termination/protection and dimension fixes. TN is explicitly excluded. Run bounded verification/short training only; do not restart the stopped long experiment.
+- On 2026-11-07 the user stopped the initial Newton run (last saved iteration 2300) and authorized G1 recovery migration: action delay, Newton self-collision, large-pose resets, four-group probabilistic termination/protection and dimension fixes. TN is explicitly excluded. The subsequent user request authorizes a NEW 3000-iteration Newton recovery run, the largest practical validated environment count, and automatic evaluation of all 40 LAFAN1 clips. Preserve the stopped flat experiment; do not resume it as recovery.
 
 ## Required commit and push cycle
 The user explicitly authorizes ongoing commits and pushes for this project.
