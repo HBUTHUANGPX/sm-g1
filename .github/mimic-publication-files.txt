@@ -137,3 +137,9 @@ scripts/evaluate_g1.py
 scripts/export_g1_release.py
 scripts/run_g1_experiment.py
 scripts/train_g1.py
+tools/assets/download_lafan1.py
+tools/assets/urdf_to_mjcf.py
+tools/assets/mjcf_to_usd.py
+licenses/supermimic_vibed-MIT.txt
+mimic_baseline/tests/g1/test_asset_tools.py
+docs/repository-layout.md

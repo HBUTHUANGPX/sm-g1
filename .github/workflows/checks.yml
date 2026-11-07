@@ -10,7 +10,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m compileall -q supermimic_g1/supermimic supermimic_g1/tools
+      - run: python -m compileall -q tools/assets mimic_baseline/scripts
       - run: python .github/check_repository.py
       - run: pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
       - run: pip install pytest numpy pyyaml gymnasium
