@@ -1,0 +1,8 @@
+This package implements SuperMimic: Scaling Humanoid Whole-Body Control with
+One Differentiable World Model (arXiv:2610.28480).
+
+Some implementation details are adapted from the unofficial repository
+https://github.com/zita-ch/supermimic_vibed
+at commit 27126bddd74381d164118ef83ee78edb58484a6b.
+The upstream code is MIT licensed; its license is reproduced in LICENSE.
+This package is an RX-P2/PhysX adaptation, not an official authors' release.

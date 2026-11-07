@@ -12,3 +12,5 @@ jobs:
           python-version: '3.12'
       - run: python -m compileall -q supermimic_g1/supermimic supermimic_g1/tools
       - run: python .github/check_repository.py
+      - run: pip install torch pytest numpy pyyaml
+      - run: python -m pytest -q mimic_baseline/tests/g1
