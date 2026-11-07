@@ -9,13 +9,22 @@ import xml.etree.ElementTree as ET
 from .g1 import G1_JOINT_NAMES
 
 
-def make_g1_robot_cfg(usd_path, urdf_path):
+def make_g1_robot_cfg(usd_path, urdf_path, *, actuator_type="implicit", min_delay=0, max_delay=0, self_collisions=True):
     if not usd_path or not urdf_path:
         raise ValueError("G1 requires explicit robot_usd and robot_urdf paths")
     import isaaclab.sim as sim_utils
     from isaaclab.assets import ArticulationCfg
     from isaaclab.actuators import ImplicitActuatorCfg
     from isaaclab_physx.sim.schemas import PhysxRigidBodyCfg, PhysxArticulationCfg
+    from isaaclab_newton.sim.schemas import NewtonArticulationCfg
+
+    if actuator_type not in ("implicit", "delayed_pd"):
+        raise ValueError("G1 supports implicit or delayed_pd without TN")
+    if min_delay < 0 or max_delay < min_delay:
+        raise ValueError("Expected 0 <= min_delay <= max_delay")
+    if actuator_type == "implicit" and max_delay:
+        raise ValueError("Implicit G1 actuators do not implement delay")
+    from .actuators import G1DelayedPDActuatorCfg
 
     joints = {j.attrib["name"]: j for j in ET.parse(urdf_path).getroot().findall("joint")}
     actuators = {}
@@ -37,8 +46,21 @@ def make_g1_robot_cfg(usd_path, urdf_path):
             kp, kd, default = 10.0, 1.0, 0.0
         else:
             kp, kd, default = 40.0, 2.0, (0.3 if "elbow" in name else 0.0)
-        actuators[name] = ImplicitActuatorCfg(
-            joint_names_expr=[name], stiffness=kp, damping=kd, effort_limit_sim=effort, velocity_limit_sim=velocity
+        actuator_class = ImplicitActuatorCfg if actuator_type == "implicit" else G1DelayedPDActuatorCfg
+        # Explicit PD needs reflected inertia at the 5 ms physics tick.
+        # Engineering simulation value, not a measured G1 motor parameter.
+        extra = (
+            {}
+            if actuator_type == "implicit"
+            else dict(min_delay=min_delay, max_delay=max_delay, effort_limit=effort, velocity_limit=velocity, armature=0.03)
+        )
+        actuators[name] = actuator_class(
+            **extra,
+            joint_names_expr=[name],
+            stiffness=kp,
+            damping=kd,
+            effort_limit_sim=effort,
+            velocity_limit_sim=velocity,
         )
         scales.append(0.25 * effort / kp)
         defaults[name] = default
@@ -49,7 +71,8 @@ def make_g1_robot_cfg(usd_path, urdf_path):
             variants={"Physics": "physx"},
             activate_contact_sensors=False,
             rigid_props=PhysxRigidBodyCfg(disable_gravity=False, linear_damping=0.0, angular_damping=0.0),
-            articulation_props=[PhysxArticulationCfg(enabled_self_collisions=True)],
+            articulation_props=[PhysxArticulationCfg(enabled_self_collisions=self_collisions),
+                                NewtonArticulationCfg(self_collision_enabled=self_collisions)],
         ),
         init_state=ArticulationCfg.InitialStateCfg(pos=(0.0, 0.0, 0.76), joint_pos=defaults, joint_vel={".*": 0.0}),
         soft_joint_pos_limit_factor=0.9,

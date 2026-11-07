@@ -336,7 +336,8 @@ class MDP:
         from .recovery import tracking_errors
 
         bodies = self.kin.forward(*state) if body_state is None else body_state
-        return tracking_errors(state, reference, bodies)
+        return tracking_errors(state, reference, bodies,
+                               body_indices=getattr(self.kin, "recovery_body_indices", None))
 
     def critic_features(
         self,

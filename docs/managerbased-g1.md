@@ -2,7 +2,7 @@
 
 ## Implementation and scope
 
-The active task is `SuperMimic-Flat-G1-v0`. It instantiates the **original**
+New runs default to `SuperMimic-Recovery-G1-v0`; `SuperMimic-Flat-G1-v0` remains available. It instantiates the **original**
 `mimic_baseline.tasks.supermimic.env_managed.SuperMimicRLEnv`. The G1 configuration
 inherits `SuperMimicEnvCfg`; it does not introduce another physics step loop.
 `SuperMimicTrainingEnv` exposes pre-autoreset transitions to the original `Trainer`.
@@ -11,7 +11,7 @@ The standalone `supermimic_g1/supermimic` package is not imported.
 Only proprioceptive G1 tracking and LAFAN1 are enabled by the new entry point.
 No ERP, PMG, PPO substitution, SOMA or cross-platform abstraction is introduced.
 The Isaac Lab 3 runtime supports `--backend ovphysx` (default) and
-`--backend newton` (MJWarp solver). Both have real GPU environment checks.
+`--backend newton` (MJWarp solver). Both have prior flat-environment GPU checks; the recovery migration below is verified on Newton.
 Resume/evaluation infer the saved backend and reject incompatible overrides.
 
 ## What is reused versus changed
@@ -73,10 +73,10 @@ Prepare / refresh converted data:
 python mimic_baseline/scripts/supermimic/train_g1.py --mode prepare --data-root supermimic_g1/data --log-dir runs/g1-prepare
 ```
 
-Real manager/FK/reward/partial-reset/terminal-transition checks:
+Flat manager/FK/reward/partial-reset/terminal-transition checks:
 
 ```bash
-python mimic_baseline/scripts/supermimic/train_g1.py --mode check --data-root supermimic_g1/data --log-dir runs/g1-check --num-envs 4 --clip-limit 1
+python mimic_baseline/scripts/supermimic/train_g1.py --mode check --no-recovery --actuator-type implicit --max-delay 0 --data-root supermimic_g1/data --log-dir runs/g1-check --num-envs 4 --clip-limit 1
 ```
 
 Small-network integration run (64 environments, 10 iterations):
@@ -155,7 +155,7 @@ python mimic_baseline/scripts/supermimic/train_g1.py --backend newton --mode tra
 python mimic_baseline/scripts/supermimic/train_g1.py --mode evaluate --data-root supermimic_g1/data --log-dir runs/newton-512-3000-eval --resume runs/newton-512-3000/model_3000.pt
 ```
 
-The second command must run only after training completes. Evaluation includes all
+These are historical commands for pinned revision `282a555`, not commands to restart the stopped experiment on current defaults. The second command was not run; final evaluation was cancelled. Evaluation includes all
 40 source clips and uses their original unpadded endpoints. Newton validation
 checks actual MJWarp geometry friction after model updates, the ground coefficient,
 COM rebasing, partial resets, reward parity and pre-autoreset terminal states.
@@ -165,3 +165,52 @@ The formal run is pinned to source revision `282a555`. Its disabled recovery
 provenance contains legacy descriptive action/observation widths 27/91; actual
 policy, replay and observations are verified as G1 29/93. The subsequent metadata
 fix affects future checkpoints only. It does not change learning or this run.
+
+
+## G1 recovery migration (2026-11-07)
+
+New runs enable the original RX-P2 recovery lifecycle. The stopped flat run remains
+at its last saved iteration 2300 and is not resumed as a recovery experiment.
+The separate recovery deployment contains only bounded validation jobs.
+
+| Feature | Current G1 behavior |
+|---|---|
+| Action delay | Original reset-safe ring buffers, independently sampled 0–4 physics ticks (0–20 ms), explicit PD, 5 ms physics tick / 20 ms control tick. Zero-time resets do not advance history. |
+| Newton | Lab computes delayed PD; Newton MJWarp integrates physics. Self-collision is explicitly enabled; actual robot-to-robot contacts were observed. |
+| Large-pose reset | Original 15% recovery role, reference yaw with roll/pitch uniform in [-pi, pi], reference joints ±0.2 rad clipped to limits, zero velocities. Actual G1 collision boxes start 0.15 m above ground. Instanced USD meshes are included. |
+| Tracking termination | Original height / tilt / ankle / wrist groups. Independent probabilities per 20 ms step: 0.006667 / 0.006667 / 0.04 / 0.04, combined by OR. |
+| Protection | Recovery-role episodes only, first 200 control steps (4 s); motion-end and time-limit truncations remain active. Evaluation uses deterministic raw tracking failures without protection. |
+| Imagined training | Original smooth group-OR expected hazard and source-state protection clock; replay records recovery role, critic receives remaining protection. |
+| Dimensions | Action 29, state 73, actor observation 93, 10-frame goal 730, WM 162→73, recovery critic 915. Original RX-P2 defaults remain unchanged. |
+| TN | Not enabled. Static URDF effort limits remain active. |
+
+Explicit PD requires a reflected-inertia setting: delayed G1 actuators now use
+**0.03 kg·m² armature per joint**, while implicit legacy configurations are unchanged.
+This is an engineering simulation setting, not measured G1 motor identification.
+Without it the tested explicit-PD configuration diverged at the fourth control
+step; with it the bounded reset/rollout and full-network training checks passed.
+No claim is made about long-run convergence or hardware fidelity.
+
+Run the recovery environment check (at least 32 environments):
+
+```bash
+python mimic_baseline/scripts/supermimic/train_g1.py --backend newton --mode check --recovery --num-envs 64 --clip-limit 1 --data-root supermimic_g1/data --log-dir runs/g1-recovery-check
+```
+
+Reproduce the full-network integration check with small training batches:
+
+```bash
+python mimic_baseline/scripts/supermimic/train_g1.py --backend newton --mode train --recovery --num-envs 64 --iterations 10 --buffer-steps 128 --warmup-steps 64 --wm-batch 32 --wm-batches 1 --policy-batch 32 --critic-epochs 1 --critic-minibatches 1 --data-root supermimic_g1/data --log-dir runs/g1-recovery-smoke
+python mimic_baseline/scripts/supermimic/train_g1.py --mode train --iterations 12 --resume runs/g1-recovery-smoke/last.pt --data-root supermimic_g1/data --log-dir runs/g1-recovery-resume
+```
+
+Resume restores recovery/actuator/collision settings; incompatible overrides fail.
+Old Newton checkpoints missing a self-collision field restore their previous
+`False` setting. `--no-recovery` selects flat termination/reset semantics;
+`--actuator-type implicit --max-delay 0` independently selects implicit actuation.
+
+See [recovery validation evidence](results/2026-11-07-managerbased-g1-recovery.json)
+for measured reset rates, clearance, protection boundaries, self-contact and
+checkpoint hashes. These checks validate execution and semantics, not learned recovery.
+
+The iteration-12 smoke checkpoint was evaluated across all 40 LAFAN1 clips: 0/40 completed. This is an evaluation-entry check, not evidence of learned recovery. No training process remains running.

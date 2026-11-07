@@ -106,15 +106,16 @@ def recovery_yaw_mat(matrix: torch.Tensor) -> torch.Tensor:
     return torch.stack((c, -s, zero, s, c, zero, zero, zero, one), -1).reshape(matrix.shape)
 
 
-def tracking_errors(state, reference, body_state):
+def tracking_errors(state, reference, body_state, *, body_indices=None):
     """Base height/tilt plus max ankle/wrist distance in RGMT waist alignment."""
+    waist, ankles, wrists = body_indices if body_indices is not None else (_WAIST, _ANKLES, _WRISTS)
     p, rotation = state[:2]
     body_p, body_r = body_state[:2]
     ref = reference.now.detach()
     reference_p, reference_r = ref.body_p, ref.body_R
-    ref_anchor = reference_p[..., _WAIST, :]
-    anchor = torch.cat((body_p[..., _WAIST, :2], ref_anchor[..., 2:3]), -1)
-    heading = recovery_yaw_mat(body_r[..., _WAIST, :, :] @ reference_r[..., _WAIST, :, :].transpose(-1, -2))
+    ref_anchor = reference_p[..., waist, :]
+    anchor = torch.cat((body_p[..., waist, :2], ref_anchor[..., 2:3]), -1)
+    heading = recovery_yaw_mat(body_r[..., waist, :, :] @ reference_r[..., waist, :, :].transpose(-1, -2))
     aligned = anchor.unsqueeze(-2) + (
         heading.unsqueeze(-3) @ (reference_p - ref_anchor.unsqueeze(-2)).unsqueeze(-1)
     ).squeeze(-1)
@@ -122,20 +123,23 @@ def tracking_errors(state, reference, body_state):
     return torch.stack((
         (ref.p[..., 2] - p[..., 2]).abs(),
         (ref.R[..., 2, 2] - rotation[..., 2, 2]).abs(),
-        torch.maximum(distances[..., _ANKLES[0]], distances[..., _ANKLES[1]]),
-        torch.maximum(distances[..., _WRISTS[0]], distances[..., _WRISTS[1]]),
+        torch.maximum(distances[..., ankles[0]], distances[..., ankles[1]]),
+        torch.maximum(distances[..., wrists[0]], distances[..., wrists[1]]),
     ), -1)
 
 
 class RecoveryPlacement:
     """Load headed collision boxes once; place the actual perturbed FK pose."""
 
-    def __init__(self, kin, usd_path):
+    def __init__(self, kin, usd_path, *, physics_variant=None):
         from mimic_baseline.utils.collision_bounds import read_collision_bounds
 
-        bounds = read_collision_bounds(usd_path)
-        if not bounds or "neck_pitch_link" not in bounds:
-            raise ValueError("Recovery requires headed RX-P2 collision bounds, including neck_pitch_link")
+        bounds = (read_collision_bounds(usd_path) if physics_variant is None
+                  else read_collision_bounds(usd_path, physics_variant=physics_variant))
+        required = getattr(kin, "recovery_required_bodies", ("neck_pitch_link",))
+        missing = set(required) - bounds.keys()
+        if not bounds or missing:
+            raise ValueError(f"Recovery collision bounds missing required bodies: {sorted(missing)}")
         self.kin = kin
         self.body_names = tuple(bounds)
         self.body_ids = torch.tensor([kin.body_names.index(name) for name in self.body_names], device=kin.device)

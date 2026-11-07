@@ -413,7 +413,7 @@ class MotionLib:
             ),
             dim=-1,
         )
-        return features.reshape(f.shape + (GOAL_PER_FRAME * K,))
+        return features.reshape(f.shape + ((15 + 2 * self.action_dim) * K,))
 
     def goal_state_relative(
         self, f: torch.Tensor, K: int, R_actual: torch.Tensor
@@ -435,7 +435,7 @@ class MotionLib:
             ),
             dim=-1,
         )
-        return features.reshape(f.shape + (GOAL_PER_FRAME_LEGACY * K,))
+        return features.reshape(f.shape + ((6 + 2 * self.action_dim) * K,))
 
 
 __all__ = ["BIN_FRAMES", "CONTROL_DT", "MotionLib"]

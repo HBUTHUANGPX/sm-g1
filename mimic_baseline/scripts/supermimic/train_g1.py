@@ -16,6 +16,9 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--data-root", type=Path, required=True)
     p.add_argument("--mode", choices=["prepare", "check", "train", "evaluate"], default="check")
+    p.add_argument("--recovery", dest="recovery_enabled", action=argparse.BooleanOptionalAction, default=None)
+    p.add_argument("--actuator-type", choices=["implicit", "delayed_pd"], default=None)
+    p.add_argument("--max-delay", type=int, default=None)
     p.add_argument("--backend", choices=["ovphysx", "newton"], default=None)
     p.add_argument("--num-envs", type=int, default=None)
     p.add_argument("--iterations", type=int, default=None)
@@ -77,6 +80,7 @@ def main():
     urdf = data / "g1_description/g1_29dof_rev_1_0.urdf"
     usd = data / "g1_usd/g1_29dof/g1_29dof.usda"
     settings = (
+        "recovery_enabled", "actuator_type", "max_delay",
         "num_envs",
         "iterations",
         "buffer_steps",
@@ -113,8 +117,9 @@ def main():
             num_envs=args.num_envs or 64,
             iterations=args.iterations or 10,
             perception=False,
-            actuator_type="implicit",
-            max_delay=0,
+            recovery_enabled=True if args.recovery_enabled is None else args.recovery_enabled,
+            actuator_type=args.actuator_type or "delayed_pd",
+            max_delay=(0 if args.actuator_type == "implicit" else 4) if args.max_delay is None else args.max_delay,
             eval_every=0,
             log_every=1,
             **locations,
@@ -139,9 +144,14 @@ def main():
     motion = MotionLib(paths, kin, cfg.device)
     if args.mode == "evaluate":
         cfg.num_envs = len(paths)
-    mdp = MDP(kin, motion, torch.zeros(29, device=cfg.device))
+    mdp = MDP(kin, motion, torch.zeros(29, device=cfg.device), recovery_enabled=cfg.recovery_enabled)
     env_cfg = G1SuperMimicEnvCfg(
         backend=args.backend,
+        self_collisions=cfg.self_collisions,
+        recovery_enabled=cfg.recovery_enabled,
+        actuator_type=cfg.actuator_type,
+        max_delay=cfg.max_delay,
+        actor_relative_orientation=cfg.actor_relative_orientation,
         robot_usd=str(usd),
         robot_urdf=str(urdf),
         ground_usd=str(data / "ground/default_ground_plane.usda"),
@@ -151,34 +161,26 @@ def main():
     env_cfg.commands.motion.goal_frames = cfg.goal_frames
     env_cfg.commands.motion.gamma = cfg.gamma
     env_cfg.sim.device = cfg.device
-    if args.mode == "check":
+    if args.mode == "check" and not cfg.recovery_enabled:
         env_cfg.episode_length_s = 0.04
         env_cfg.reset_noise = False
     with launch_simulation(env_cfg.sim, {"viz": "none", "device": cfg.device}):
         import gymnasium as gym
 
-        managed = gym.make("SuperMimic-Flat-G1-v0", cfg=env_cfg, motion=motion, mdp=mdp).unwrapped
+        task = "SuperMimic-Recovery-G1-v0" if cfg.recovery_enabled else "SuperMimic-Flat-G1-v0"
+        managed = gym.make(task, cfg=env_cfg, motion=motion, mdp=mdp).unwrapped
         env = SuperMimicTrainingEnv(managed)
         try:
             env.reset()
             if args.mode == "check":
-                from mimic_baseline.tasks.supermimic.g1_validation import check_environment
+                from mimic_baseline.tasks.supermimic.g1_validation import check_environment, check_recovery_environment
 
-                result = check_environment(env)
+                result = check_recovery_environment(env) if cfg.recovery_enabled else check_environment(env)
                 (args.log_dir / "environment.json").write_text(json.dumps(result, indent=2))
                 print(json.dumps(result))
                 return
-            kwargs = {"hidden": (64, 64)} if args.small_model else {}
-            wm = WorldModel(target_mode=cfg.wm_target_mode, action_dim=29, **kwargs).to(cfg.device)
-            policy = Policy(
-                93,
-                73 * cfg.goal_frames,
-                hist=cfg.hist,
-                action_dim=29,
-                actor_relative_orientation=cfg.actor_relative_orientation,
-                **kwargs,
-            ).to(cfg.device)
-            critic = Critic(INV_DIM + CRITIC_EXTRA + 73 * cfg.goal_frames).to(cfg.device)
+            from mimic_baseline.tasks.supermimic.g1_run_config import build_g1_models
+            wm, policy, critic = build_g1_models(cfg, small_model=args.small_model)
             if args.mode == "evaluate":
                 if not args.resume:
                     raise ValueError("Evaluation requires --resume")
@@ -199,7 +201,7 @@ def main():
                 )
                 print(json.dumps({"clips": len(records), "completed": sum(r["completed"] for r in records)}))
                 return
-            replay = ReplayBuffer(cfg.buffer_steps, cfg.num_envs, cfg.device, action_dim=29)
+            replay = ReplayBuffer(cfg.buffer_steps, cfg.num_envs, cfg.device, action_dim=29, recovery_enabled=cfg.recovery_enabled)
             trainer = Trainer(
                 env,
                 replay,
