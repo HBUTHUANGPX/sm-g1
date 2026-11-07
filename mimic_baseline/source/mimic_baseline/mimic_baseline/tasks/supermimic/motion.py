@@ -141,6 +141,8 @@ class MotionLib:
             raise ValueError("At least one motion NPZ is required.")
         self.device = torch.device(device)
         self.kin = kin
+        self.action_dim = getattr(kin, "action_dim", 27)
+        self.root_body_name = getattr(kin, "root_body_name", "base_link")
         self.paths = tuple(str(Path(path).expanduser().resolve()) for path in paths)
         self.names = [Path(path).stem for path in self.paths]
         self.sharded = False
@@ -201,13 +203,13 @@ class MotionLib:
 
         for path in self.paths:
             with np.load(path, allow_pickle=False) as data:
-                self._validate_fields(data, path)
+                self._validate_fields(data, path, robot_name="unitree_g1" if self.root_body_name == "pelvis" else "mondo_rx_p2")
                 file_joint_names = _names(data["joint_names"])
                 file_body_names = _names(data["body_names"])
                 joint_order = [
-                    file_joint_names.index(name) for name in self.kin.joint_names[:27]
+                    file_joint_names.index(name) for name in self.kin.joint_names[:self.action_dim]
                 ]
-                root_index = file_body_names.index("base_link")
+                root_index = file_body_names.index(self.root_body_name)
 
                 joint_pos = np.asarray(data["joint_pos"], dtype=np.float32)
                 joint_vel = np.asarray(data["joint_vel"], dtype=np.float32)
@@ -231,8 +233,8 @@ class MotionLib:
 
             joint_q = np.zeros((frame_count, len(self.kin.joint_names)), dtype=np.float32)
             joint_qd = np.zeros_like(joint_q)
-            joint_q[:, :27] = joint_pos[:, joint_order]
-            joint_qd[:, :27] = joint_vel[:, joint_order]
+            joint_q[:, :self.action_dim] = joint_pos[:, joint_order]
+            joint_qd[:, :self.action_dim] = joint_vel[:, joint_order]
             joint_q_parts.append(joint_q)
             joint_qd_parts.append(joint_qd)
             # Copy only the base-link slices so the much larger per-body NPZ
@@ -328,7 +330,7 @@ class MotionLib:
         self._build_bins()
 
     @staticmethod
-    def _validate_fields(data: np.lib.npyio.NpzFile, path: str) -> None:
+    def _validate_fields(data: np.lib.npyio.NpzFile, path: str, robot_name: str = "mondo_rx_p2") -> None:
         required = {
             "fps",
             "robot_name",
@@ -347,8 +349,8 @@ class MotionLib:
         fps = float(np.asarray(data["fps"]).reshape(-1)[0])
         if not np.isclose(fps, 50.0):
             raise ValueError(f"Motion file {path} has fps={fps}, expected 50.")
-        if not _scalar(data, "robot_name").startswith("mondo_rx_p2"):
-            raise ValueError(f"Motion file {path} is not an RX-P2 motion.")
+        if not _scalar(data, "robot_name").startswith(robot_name):
+            raise ValueError(f"Motion file {path} does not match robot {robot_name}.")
 
     def _build_bins(self) -> None:
         bin_counts = (self.clip_len - 1) // BIN_FRAMES
@@ -406,8 +408,8 @@ class MotionLib:
                 mat_to_6d(heading_transpose @ self.root_R[future]),
                 self.root_v_local[future],
                 self.root_w_local[future],
-                self.q[future][..., :ACTION_JOINTS],
-                self.qd[future][..., :ACTION_JOINTS] * 0.1,
+                self.q[future][..., :self.action_dim],
+                self.qd[future][..., :self.action_dim] * 0.1,
             ),
             dim=-1,
         )
@@ -427,8 +429,8 @@ class MotionLib:
         )
         features = torch.cat(
             (
-                self.q[future][..., :27],
-                self.qd[future][..., :27] * 0.1,
+                self.q[future][..., :self.action_dim],
+                self.qd[future][..., :self.action_dim] * 0.1,
                 mat_to_6d(relative_rotation),
             ),
             dim=-1,
