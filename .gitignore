@@ -32,3 +32,5 @@ __pycache__/
 /supermimic_g1/data/
 /supermimic_g1/logs/
 /supermimic_g1/outputs/
+
+!/docs/superpowers/

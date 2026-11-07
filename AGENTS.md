@@ -1,11 +1,12 @@
 # Project working agreement
 
 ## Scope
-- Active project: `supermimic_g1/`, Unitree G1, proprioceptive SuperMimic, LAFAN1 only.
+- Active migration: introduce Unitree G1 into the ORIGINAL `mimic_baseline/tasks/supermimic/env_managed.py` ManagerBased path, reusing its managers and Trainer. Proprioception and LAFAN1 only.
+- `supermimic_g1/` is the previous standalone implementation, retained as a historical comparison. Do not substitute it for the original ManagerBased path. Multi-backend work is deferred.
 - PUBLIC repository: https://github.com/HBUTHUANGPX/sm-g1.
 - Isaac Lab is pinned to v3.0.0 as a submodule. Keep project adaptations outside it.
 - Historical RX-P2 code and company documents in this workspace are outside the publication allowlist.
-- Keep Windows training stopped and SSH disconnected until the user requests remote work again.
+- On 2026-11-07 the user authorized restoring Windows SSH for G1 ManagerBased environment checks, short training and evaluation. Do not start unrelated or indefinite jobs.
 
 ## Required commit and push cycle
 The user explicitly authorizes ongoing commits and pushes for this project.
