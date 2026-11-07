@@ -11,6 +11,7 @@ from ..evaluation.profiles import configure_evaluation
 class G1EvaluationEnvCfg(G1SuperMimicEnvCfg):
     evaluation_profile: str = "strict"
     evaluation_clip_steps: int = 1
+    evaluation_execution: str = "reference"
 
 
 class G1EvaluationEnv(SuperMimicRLEnv):
@@ -18,6 +19,12 @@ class G1EvaluationEnv(SuperMimicRLEnv):
         configure_evaluation(
             cfg, cfg.evaluation_profile, longest_clip_steps=cfg.evaluation_clip_steps
         )
+        if cfg.evaluation_execution == "grouped":
+            from .evaluation_actuators import group_evaluation_actuators
+
+            group_evaluation_actuators(cfg)
+        elif cfg.evaluation_execution != "reference":
+            raise ValueError("Unknown evaluation execution mode")
         super().__init__(cfg, **kwargs)
 
     @property

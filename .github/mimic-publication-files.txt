@@ -151,3 +151,7 @@ mimic_baseline/tests/g1/test_evaluation_cli_profiles.py
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/cli/evaluate_after_run.py
 scripts/evaluate_after_run.py
 mimic_baseline/tests/g1/test_evaluate_after_run.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/joint_delay.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/evaluation_actuators.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/validation/evaluation_actuators.py
+mimic_baseline/tests/g1/test_evaluation_actuators.py

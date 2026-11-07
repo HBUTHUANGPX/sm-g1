@@ -54,7 +54,7 @@ def runtime_profile(env, profile):
     for name, actuator in env.scene["robot"].actuators.items():
         buffer = getattr(actuator, "positions_delay_buffer", None)
         if buffer is not None:
-            delays[name] = sorted(set(buffer.time_lags.detach().cpu().tolist()))
+            delays[name] = sorted(set(buffer.time_lags.detach().flatten().cpu().tolist()))
     if profile == "full_clean":
         if (
             terms
@@ -74,6 +74,7 @@ def runtime_profile(env, profile):
         raise RuntimeError("Strict recovery evaluation is missing tracking groups")
     return {
         "profile": profile,
+        "execution": getattr(cfg, "evaluation_execution", "reference"),
         "protocol_version": PROTOCOL_VERSION,
         "domain_randomization": False,
         "reset_noise": False,
