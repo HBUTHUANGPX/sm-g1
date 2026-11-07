@@ -2,7 +2,7 @@
   "training_source_revision": "61cdbfe36f1eb08d7294f5214ee25c204874762a",
   "evaluation_source_revision": "e52e8628cb2142944fd3e75aab30262656921bc5",
   "training_stopped_by_user": true,
-  "last_logged_iteration": 6630,
+  "last_logged_iteration": 6640,
   "summary": {
     "clips": 40,
     "completed": 6,
