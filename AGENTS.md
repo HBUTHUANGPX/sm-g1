@@ -1,7 +1,7 @@
 # Project working agreement
 
 ## Scope
-- Active migration: introduce Unitree G1 into the ORIGINAL `mimic_baseline/tasks/supermimic/env_managed.py` ManagerBased path, reusing its managers and Trainer. Proprioception and LAFAN1 only.
+- Active migration: introduce Unitree G1 into the ORIGINAL `mimic_baseline/tasks/supermimic/envs/manager_based.py` (legacy `env_managed.py` import remains supported) ManagerBased path, reusing its managers and Trainer. Proprioception and LAFAN1 only.
 - `supermimic_g1/` is the previous standalone implementation, retained as a historical comparison. Do not substitute it for the original ManagerBased path. Multi-backend work is deferred.
 - PUBLIC repository: https://github.com/HBUTHUANGPX/sm-g1.
 - Isaac Lab is pinned to v3.0.0 as a submodule. Keep project adaptations outside it.

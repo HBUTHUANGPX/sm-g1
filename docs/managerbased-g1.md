@@ -3,7 +3,7 @@
 ## Implementation and scope
 
 New runs default to `SuperMimic-Recovery-G1-v0`; `SuperMimic-Flat-G1-v0` remains available. It instantiates the **original**
-`mimic_baseline.tasks.supermimic.env_managed.SuperMimicRLEnv`. The G1 configuration
+`mimic_baseline.tasks.supermimic.envs.manager_based.SuperMimicRLEnv`. The G1 configuration
 inherits `SuperMimicEnvCfg`; it does not introduce another physics step loop.
 `SuperMimicTrainingEnv` exposes pre-autoreset transitions to the original `Trainer`.
 The standalone `supermimic_g1/supermimic` package is not imported.
@@ -70,25 +70,25 @@ Windows installation, its existing OVPhysX dependency directory must remain on
 Prepare / refresh converted data:
 
 ```bash
-python mimic_baseline/scripts/supermimic/train_g1.py --mode prepare --data-root supermimic_g1/data --log-dir runs/g1-prepare
+python scripts/train_g1.py --mode prepare --data-root supermimic_g1/data --log-dir runs/g1-prepare
 ```
 
 Flat manager/FK/reward/partial-reset/terminal-transition checks:
 
 ```bash
-python mimic_baseline/scripts/supermimic/train_g1.py --mode check --no-recovery --actuator-type implicit --max-delay 0 --data-root supermimic_g1/data --log-dir runs/g1-check --num-envs 4 --clip-limit 1
+python scripts/train_g1.py --mode check --no-recovery --actuator-type implicit --max-delay 0 --data-root supermimic_g1/data --log-dir runs/g1-check --num-envs 4 --clip-limit 1
 ```
 
 Small-network integration run (64 environments, 10 iterations):
 
 ```bash
-python mimic_baseline/scripts/supermimic/train_g1.py --mode train --data-root supermimic_g1/data --log-dir runs/g1-smoke --num-envs 64 --iterations 10 --small-model
+python scripts/train_g1.py --mode train --data-root supermimic_g1/data --log-dir runs/g1-smoke --num-envs 64 --iterations 10 --small-model
 ```
 
 Original network sizes and 32-step BPTT with small batches:
 
 ```bash
-python mimic_baseline/scripts/supermimic/train_g1.py --mode train --data-root supermimic_g1/data --log-dir runs/g1-full-network --num-envs 64 --iterations 2 --buffer-steps 64 --warmup-steps 16 --wm-batches 1 --wm-batch 32 --policy-batch 32 --critic-epochs 1 --critic-minibatches 1
+python scripts/train_g1.py --mode train --data-root supermimic_g1/data --log-dir runs/g1-full-network --num-envs 64 --iterations 2 --buffer-steps 64 --warmup-steps 16 --wm-batches 1 --wm-batch 32 --policy-batch 32 --critic-epochs 1 --critic-minibatches 1
 ```
 
 The full-network command validates execution, not convergence. Increase environment
@@ -98,7 +98,7 @@ are the original Trainer defaults. `--iterations` is an absolute target iteratio
 Resume without repeating architecture or training settings:
 
 ```bash
-python mimic_baseline/scripts/supermimic/train_g1.py --mode train --data-root supermimic_g1/data --log-dir runs/g1-resume --iterations 12 --resume runs/g1-smoke/last.pt
+python scripts/train_g1.py --mode train --data-root supermimic_g1/data --log-dir runs/g1-resume --iterations 12 --resume runs/g1-smoke/last.pt
 ```
 
 Resume restores saved configuration and infers small/full architecture. Incompatible
@@ -106,10 +106,10 @@ training overrides are rejected. Log cadence, target iteration and relocated pat
 can change. The original Trainer refills replay after restart; this is not bitwise
 continuation of the previous simulator/replay state.
 
-Evaluate every source clip from its first frame with randomization/noise disabled:
+Evaluate all 40 source clips from their first frames with observation/reset noise and physical randomization disabled. Saved actuator delays remain active:
 
 ```bash
-python mimic_baseline/scripts/supermimic/train_g1.py --mode evaluate --data-root supermimic_g1/data --log-dir runs/g1-eval --resume runs/g1-resume/last.pt
+python scripts/evaluate_g1.py --data-root supermimic_g1/data --output runs/g1-eval --checkpoint runs/g1-resume/last.pt
 ```
 
 The evaluator emits `perclip.json`, `perclip.csv` and `by_category.csv`. Completion
@@ -151,8 +151,8 @@ warmup, with 9.54 GiB peak PyTorch allocation. Physics uses 5 ms steps and the
 original manager decimation of four; measured action time is 20 ms.
 
 ```bash
-python mimic_baseline/scripts/supermimic/train_g1.py --backend newton --mode train --data-root supermimic_g1/data --log-dir runs/newton-512-3000 --num-envs 512 --iterations 3000 --save-every 100 --log-every 10
-python mimic_baseline/scripts/supermimic/train_g1.py --mode evaluate --data-root supermimic_g1/data --log-dir runs/newton-512-3000-eval --resume runs/newton-512-3000/model_3000.pt
+python scripts/train_g1.py --backend newton --mode train --data-root supermimic_g1/data --log-dir runs/newton-512-3000 --num-envs 512 --iterations 3000 --save-every 100 --log-every 10
+python scripts/train_g1.py --mode evaluate --data-root supermimic_g1/data --log-dir runs/newton-512-3000-eval --resume runs/newton-512-3000/model_3000.pt
 ```
 
 These are historical commands for pinned revision `282a555`, not commands to restart the stopped experiment on current defaults. The second command was not run; final evaluation was cancelled. Evaluation includes all
@@ -194,14 +194,14 @@ No claim is made about long-run convergence or hardware fidelity.
 Run the recovery environment check (at least 32 environments):
 
 ```bash
-python mimic_baseline/scripts/supermimic/train_g1.py --backend newton --mode check --recovery --num-envs 64 --clip-limit 1 --data-root supermimic_g1/data --log-dir runs/g1-recovery-check
+python scripts/train_g1.py --backend newton --mode check --recovery --num-envs 64 --clip-limit 1 --data-root supermimic_g1/data --log-dir runs/g1-recovery-check
 ```
 
 Reproduce the full-network integration check with small training batches:
 
 ```bash
-python mimic_baseline/scripts/supermimic/train_g1.py --backend newton --mode train --recovery --num-envs 64 --iterations 10 --buffer-steps 128 --warmup-steps 64 --wm-batch 32 --wm-batches 1 --policy-batch 32 --critic-epochs 1 --critic-minibatches 1 --data-root supermimic_g1/data --log-dir runs/g1-recovery-smoke
-python mimic_baseline/scripts/supermimic/train_g1.py --mode train --iterations 12 --resume runs/g1-recovery-smoke/last.pt --data-root supermimic_g1/data --log-dir runs/g1-recovery-resume
+python scripts/train_g1.py --backend newton --mode train --recovery --num-envs 64 --iterations 10 --buffer-steps 128 --warmup-steps 64 --wm-batch 32 --wm-batches 1 --policy-batch 32 --critic-epochs 1 --critic-minibatches 1 --data-root supermimic_g1/data --log-dir runs/g1-recovery-smoke
+python scripts/train_g1.py --mode train --iterations 12 --resume runs/g1-recovery-smoke/last.pt --data-root supermimic_g1/data --log-dir runs/g1-recovery-resume
 ```
 
 Resume restores recovery/actuator/collision settings; incompatible overrides fail.
@@ -257,3 +257,8 @@ capacity with GPU headroom. The 60-iteration smoke model completed0/40 clips,
 which does not predict the formal training outcome. Formal results are pending.
 
 See [capacity evidence and launch snapshot](results/2026-11-07-g1-recovery-formal.json).
+
+
+## Source layout
+
+See [architecture and evaluation](architecture.md) for canonical modules, stable command wrappers, compatibility contracts and release validation.
