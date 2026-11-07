@@ -1,6 +1,6 @@
 # G1 on the original ManagerBased SuperMimic path
 
-Status: implementation in progress. No multi-backend work in this task.
+Status: implementation and bounded GPU validation complete. No multi-backend work in this task.
 
 ## Approved direction
 Use the existing `mimic_baseline/tasks/supermimic/env_managed.py`, its manager terms,
@@ -9,14 +9,14 @@ is not the new environment implementation. The external repository is only a dat
 reference. Preserve the existing RX-P2 defaults and their tests.
 
 ## Implementation sequence
-- [ ] Audit and parameterize the RX-P2-specific 27-action/29-joint assumptions without changing existing defaults.
-- [ ] Introduce G1 robot metadata and reuse the original differentiable URDF FK.
-- [ ] Convert pinned LAFAN1 CSVs into the original MotionLib NPZ schema with explicit frame/quaternion/joint metadata.
-- [ ] Add G1 configuration to the existing ManagerBased environment, preserving manager lifecycle and terminal transition capture.
-- [ ] Connect the original SuperMimic Trainer with G1-sized policy, world model and replay; prohibit perception and incompatible checkpoints.
-- [ ] Run CPU contract tests and existing relevant regressions.
-- [ ] Run real Windows GPU FK/reset/step/terminal-state checks, short training, resume and full-clip evaluation.
-- [ ] Publish tested changes immediately on the task branch; report exact evidence and remaining limits.
+- [x] Audit and parameterize the RX-P2-specific 27-action/29-joint assumptions without changing existing defaults.
+- [x] Introduce G1 robot metadata and reuse the original differentiable URDF FK.
+- [x] Convert pinned LAFAN1 CSVs into the original MotionLib NPZ schema with explicit frame/quaternion/joint metadata.
+- [x] Add G1 configuration to the existing ManagerBased environment, preserving manager lifecycle and terminal transition capture.
+- [x] Connect the original SuperMimic Trainer with G1-sized policy, world model and replay; prohibit perception and incompatible checkpoints.
+- [x] Run CPU contract tests and existing relevant regressions.
+- [x] Run real Windows GPU FK/reset/step/terminal-state checks, short training, resume and full-clip evaluation.
+- [x] Publish tested changes immediately on the task branch; report exact evidence and remaining limits.
 
 ## Required assertions
 G1 has 29 policy actions: its last two joints must not be treated as RX-P2 neck servos.
