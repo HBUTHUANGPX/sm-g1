@@ -8,6 +8,8 @@
 - Historical RX-P2 code and company documents in this workspace are outside the publication allowlist.
 - On 2026-11-07 the user stopped the initial Newton run (last saved iteration 2300) and authorized G1 recovery migration: action delay, Newton self-collision, large-pose resets, four-group probabilistic termination/protection and dimension fixes. TN is explicitly excluded. The subsequent user request authorizes a NEW 3000-iteration Newton recovery run, the largest practical validated environment count, and automatic evaluation of all 40 LAFAN1 clips. Preserve the stopped flat experiment; do not resume it as recovery.
 
+- The latest request authorizes continuing the completed recovery checkpoint from iteration 3000 to an absolute target of 20000, preserving the 2560-environment Newton configuration and automatically evaluating all 40 clips at the end. Use a separate run directory and retain the original 3000-iteration results.
+
 ## Required commit and push cycle
 The user explicitly authorizes ongoing commits and pushes for this project.
 1. Check Git status and preserve unrelated user work.

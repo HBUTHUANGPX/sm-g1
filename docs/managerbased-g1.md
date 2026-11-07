@@ -276,3 +276,28 @@ The source architecture refactor was not deployed into this run.
 See [all 40 per-clip results](results/2026-11-07-g1-recovery-lafan1-3000.json)
 for durations, error metrics, outcomes and checkpoint SHA256. No training settings
 were changed in response to this result as part of the architecture task.
+
+
+## Continuing recovery to 20000 iterations
+
+The user authorized continuing the completed recovery run from iteration 3000
+to **total iteration 20000**, with the same 2560 environments, Newton physics,
+full networks, recovery rules and optimizer settings. The launcher now accepts
+`--resume`, records the input iteration/SHA256, checks configuration compatibility
+and optimizer presence, and rechecks the input digest before launching.
+
+In a committed, exported release, use the release manifest's exact source SHA:
+
+```bash
+python scripts/run_g1_experiment.py --data-root supermimic_g1/data --run-dir runs/newton-recovery-2560-20000 --num-envs 2560 --iterations 20000 --resume runs/newton-recovery-2560-3000/train/model_3000.pt --source-revision 61cdbfe36f1eb08d7294f5214ee25c204874762a
+```
+
+Paths may point to separate deployments. Existing output directories are rejected.
+Checkpoints remain every 100 iterations and metrics every 10; all-40 evaluation
+runs automatically after a verified final checkpoint. Resume restores model and
+optimizer state, then refills replay using the existing Trainer behavior.
+The original 3000-iteration evaluation remains intact.
+
+See [launch metadata](results/2026-11-07-g1-recovery-20000.json). This records a
+running continuation, not a completed 20000-iteration result. Source, runtime and
+data are pinned; no learning or physics algorithm was changed for continuation.
