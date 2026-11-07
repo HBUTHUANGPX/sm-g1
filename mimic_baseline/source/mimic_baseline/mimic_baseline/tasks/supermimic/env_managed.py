@@ -26,7 +26,7 @@ from isaaclab.utils.noise import UniformNoiseCfg
 from mimic_baseline.assets import ASSET_DIR
 from mimic_baseline.robots.torque_speed_actuator import DelayedTorqueSpeedPDActuatorCfg
 from .action_bounds import clip_action
-from .actuators import SuperMimicDelayedPDActuator
+from .actuators import SuperMimicDelayedPDActuator, G1DelayedPDActuator
 from .env import GROUND_PLANE_USD, make_sim
 from .kinematics import RXP2Kinematics
 from .mdp.commands import SuperMimicMotionCommandCfg, canonical_state
@@ -234,7 +234,10 @@ class SuperMimicEnvCfg(ManagerBasedRLEnvCfg):
         super().__post_init__()
         if self.robot_name == "g1":
             from .g1_robot import make_g1_robot_cfg
-            self.scene.robot, self.action_scale = make_g1_robot_cfg(self.robot_usd, self.robot_urdf)
+            self.scene.robot, self.action_scale = make_g1_robot_cfg(
+                self.robot_usd, self.robot_urdf, actuator_type=self.actuator_type,
+                min_delay=self.min_delay, max_delay=self.max_delay,
+            )
             self.actions.joint_pos.action_dim = self.action_dim
             if self.ground_usd:
                 self.scene.ground.spawn.usd_path = self.ground_usd
@@ -473,7 +476,7 @@ class SuperMimicRLEnv(ManagerBasedRLEnv):
         # The base reset writes ALL articulations, including non-reset rows.
         # Suppress only delay advancement; keep Lab's reset/render/obs lifecycle.
         actuators = [actuator for actuator in self.scene["robot"].actuators.values()
-                     if isinstance(actuator, SuperMimicDelayedPDActuator)]
+                     if isinstance(actuator, (SuperMimicDelayedPDActuator, G1DelayedPDActuator))]
         for actuator in actuators:
             actuator.reset_sync_only = True
         try:
