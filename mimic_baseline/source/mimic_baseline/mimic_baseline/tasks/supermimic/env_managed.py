@@ -387,7 +387,8 @@ class SuperMimicRLEnv(ManagerBasedRLEnv):
         self.action_scale = torch.tensor(self.cfg.action_scale, device=self.device)
         robot = self.scene["robot"]
         torso_id = robot.find_bodies(self.cfg.torso_body_name, preserve_order=True)[0][0]
-        self.randomization = EpisodeRandomization(robot, self.xi, torso_id, eval_mode=self.cfg.eval_mode)
+        self.randomization = EpisodeRandomization(robot, self.xi, torso_id, eval_mode=self.cfg.eval_mode,
+                                                   physics_manager=self.sim.physics_manager if getattr(self.cfg, "backend", None) == "newton" else None)
         self._previous_action = torch.zeros(self.num_envs, self.cfg.action_dim, device=self.device)
         super().load_managers()
         # Preserve Lab's manager initialization and physics loop. Only the

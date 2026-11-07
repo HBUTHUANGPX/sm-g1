@@ -16,3 +16,13 @@ def restore_run_config(checkpoint, overrides, *, small_model=None):
             raise ValueError(f"{name} differs from checkpoint; resume preserves training settings")
         config[name] = value
     return config, saved_small
+
+
+def resolve_backend(requested, checkpoint):
+    saved = checkpoint.get("provenance", {}).get("backend", "ovphysx") if checkpoint else None
+    backend = requested or saved or "ovphysx"
+    if backend not in ("newton", "ovphysx"):
+        raise ValueError(f"Unknown backend: {backend}")
+    if saved is not None and backend != saved:
+        raise ValueError("backend differs from checkpoint; resume preserves physics")
+    return backend

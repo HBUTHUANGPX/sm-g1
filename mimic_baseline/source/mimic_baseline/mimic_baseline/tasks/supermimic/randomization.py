@@ -49,6 +49,7 @@ class EpisodeRandomization:
         xi: torch.Tensor,
         torso_id: int,
         eval_mode: bool = False,
+        physics_manager=None,
     ) -> None:
         if not isinstance(xi, torch.Tensor):
             raise TypeError(
@@ -70,34 +71,43 @@ class EpisodeRandomization:
         self.num_envs = xi.shape[0]
         self.device = xi.device
 
-        self._ov_material_type = None
-        if hasattr(robot.root_view, "get_material_properties"):
-            materials = robot.root_view.get_material_properties()
+        self._newton_manager = physics_manager
+        if physics_manager is not None:
+            model = physics_manager.get_model()
+            self._newton_mu = _to_torch(robot.root_view.get_attribute("shape_material_mu", model)[:, 0])
+            # MuJoCo combines contact friction using max. Ground must not mask
+            # the original robot friction range [0.3, 1.2].
+            shape_body = _to_torch(model.shape_body)
+            _to_torch(model.shape_material_mu)[shape_body < 0] = TRAIN_FRICTION_RANGE[0]
         else:
-            from isaaclab_ov import tensor_types
-            self._ov_material_type = tensor_types.SHAPE_FRICTION_AND_RESTITUTION
-            materials = robot.root_view.get_attribute(self._ov_material_type)
-        material_properties = _to_torch(materials)
-        if not isinstance(material_properties, torch.Tensor):
-            raise TypeError("Material properties must bridge to a torch.Tensor.")
-        if (
-            material_properties.ndim != 3
-            or material_properties.shape[0] != self.num_envs
-            or material_properties.shape[2] != 3
-        ):
-            raise ValueError(
-                "Material properties must have shape "
-                "(num_envs, max_shapes, 3), got "
-                f"{tuple(material_properties.shape)}."
+            self._ov_material_type = None
+            if hasattr(robot.root_view, "get_material_properties"):
+                materials = robot.root_view.get_material_properties()
+            else:
+                from isaaclab_ov import tensor_types
+                self._ov_material_type = tensor_types.SHAPE_FRICTION_AND_RESTITUTION
+                materials = robot.root_view.get_attribute(self._ov_material_type)
+            material_properties = _to_torch(materials)
+            if not isinstance(material_properties, torch.Tensor):
+                raise TypeError("Material properties must bridge to a torch.Tensor.")
+            if (
+                material_properties.ndim != 3
+                or material_properties.shape[0] != self.num_envs
+                or material_properties.shape[2] != 3
+            ):
+                raise ValueError(
+                    "Material properties must have shape "
+                    "(num_envs, max_shapes, 3), got "
+                    f"{tuple(material_properties.shape)}."
+                )
+            # PhysX's material setter consumes a full CPU tensor plus selected
+            # environment indices.
+            self._material_properties = (
+                material_properties.detach()
+                .to(device="cpu", dtype=torch.float32)
+                .contiguous()
+                .clone()
             )
-        # PhysX's material setter consumes a full CPU tensor plus selected
-        # environment indices.
-        self._material_properties = (
-            material_properties.detach()
-            .to(device="cpu", dtype=torch.float32)
-            .contiguous()
-            .clone()
-        )
 
         nominal_com = robot.data.body_com_pose_b.torch[:, torso_id]
         if nominal_com.ndim != 2 or nominal_com.shape[0] != self.num_envs:
@@ -149,6 +159,11 @@ class EpisodeRandomization:
 
     def _apply_material(self, env_ids: torch.Tensor) -> None:
         """Write selected friction rows through PhysX's CPU material bridge."""
+        if self._newton_manager is not None:
+            from newton import ModelFlags
+            self._newton_mu[env_ids] = self.xi[env_ids, :1]
+            self._newton_manager.add_model_change(ModelFlags.SHAPE_PROPERTIES)
+            return
         import warp as wp
 
         cpu_ids = env_ids.detach().to(device="cpu", dtype=torch.int32)
