@@ -4,35 +4,54 @@ Use source URDF joint limits. Gains below are an explicit initial engineering
 configuration, not a claim of hardware calibration or policy convergence.
 The environment and trainer stay in the original project.
 """
+
 import xml.etree.ElementTree as ET
 from .g1 import G1_JOINT_NAMES
 
 
 def make_g1_robot_cfg(usd_path, urdf_path):
     if not usd_path or not urdf_path:
-        raise ValueError('G1 requires explicit robot_usd and robot_urdf paths')
+        raise ValueError("G1 requires explicit robot_usd and robot_urdf paths")
     import isaaclab.sim as sim_utils
     from isaaclab.assets import ArticulationCfg
     from isaaclab.actuators import ImplicitActuatorCfg
     from isaaclab_physx.sim.schemas import PhysxRigidBodyCfg, PhysxArticulationCfg
-    joints={j.attrib['name']:j for j in ET.parse(urdf_path).getroot().findall('joint')}
-    actuators={}; scales=[]; defaults={}
+
+    joints = {j.attrib["name"]: j for j in ET.parse(urdf_path).getroot().findall("joint")}
+    actuators = {}
+    scales = []
+    defaults = {}
     for name in G1_JOINT_NAMES:
-        limit=joints[name].find('limit')
-        effort=float(limit.attrib['effort']); velocity=float(limit.attrib['velocity'])
-        if 'knee' in name: kp,kd,default=200.,5.,.3
-        elif 'ankle' in name: kp,kd,default=20.,1.,(-.2 if 'pitch' in name else 0.)
-        elif 'hip' in name: kp,kd,default=100.,2.5,(-.1 if 'pitch' in name else 0.)
-        elif 'waist' in name: kp,kd,default=100.,2.5,0.
-        elif 'wrist' in name: kp,kd,default=10.,1.,0.
-        else: kp,kd,default=40.,2.,(.3 if 'elbow' in name else 0.)
-        actuators[name]=ImplicitActuatorCfg(joint_names_expr=[name],stiffness=kp,damping=kd,
-            effort_limit_sim=effort,velocity_limit_sim=velocity)
-        scales.append(.25*effort/kp);defaults[name]=default
-    return ArticulationCfg(prim_path='{ENV_REGEX_NS}/Robot',
-        spawn=sim_utils.UsdFileCfg(usd_path=str(usd_path),variants={'Physics':'physx'},
+        limit = joints[name].find("limit")
+        effort = float(limit.attrib["effort"])
+        velocity = float(limit.attrib["velocity"])
+        if "knee" in name:
+            kp, kd, default = 200.0, 5.0, 0.3
+        elif "ankle" in name:
+            kp, kd, default = 20.0, 1.0, (-0.2 if "pitch" in name else 0.0)
+        elif "hip" in name:
+            kp, kd, default = 100.0, 2.5, (-0.1 if "pitch" in name else 0.0)
+        elif "waist" in name:
+            kp, kd, default = 100.0, 2.5, 0.0
+        elif "wrist" in name:
+            kp, kd, default = 10.0, 1.0, 0.0
+        else:
+            kp, kd, default = 40.0, 2.0, (0.3 if "elbow" in name else 0.0)
+        actuators[name] = ImplicitActuatorCfg(
+            joint_names_expr=[name], stiffness=kp, damping=kd, effort_limit_sim=effort, velocity_limit_sim=velocity
+        )
+        scales.append(0.25 * effort / kp)
+        defaults[name] = default
+    return ArticulationCfg(
+        prim_path="{ENV_REGEX_NS}/Robot",
+        spawn=sim_utils.UsdFileCfg(
+            usd_path=str(usd_path),
+            variants={"Physics": "physx"},
             activate_contact_sensors=False,
-            rigid_props=PhysxRigidBodyCfg(disable_gravity=False,linear_damping=0.,angular_damping=0.),
-            articulation_props=[PhysxArticulationCfg(enabled_self_collisions=True)]),
-        init_state=ArticulationCfg.InitialStateCfg(pos=(0.,0.,.76),joint_pos=defaults,joint_vel={'.*':0.}),
-        soft_joint_pos_limit_factor=.9,actuators=actuators),scales
+            rigid_props=PhysxRigidBodyCfg(disable_gravity=False, linear_damping=0.0, angular_damping=0.0),
+            articulation_props=[PhysxArticulationCfg(enabled_self_collisions=True)],
+        ),
+        init_state=ArticulationCfg.InitialStateCfg(pos=(0.0, 0.0, 0.76), joint_pos=defaults, joint_vel={".*": 0.0}),
+        soft_joint_pos_limit_factor=0.9,
+        actuators=actuators,
+    ), scales
