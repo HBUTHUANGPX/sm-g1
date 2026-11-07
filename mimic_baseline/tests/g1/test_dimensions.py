@@ -43,3 +43,11 @@ def test_g1_mdp_observation_has_29_previous_actions():
     observation=mdp.obs((p,R,p,p,q,q),q,torch.zeros(2,33))
     assert observation.shape == (2,93)
     assert mdp.obs_noise.shape == (93,)
+
+
+def test_observation_noise_uses_robot_device_not_global_default_device():
+    kin=SimpleNamespace(action_dim=29,q_lo=-torch.ones(29),q_hi=torch.ones(29))
+    motion=SimpleNamespace(kin=kin); default_q=torch.zeros(29)
+    with torch.device('meta'):
+        mdp=MDP(kin,motion,default_q)
+    assert mdp.obs_noise.device.type == 'cpu'

@@ -154,7 +154,8 @@ class MDP:
         half_range = (kin.q_hi - kin.q_lo) * 0.5
         self.soft_lo = midpoint - half_range * cfg.soft_limit_factor
         self.soft_hi = midpoint + half_range * cfg.soft_limit_factor
-        self.obs_noise = torch.cat((OBS_NOISE[:64], torch.zeros(self.action_dim))).to(default_q.device)
+        self.obs_noise = torch.cat((OBS_NOISE[:64].to(default_q.device),
+                                    torch.zeros(self.action_dim, device=default_q.device, dtype=OBS_NOISE.dtype)))
 
     def obs(
         self,
