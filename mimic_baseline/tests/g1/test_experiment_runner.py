@@ -61,3 +61,23 @@ def test_source_revision_mismatch_is_rejected(tmp_path, monkeypatch):
     monkeypatch.setattr(runner,'PROJECT_ROOT',tmp_path)
     with pytest.raises(ValueError,match='revision mismatch'):
         runner.verify_source('0'*40)
+
+
+def test_release_export_uses_committed_allowlist_only(tmp_path):
+    import tarfile
+    spec = importlib.util.spec_from_file_location('exporter', Path(__file__).parents[2] / 'scripts/supermimic/export_g1_release.py')
+    exporter = importlib.util.module_from_spec(spec); spec.loader.exec_module(exporter)
+    repo=tmp_path/'repo';repo.mkdir()
+    def git(*args): return subprocess.check_output(['git','-C',str(repo),*args])
+    git('init','-q');git('config','user.name','Test');git('config','user.email','test@example.invalid')
+    (repo/'.github').mkdir();(repo/'.github/mimic-publication-files.txt').write_text('code.py\n')
+    (repo/'code.py').write_text('original');(repo/'private.txt').write_text('excluded')
+    git('add','.');git('commit','-qm','fixture')
+    revision=git('rev-parse','HEAD').decode().strip()
+    (repo/'code.py').write_text('uncommitted')
+    output=tmp_path/'release.tar';manifest=exporter.export_release(repo,output)
+    assert manifest['source_revision']==revision
+    with tarfile.open(output) as archive:
+        assert set(archive.getnames())=={'code.py','release-manifest.json'}
+        assert archive.extractfile('code.py').read()==b'original'
+    with pytest.raises(FileExistsError): exporter.export_release(repo,output)
