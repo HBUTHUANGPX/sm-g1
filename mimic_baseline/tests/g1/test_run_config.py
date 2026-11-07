@@ -25,3 +25,12 @@ def test_resume_rejects_incompatible_model_and_implicit_training_changes():
     wrong["format"] = "supermimic-rx-p2-v1"
     with pytest.raises(ValueError, match="G1"):
         restore_run_config(wrong, {})
+
+
+def test_legacy_newton_checkpoint_does_not_silently_enable_self_collision():
+    old = checkpoint()
+    old['provenance']['backend'] = 'newton'
+    cfg, _ = restore_run_config(old, {})
+    assert cfg['self_collisions'] is False
+    with pytest.raises(ValueError, match='self_collisions'):
+        restore_run_config(old, {'self_collisions': True})

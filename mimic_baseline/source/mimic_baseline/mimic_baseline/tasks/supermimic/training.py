@@ -60,6 +60,7 @@ _SOURCE_COMMIT = "27126bddd74381d164118ef83ee78edb58484a6b"
 class TrainingConfig:
     """Paper optimization defaults plus explicit RX-P2 environment settings."""
 
+    self_collisions: bool = True
     robot_name: str = "rx_p2"
     num_envs: int = 4096
     iterations: int = 320_000

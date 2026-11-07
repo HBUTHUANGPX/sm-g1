@@ -62,12 +62,21 @@ def check_environment(env):
         if done.any():
             terminal_distinct |= bool((tr["s1"][done] - flatten_state(env.state())[done]).abs().max() > 1e-5)
     assert terminal_count > 0 and terminal_distinct, "Terminal transitions replaced by reset or no reset exercised"
+    self_collision_values = []
+    solver_exclusions = None
     solver_friction_error = None
     if randomization._newton_manager is not None:
         import warp as wp
 
         manager = randomization._newton_manager
         solver = manager._solver
+        from isaaclab.sim import get_current_stage
+        for prim in get_current_stage().Traverse():
+            attr = prim.GetAttribute("newton:selfCollisionEnabled")
+            if attr and "/Robot/" in str(prim.GetPath()):
+                self_collision_values.append(bool(attr.Get()))
+        assert self_collision_values and all(v == env.env.cfg.self_collisions for v in self_collision_values)
+        solver_exclusions = int(solver.mj_model.nexclude)
         # Deliberate endpoints detect a fixed ground coefficient masking the
         # low end. This runs only in the disposable check environment.
         env.env.xi[0, 0] = 0.3
@@ -89,6 +98,8 @@ def check_environment(env):
         "backend": getattr(env.env.cfg, "backend", "ovphysx"),
         "control_dt": env.env.step_dt,
         "actual_control_dt": actual_control_dt,
+        "newton_self_collision_values": self_collision_values,
+        "solver_excluded_body_pairs": solver_exclusions,
         "solver_friction_max_error": solver_friction_error,
         "torso_com_max_error": com_error,
         "friction_max_error": friction_error,

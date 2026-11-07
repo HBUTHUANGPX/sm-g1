@@ -6,6 +6,7 @@ from .env_managed import SuperMimicEnvCfg
 
 @configclass
 class G1SuperMimicEnvCfg(SuperMimicEnvCfg):
+    self_collisions: bool = True
     backend: str = "ovphysx"
     robot_name: str = "g1"
     action_dim: int = 29

@@ -9,13 +9,14 @@ import xml.etree.ElementTree as ET
 from .g1 import G1_JOINT_NAMES
 
 
-def make_g1_robot_cfg(usd_path, urdf_path, *, actuator_type="implicit", min_delay=0, max_delay=0):
+def make_g1_robot_cfg(usd_path, urdf_path, *, actuator_type="implicit", min_delay=0, max_delay=0, self_collisions=True):
     if not usd_path or not urdf_path:
         raise ValueError("G1 requires explicit robot_usd and robot_urdf paths")
     import isaaclab.sim as sim_utils
     from isaaclab.assets import ArticulationCfg
     from isaaclab.actuators import ImplicitActuatorCfg
     from isaaclab_physx.sim.schemas import PhysxRigidBodyCfg, PhysxArticulationCfg
+    from isaaclab_newton.sim.schemas import NewtonArticulationCfg
 
     if actuator_type not in ("implicit", "delayed_pd"):
         raise ValueError("G1 supports implicit or delayed_pd without TN")
@@ -68,7 +69,8 @@ def make_g1_robot_cfg(usd_path, urdf_path, *, actuator_type="implicit", min_dela
             variants={"Physics": "physx"},
             activate_contact_sensors=False,
             rigid_props=PhysxRigidBodyCfg(disable_gravity=False, linear_damping=0.0, angular_damping=0.0),
-            articulation_props=[PhysxArticulationCfg(enabled_self_collisions=True)],
+            articulation_props=[PhysxArticulationCfg(enabled_self_collisions=self_collisions),
+                                NewtonArticulationCfg(self_collision_enabled=self_collisions)],
         ),
         init_state=ArticulationCfg.InitialStateCfg(pos=(0.0, 0.0, 0.76), joint_pos=defaults, joint_vel={".*": 0.0}),
         soft_joint_pos_limit_factor=0.9,

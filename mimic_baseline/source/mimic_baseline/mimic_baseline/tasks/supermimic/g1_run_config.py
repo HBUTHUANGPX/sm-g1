@@ -5,6 +5,7 @@ def restore_run_config(checkpoint, overrides, *, small_model=None):
     if checkpoint.get("format") != "supermimic-g1-v1":
         raise ValueError("Expected an original ManagerBased G1 checkpoint")
     config = dict(checkpoint["config"])
+    config.setdefault("self_collisions", checkpoint.get("provenance", {}).get("backend", "ovphysx") != "newton")
     if config.get("robot_name") != "g1" or config.get("perception", False):
         raise ValueError("Expected proprioceptive G1 configuration")
     saved_small = bool(checkpoint.get("provenance", {}).get("small_model", False))

@@ -237,6 +237,7 @@ class SuperMimicEnvCfg(ManagerBasedRLEnvCfg):
             self.scene.robot, self.action_scale = make_g1_robot_cfg(
                 self.robot_usd, self.robot_urdf, actuator_type=self.actuator_type,
                 min_delay=self.min_delay, max_delay=self.max_delay,
+                self_collisions=self.self_collisions,
             )
             self.actions.joint_pos.action_dim = self.action_dim
             if self.ground_usd:

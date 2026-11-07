@@ -142,6 +142,7 @@ def main():
     mdp = MDP(kin, motion, torch.zeros(29, device=cfg.device))
     env_cfg = G1SuperMimicEnvCfg(
         backend=args.backend,
+        self_collisions=cfg.self_collisions,
         robot_usd=str(usd),
         robot_urdf=str(urdf),
         ground_usd=str(data / "ground/default_ground_plane.usda"),
