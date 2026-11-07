@@ -238,3 +238,22 @@ It requires exactly the 40 source clip names in the evaluation output; completio
 of the pipeline does not mean completion of every motion. `status.json` records
 training/evaluation failure or completion, while `experiment.json` preserves the
 commands and source manifest. Runtime logs and checkpoints remain outside Git.
+
+
+## Fresh recovery formal run
+
+The new Newton recovery run started on 2026-11-07 with **2560 environments**,
+3000 target iterations, full networks, WM batch2048×10, policy batch4096,
+32-step BPTT and 1000-step replay. It starts from scratch rather than the stopped
+flat checkpoint. Source is pinned to `1bf1a4e9d788316046bad25bb97ba2018fe0cc01`.
+The Windows process is detached from SSH and invokes all-40-clip evaluation only
+after verified successful training. Saving occurs every 100 iterations.
+
+Capacity trials covered 1024, 2048, 2560, 3072 and 4096 environments. The selected
+2560 configuration completed a 60-iteration full-batch stability run at about
+0.54–0.56 iterations/s, with peak PyTorch allocation11.57 GiB and reservation14.22 GiB.
+Larger counts incurred severe throughput degradation; the choice favors practical
+capacity with GPU headroom. The 60-iteration smoke model completed0/40 clips,
+which does not predict the formal training outcome. Formal results are pending.
+
+See [capacity evidence and launch snapshot](results/2026-11-07-g1-recovery-formal.json).
