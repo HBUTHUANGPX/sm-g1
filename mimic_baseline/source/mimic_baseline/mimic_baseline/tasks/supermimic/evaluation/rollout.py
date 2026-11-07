@@ -1,168 +1,48 @@
-"""Reusable deterministic SuperMimic rollout metrics and helpers."""
+"""Original evaluation rollout functions."""
 
 from __future__ import annotations
 
-import csv
-import json
-import os
-import re
-from collections import defaultdict
-from pathlib import Path
+
 from typing import Any
+
 
 import torch
 
-from .action_bounds import clip_action
-from .mdp_legacy import MAX_STEP_REWARD, flatten_state, unflatten_state
-from .motion import CONTROL_DT
-from .reference import FixedReference, ReferenceBatch, ensure_static_reference
-from .rotations import mat_to_quat
+
+from mimic_baseline.tasks.supermimic.core.action_bounds import clip_action
 
 
-SUITES = ("tracking", "standing_push")
-PUSH_UPRIGHT_THRESHOLD = 0.8
-PUSH_ROOT_HEIGHT_TOLERANCE = 0.25
-PUSH_FINAL_DWELL_STEPS = 25
-METRIC_KEYS = (
-    "root_xy_rmse",
-    "root_z_rmse",
-    "root_rotation_rmse_rad",
-    "joint_rmse",
-    "body_position_rmse",
-    "body_orientation_rmse_rad",
+from mimic_baseline.tasks.supermimic.core.mdp import flatten_state, unflatten_state
+
+
+from mimic_baseline.tasks.supermimic.data.motion import CONTROL_DT
+
+
+from mimic_baseline.tasks.supermimic.data.reference import (
+    ReferenceBatch,
+    ensure_static_reference,
 )
 
 
-def policy_action(policy, history, goal, state, reference: ReferenceBatch, perception=None):
+from mimic_baseline.tasks.supermimic.core.rotations import mat_to_quat
+
+
+from .constants import PUSH_UPRIGHT_THRESHOLD, PUSH_ROOT_HEIGHT_TOLERANCE, PUSH_FINAL_DWELL_STEPS, METRIC_KEYS
+from .metrics import _step_metrics, normalized_clip_return
+from .reporting import motion_category
+
+
+def policy_action(
+    policy, history, goal, state, reference: ReferenceBatch, perception=None
+):
     """Supply clean current orientation only to actors declaring the new ABI."""
     args = (history, goal) if perception is None else (history, goal, perception)
     if getattr(policy, "relative_orientation_dim", 0):
-        from .mdp_legacy import relative_root_orientation
+        from mimic_baseline.tasks.supermimic.core.mdp import relative_root_orientation
 
         orientation = relative_root_orientation(state[1], reference.now.R)
         return policy(*args, relative_orientation=orientation)
     return policy(*args)
-
-
-def _max_step_reward() -> float:
-    return float(MAX_STEP_REWARD)
-
-
-def normalized_clip_return(
-    total_return: float,
-    clip_start: int,
-    clip_end: int,
-    *,
-    duration_steps: int | None = None,
-) -> float:
-    """Normalize by the reward ceiling over the reported simulation duration."""
-    steps = (
-        max(int(clip_end) - int(clip_start), 1)
-        if duration_steps is None
-        else max(int(duration_steps), 1)
-    )
-    return float(total_return) / (steps * _max_step_reward())
-
-
-def motion_category(name: str) -> str:
-    """Derive a stable evaluation category from a motion path/name."""
-    normalized = str(name).replace("\\", "/")
-    parts = [part for part in normalized.split("/") if part]
-    if len(parts) > 1:
-        return parts[-2].lower()
-    leaf = Path(parts[-1] if parts else "").stem
-    token = re.split(r"[_.\-]", leaf, maxsplit=1)
-    return token[0].lower() or "uncategorized"
-
-
-def _write_per_clip_csv(path: Path, records: list[dict[str, Any]]) -> None:
-    columns = [
-        "suite",
-        "name",
-        "category",
-        "clip_id",
-        "clip_start",
-        "clip_end",
-        "full_clip_frames",
-        "steps",
-        "return",
-        "normalized_return",
-        "terminated",
-        "completed",
-        "outcome",
-        "termination_policy",
-        "push_speed",
-        "root_xy_rmse",
-        "root_z_rmse",
-        "root_rotation_rmse_rad",
-        "joint_rmse",
-        "body_position_rmse",
-        "body_orientation_rmse_rad",
-        "diagnostic_final_dwell_ok",
-    ]
-    with path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=columns)
-        writer.writeheader()
-        for record in records:
-            writer.writerow({key: record.get(key) for key in columns})
-
-
-def _write_category_csv(path: Path, grouped: dict[str, dict[str, Any]]) -> None:
-    columns = [
-        "suite",
-        "category",
-        "clips",
-        "mean_normalized_return",
-        "completion_rate",
-        "termination_rate",
-    ]
-    with path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=columns)
-        writer.writeheader()
-        for key in sorted(grouped):
-            writer.writerow({column: grouped[key][column] for column in columns})
-
-
-def write_results(
-    output_dir: str | os.PathLike[str],
-    records: list[dict[str, Any]],
-    metadata: dict[str, Any] | None = None,
-) -> dict[str, dict[str, Any]]:
-    """Write per-clip JSON/CSV and category aggregates with explicit suite labels."""
-    output = Path(output_dir)
-    output.mkdir(parents=True, exist_ok=True)
-    grouped_records: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for record in records:
-        grouped_records[record["category"]].append(record)
-    grouped: dict[str, dict[str, Any]] = {}
-    for category, rows in grouped_records.items():
-        count = len(rows)
-        grouped[category] = {
-            "suite": rows[0]["suite"],
-            "category": category,
-            "clips": count,
-            "mean_normalized_return": sum(float(row["normalized_return"]) for row in rows) / count,
-            "completion_rate": sum(bool(row["completed"]) for row in rows) / count,
-            "termination_rate": sum(bool(row["terminated"]) for row in rows) / count,
-            "outcomes": {
-                outcome: sum(row["outcome"] == outcome for row in rows)
-                for outcome in sorted({row["outcome"] for row in rows})
-            },
-        }
-    payload = {
-        "metadata": metadata or {},
-        "by_category": grouped,
-        "clips": records,
-    }
-    (output / "perclip.json").write_text(
-        json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
-    )
-    _write_per_clip_csv(output / "perclip.csv", records)
-    _write_category_csv(output / "by_category.csv", grouped)
-    return grouped
-
-
-FixedTargetMotion = FixedReference
 
 
 def reference_frames(reference: ReferenceBatch):
@@ -179,28 +59,6 @@ def _policy_obs_history(
     xi: torch.Tensor,
 ):
     return mdp.obs(state, action, xi)
-
-
-def _step_metrics(
-    executed: dict[str, torch.Tensor],
-    reference: ReferenceBatch,
-    terms: dict[str, torch.Tensor],
-) -> dict[str, torch.Tensor]:
-    """Compute per-environment squared errors on the simulator device."""
-    actual = unflatten_state(executed["s1"])
-    root_error = actual[0] - reference.now.p
-    relative_rotation = actual[1].transpose(-1, -2) @ reference.now.R
-    cosine = ((relative_rotation.diagonal(dim1=-2, dim2=-1).sum(-1) - 1.0) * 0.5).clamp(
-        -1.0, 1.0
-    )
-    return {
-        "root_xy_rmse": root_error[..., :2].square().sum(-1),
-        "root_z_rmse": root_error[..., 2].square(),
-        "root_rotation_rmse_rad": torch.acos(cosine).square(),
-        "joint_rmse": (actual[4] - reference.now.q).square().mean(-1),
-        "body_position_rmse": terms["e_body_pos"],
-        "body_orientation_rmse_rad": terms["e_body_ori"],
-    }
 
 
 def evaluate_tracking(
@@ -230,7 +88,9 @@ def evaluate_tracking(
     motion = ensure_static_reference(motion)
     catalog = motion.catalog
     starts = catalog.clip_start.long()
-    ends = (catalog.original_clip_end if use_original_lengths else catalog.clip_end).long()
+    ends = (
+        catalog.original_clip_end if use_original_lengths else catalog.clip_end
+    ).long()
     clip_ids = (
         torch.arange(starts.numel(), device=starts.device)
         if selected_clip_ids is None
@@ -273,8 +133,13 @@ def evaluate_tracking(
         from .rollout_archive import RolloutRecorder
 
         reference = motion.sample(*motion.locate(env.f))
-        archive = RolloutRecorder(flatten_state(env.state()), flatten_state(reference.now.state),
-                                  reference_frames(reference), env.ep_step, control_dt=CONTROL_DT)
+        archive = RolloutRecorder(
+            flatten_state(env.state()),
+            flatten_state(reference.now.state),
+            reference_frames(reference),
+            env.ep_step,
+            control_dt=CONTROL_DT,
+        )
     active = torch.ones((env.N,), dtype=torch.bool, device=trial_starts.device)
     first_termination = torch.zeros_like(active)
     reached_boundary = torch.zeros_like(active)
@@ -308,7 +173,8 @@ def evaluate_tracking(
         for step_index in range(transition_limit):
             state = env.state()
             obs = (
-                policy_observation() if callable(policy_observation)
+                policy_observation()
+                if callable(policy_observation)
                 else _policy_obs_history(mdp, state, env.a_prev, env.xi)
             )
             if history is None:
@@ -319,7 +185,9 @@ def evaluate_tracking(
             goal = reference.goal(mode=goal_mode, rotation=state[1])
             raw_action = policy_action(policy, history, goal, state, reference)
             if archive is not None and not torch.isfinite(raw_action).all():
-                raise FloatingPointError("Nonfinite policy action during rollout export")
+                raise FloatingPointError(
+                    "Nonfinite policy action during rollout export"
+                )
             action = clip_action(raw_action)
             action = action.masked_fill(~active.unsqueeze(-1), 0.0)
 
@@ -339,8 +207,14 @@ def evaluate_tracking(
             executed = env.step(action)
             reference = motion.sample(*motion.locate(env.f))
             if archive is not None:
-                archive.append(executed["s1"], flatten_state(reference.now.state), executed["a"],
-                               reference_frames(reference), env.ep_step, executed["term"])
+                archive.append(
+                    executed["s1"],
+                    flatten_state(reference.now.state),
+                    executed["a"],
+                    reference_frames(reference),
+                    env.ep_step,
+                    executed["term"],
+                )
             was_active = active
             active_float = was_active.to(dtype=torch.float32)
             rewards.add_(torch.where(was_active, executed["r"], 0.0))
@@ -376,9 +250,8 @@ def evaluate_tracking(
                 actual = unflatten_state(executed["s1"])
                 upright = actual[1][..., 2, 2] >= PUSH_UPRIGHT_THRESHOLD
                 height_ok = (
-                    (actual[0][..., 2] - reference.now.p[..., 2]).abs()
-                    <= PUSH_ROOT_HEIGHT_TOLERANCE
-                )
+                    actual[0][..., 2] - reference.now.p[..., 2]
+                ).abs() <= PUSH_ROOT_HEIGHT_TOLERANCE
                 final_dwell = torch.where(
                     was_active & upright & height_ok & (step_index >= push_step),
                     final_dwell + 1,
@@ -500,8 +373,7 @@ def evaluate_tracking(
         for env_idx in range(env.N):
             n_steps = int(host_steps[env_idx])
             rollout_data[f"env_{env_idx}"] = {
-                key: value[env_idx, :n_steps]
-                for key, value in stacked.items()
+                key: value[env_idx, :n_steps] for key, value in stacked.items()
             }
             rollout_data[f"env_{env_idx}"]["num_steps"] = n_steps
         if rollout_sink is not None:

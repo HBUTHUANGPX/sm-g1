@@ -15,7 +15,6 @@ mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/buffer.py
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/distributed.py
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/env.py
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/env_managed.py
-mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation.py
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/g1.py
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/g1_env.py
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/g1_robot.py
@@ -123,3 +122,8 @@ mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/config
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/managers.py
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/perception.py
 mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/simulation.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/__init__.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/constants.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/metrics.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/reporting.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/rollout.py
