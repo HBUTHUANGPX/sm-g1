@@ -36,7 +36,47 @@ def write_json(path, value):
     temporary.replace(path)
 
 
-def run_experiment(data_root, run_dir, num_envs, iterations, source_revision):
+def resume_metadata(checkpoint, num_envs, target_iteration):
+    """Validate a recovery continuation and bind its input artifact by digest."""
+    import torch
+
+    saved = torch.load(checkpoint, map_location="cpu", weights_only=False)
+    cfg = saved.get("config", {})
+    if not (
+        saved.get("format") == "supermimic-g1-v1"
+        and 0 <= saved.get("iteration", -1) < target_iteration
+        and cfg.get("robot_name") == "g1"
+        and not cfg.get("perception", False)
+        and cfg.get("recovery_enabled")
+        and cfg.get("self_collisions")
+        and cfg.get("actuator_type") == "delayed_pd"
+        and cfg.get("max_delay") == 4
+        and cfg.get("num_envs") == num_envs
+        and saved.get("provenance", {}).get("backend") == "newton"
+    ):
+        raise ValueError(
+            "Resume checkpoint does not match the requested recovery continuation"
+        )
+    for key in ("wm", "policy", "critic"):
+        if not saved.get(key) or not all(
+            torch.isfinite(v).all() for v in saved[key].values()
+        ):
+            raise ValueError("Missing or nonfinite resume model parameters")
+    for key in ("opt_wm", "opt_policy", "opt_critic"):
+        if not saved.get(key, {}).get("state") or not saved[key].get("param_groups"):
+            raise ValueError("Resume checkpoint is missing optimizer state")
+    with checkpoint.open("rb") as stream:
+        digest = hashlib.file_digest(stream, "sha256").hexdigest()
+    return {
+        "checkpoint": str(checkpoint),
+        "iteration": saved["iteration"],
+        "sha256": digest,
+    }
+
+
+def run_experiment(
+    data_root, run_dir, num_envs, iterations, source_revision, resume=None
+):
     import torch
 
     data_root, run_dir = Path(data_root).resolve(), Path(run_dir).resolve()
@@ -50,6 +90,8 @@ def run_experiment(data_root, run_dir, num_envs, iterations, source_revision):
     ):
         raise ValueError("source_revision must be a full Git SHA")
     manifest = verify_source(source_revision)
+    resume = Path(resume).resolve() if resume is not None else None
+    lineage = resume_metadata(resume, num_envs, iterations) if resume else None
     run_dir.mkdir(parents=True, exist_ok=False)
     entry = training_entry()
     checkpoint = run_dir / "train" / f"model_{iterations}.pt"
@@ -75,6 +117,8 @@ def run_experiment(data_root, run_dir, num_envs, iterations, source_revision):
         "--log-dir",
         str(run_dir / "train"),
     ]
+    if resume is not None:
+        train += ["--resume", str(resume)]
     evaluate = common + [
         "--mode",
         "evaluate",
@@ -93,6 +137,7 @@ def run_experiment(data_root, run_dir, num_envs, iterations, source_revision):
             evaluate_command=evaluate,
             expected_clips=sorted(names),
             source_files=manifest["files"],
+            resume=lineage,
         ),
     )
     phase = "training"
@@ -100,10 +145,19 @@ def run_experiment(data_root, run_dir, num_envs, iterations, source_revision):
         "phase": phase,
         "target_iteration": iterations,
         "source_revision": source_revision,
+        "start_iteration": lineage["iteration"] if lineage else 0,
+        "resume_sha256": lineage["sha256"] if lineage else None,
     }
     try:
         for command, phase in [(train, "training"), (evaluate, "evaluating")]:
             verify_source(source_revision)
+            if phase == "training" and resume is not None:
+                with resume.open("rb") as stream:
+                    if (
+                        hashlib.file_digest(stream, "sha256").hexdigest()
+                        != lineage["sha256"]
+                    ):
+                        raise ValueError("Resume checkpoint changed after preflight")
             status.update(
                 phase=phase, updated_utc=datetime.now(timezone.utc).isoformat()
             )
@@ -173,5 +227,10 @@ def main():
     parser.add_argument("--num-envs", type=int, required=True)
     parser.add_argument("--iterations", type=int, default=3000)
     parser.add_argument("--source-revision", required=True)
+    parser.add_argument(
+        "--resume",
+        type=Path,
+        help="Continue a saved recovery checkpoint to the absolute iteration target",
+    )
     args = parser.parse_args()
     print(json.dumps(run_experiment(**vars(args))))
