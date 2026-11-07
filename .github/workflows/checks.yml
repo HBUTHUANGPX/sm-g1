@@ -13,6 +13,6 @@ jobs:
       - run: python -m compileall -q supermimic_g1/supermimic supermimic_g1/tools
       - run: python .github/check_repository.py
       - run: pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
-      - run: pip install pytest numpy pyyaml
+      - run: pip install pytest numpy pyyaml gymnasium
       - run: python -m compileall -q mimic_baseline/source mimic_baseline/scripts/supermimic/train_g1.py
       - run: python -m pytest -q mimic_baseline/tests/g1

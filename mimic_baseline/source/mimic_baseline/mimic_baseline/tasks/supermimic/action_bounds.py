@@ -1,11 +1,6 @@
-"""Shared network-action range for simulation, imagination and deployment."""
-
-import torch
-
-
-ACTION_LIMIT = 20.0
-
-
-def clip_action(action: torch.Tensor) -> torch.Tensor:
-    """Bound the command without changing values or gradients inside the range."""
-    return action.clamp(-ACTION_LIMIT, ACTION_LIMIT)
+"""Compatibility alias; canonical implementation: core.action_bounds."""
+from importlib import import_module as _import_module
+import sys as _sys
+_target = _import_module("mimic_baseline.tasks.supermimic.core.action_bounds")
+globals().update({name: value for name, value in vars(_target).items() if not name.startswith("__")})
+_sys.modules[__name__] = _target

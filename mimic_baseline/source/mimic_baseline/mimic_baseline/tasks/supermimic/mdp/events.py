@@ -1,9 +1,6 @@
-"""Episode physics randomization, before the command writes the reset pose."""
-
-from __future__ import annotations
-
-
-def randomize_physics_parameters(env, env_ids):
-    env.randomization.resample(env_ids)
-    # The two neck servos hold a known camera mount, outside the policy action.
-    env.xi[env_ids, 1 + getattr(getattr(env, "cfg", None), "action_dim", 27):30] = 0.0
+"""Compatibility alias; canonical implementation: envs.mdp.events."""
+from importlib import import_module as _import_module
+import sys as _sys
+_target = _import_module("mimic_baseline.tasks.supermimic.envs.mdp.events")
+globals().update({name: value for name, value in vars(_target).items() if not name.startswith("__")})
+_sys.modules[__name__] = _target
