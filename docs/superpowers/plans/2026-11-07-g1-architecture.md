@@ -11,3 +11,5 @@ Keep the Isaac Lab extension package root and Python namespace for compatibility
 5. Export a separate Windows validation release only after the ongoing formal run and its automatic evaluation have finished. Compare old/new evaluator outputs on the same checkpoint, run original full-network short train/resume, and validate Newton environment behavior. Independent review, CI and PR integration.
 
 The deployed formal run at source `1bf1a4e` is immutable and must not be overwritten. Its 3000-iteration and all-40 evaluation results remain distinct from reconstruction smoke tests. Every independently validated change is committed and pushed immediately.
+
+Execution evidence: steps 1–4 implemented with legacy compatibility and immediate commit/push cycles. Step 5 completed real Newton environment checks, full-network train/resume, pre-refactor checkpoint resume and all-40 evaluation. See docs/results/2026-11-07-g1-architecture.json. Numerical parity is explicitly limited: the unchanged baseline itself varies across repeats; no bitwise or statistical equivalence claim is made. PR #5 contains the reviewed changes and evidence.

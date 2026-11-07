@@ -107,3 +107,35 @@ evaluation finishes. Deploy architecture validation to a separate directory;
 compare evaluation on the same checkpoint and verify full-network train/resume
 before treating the reorganization as runtime-validated. Never copy generated
 assets, datasets, checkpoints or machine connection details into Git.
+
+## Runtime acceptance (2026-11-07)
+
+Validated exported source `ce85602d96c237aaa9e21c4e8551a790833f8197` on the
+existing Windows Newton runtime; all 139 exported file hashes matched. Later
+commits record results and documentation only. See [machine-readable evidence](results/2026-11-07-g1-architecture.json).
+
+- Mac CPU: 45 passed. Windows CPU: 44 passed, one Git-only export test skipped
+  because Git is absent there; export was tested on Mac/CI. GPU regression: 5 passed.
+- Original function/configuration contracts: 395.
+- Newton recovery environment: 64 environments, 205 finite steps; delay ticks
+  0–4, upside-down resets, collision clearance, self-contact, probabilistic groups,
+  protection boundary, evaluation termination and partial reset checks passed.
+- Full original networks, 32-step BPTT: train to iteration 2, resume to 4; a
+  pre-refactor checkpoint resumed from 12 to 14. All three optimizer counters
+  and finite parameters were verified. These are execution tests, not convergence.
+- Same model_3000 checkpoint and all 40 clips evaluated with both source versions.
+
+| Evaluation | Completed clips | Mean normalized return |
+|---|---:|---:|
+| Original automatic run | 0/40 | 0.06922115 |
+| Original unchanged-source repeat | 0/40 | 0.06601041 |
+| Reorganized source | 0/40 | 0.07272094 |
+
+**Numerical reproducibility limit:** the unchanged old version itself changed
+termination steps on six clips, by up to 3036 steps. Old versus reorganized
+source changed four clips, by up to 3169 steps. Thus these results do not establish
+bitwise trajectory parity or statistical equivalence; three evaluations are not
+a performance comparison. No success outcome changed, and no improvement is
+claimed. Numerical/manager method bodies and configuration classes remain
+protected by the original-source contracts. This task did not alter physics
+settings to force repeatability. No physical robot was tested.
