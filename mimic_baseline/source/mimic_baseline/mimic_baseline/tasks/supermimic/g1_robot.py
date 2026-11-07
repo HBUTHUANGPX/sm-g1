@@ -47,10 +47,12 @@ def make_g1_robot_cfg(usd_path, urdf_path, *, actuator_type="implicit", min_dela
         else:
             kp, kd, default = 40.0, 2.0, (0.3 if "elbow" in name else 0.0)
         actuator_class = ImplicitActuatorCfg if actuator_type == "implicit" else G1DelayedPDActuatorCfg
+        # Explicit PD needs reflected inertia at the 5 ms physics tick.
+        # Engineering simulation value, not a measured G1 motor parameter.
         extra = (
             {}
             if actuator_type == "implicit"
-            else dict(min_delay=min_delay, max_delay=max_delay, effort_limit=effort, velocity_limit=velocity)
+            else dict(min_delay=min_delay, max_delay=max_delay, effort_limit=effort, velocity_limit=velocity, armature=0.03)
         )
         actuators[name] = actuator_class(
             **extra,

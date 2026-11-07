@@ -5,6 +5,7 @@ def restore_run_config(checkpoint, overrides, *, small_model=None):
     if checkpoint.get("format") != "supermimic-g1-v1":
         raise ValueError("Expected an original ManagerBased G1 checkpoint")
     config = dict(checkpoint["config"])
+    config.setdefault("recovery_enabled", False)
     config.setdefault("self_collisions", checkpoint.get("provenance", {}).get("backend", "ovphysx") != "newton")
     if config.get("robot_name") != "g1" or config.get("perception", False):
         raise ValueError("Expected proprioceptive G1 configuration")
@@ -27,3 +28,16 @@ def resolve_backend(requested, checkpoint):
     if saved is not None and backend != saved:
         raise ValueError("backend differs from checkpoint; resume preserves physics")
     return backend
+
+
+def build_g1_models(cfg, *, small_model=False):
+    """Construct the original networks, including recovery's privileged clock."""
+    from .networks import WorldModel, Policy, Critic
+    from .mdp_legacy import INV_DIM, CRITIC_EXTRA
+    kwargs = {"hidden": (64, 64)} if small_model else {}
+    wm = WorldModel(target_mode=cfg.wm_target_mode, action_dim=29,
+                    recovery_enabled=cfg.recovery_enabled, **kwargs).to(cfg.device)
+    policy = Policy(93, 73 * cfg.goal_frames, hist=cfg.hist, action_dim=29,
+                    actor_relative_orientation=cfg.actor_relative_orientation, **kwargs).to(cfg.device)
+    critic = Critic(INV_DIM + CRITIC_EXTRA + 73 * cfg.goal_frames + int(cfg.recovery_enabled)).to(cfg.device)
+    return wm, policy, critic

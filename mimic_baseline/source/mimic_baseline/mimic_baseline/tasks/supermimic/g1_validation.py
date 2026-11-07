@@ -113,3 +113,128 @@ def check_environment(env):
         "terminal_transitions": terminal_count,
         "terminal_state_preserved": terminal_distinct,
     }
+
+
+@torch.no_grad()
+def check_recovery_environment(env):
+    """Exercise real reset geometry, delayed physics and the original hazard manager."""
+    from .env_managed import SuperMimicTerminationManager
+    from .actuators import G1DelayedPDActuator
+    from .recovery import PROTECTION_STEPS
+    assert env.N >= 32, "Recovery check needs at least 32 environments"
+    managed = env.env
+    assert isinstance(managed.termination_manager, SuperMimicTerminationManager)
+    command = managed.command_manager.get_term("motion")
+    actuators = list(env.scene["robot"].actuators.values())
+    delayed = all(isinstance(a, G1DelayedPDActuator) for a in actuators)
+    actuator = actuators[0]
+    count = 0
+    clearance_error = 0.
+    upside_down = 0
+    observed_lags = set()
+    for _ in range(8):
+        env.reset()
+        role = managed.recovery_role
+        p, rotation, v, w, q, qd = env.state()
+        count += int(role.sum())
+        if delayed:
+            observed_lags.update(actuator.positions_delay_buffer.time_lags.tolist())
+        if role.any():
+            corners = command._recovery_placement.corners(p[role], rotation[role], q[role])
+            error = (corners[..., 2].amin(dim=(-1, -2)) - .15).abs().max().item()
+            clearance_error = max(clearance_error, error)
+            assert error < 1e-4, error
+            assert max(v[role].abs().max(), w[role].abs().max(), qd[role].abs().max()) < 1e-5
+            assert (q[role] >= env.mdp.kin.q_lo - 1e-5).all()
+            assert (q[role] <= env.mdp.kin.q_hi + 1e-5).all()
+            upside_down += int((rotation[role, 2, 2] < 0).sum())
+    fraction = count / (8 * env.N)
+    assert .08 < fraction < .22 and upside_down > 0, (fraction, upside_down)
+    if delayed:
+        assert observed_lags == set(range(actuator.cfg.min_delay, actuator.cfg.max_delay + 1)), observed_lags
+    before = flatten_state(env.state()).clone()
+    role_before = managed.recovery_role.clone()
+    if delayed:
+        lengths = actuator.positions_delay_buffer._lengths.clone()
+        head = actuator.positions_delay_buffer._head
+    env.reset(torch.tensor([0], device=env.device))
+    assert torch.equal(flatten_state(env.state())[1:], before[1:])
+    assert torch.equal(managed.recovery_role[1:], role_before[1:])
+    if delayed:
+        assert head == actuator.positions_delay_buffer._head
+        assert torch.equal(lengths[1:], actuator.positions_delay_buffer._lengths[1:])
+
+    manager = managed.termination_manager
+    # Controlled manager inputs isolate acceptance/protection from motion errors.
+    # Restore every callback afterwards; the following rollout uses real errors.
+    callbacks = [(cfg.func, cfg.params) for cfg in manager._term_cfgs]
+    original_age = managed.episode_length_buf.clone()
+    original_role = managed.recovery_role.clone()
+    original_eval = managed.cfg.eval_mode
+    try:
+        for index, cfg in enumerate(manager._term_cfgs):
+            cfg.func = lambda e, value=index in manager._tracking_indices: torch.full((e.num_envs,), value, device=e.device)
+            cfg.params = {}
+        managed.recovery_role.fill_(True)
+        managed.episode_length_buf.fill_(PROTECTION_STEPS)
+        assert not manager.compute().any(), "Protected pre-step age 199 terminated"
+        for cfg in manager._term_cfgs:
+            if cfg.time_out:
+                func = cfg.func
+                cfg.func = lambda e: torch.ones(e.num_envs, device=e.device, dtype=torch.bool)
+                assert manager.compute().all(), "Protection masked a truncation"
+                cfg.func = func
+        managed.episode_length_buf.fill_(PROTECTION_STEPS + 1)
+        accepted = torch.zeros(4, device=env.device)
+        for _ in range(200):
+            manager.compute()
+            accepted += manager.accepted_tracking.sum(0)
+        rates = accepted / (200 * env.N)
+        torch.testing.assert_close(rates, rates.new_tensor([.02/3, .02/3, .04, .04]), atol=.006, rtol=0)
+        managed.cfg.eval_mode = True
+        managed.episode_length_buf.fill_(1)
+        assert manager.compute().all(), "Evaluation must use raw deterministic failures"
+    finally:
+        for cfg, (func, params) in zip(manager._term_cfgs, callbacks):
+            cfg.func, cfg.params = func, params
+        managed.cfg.eval_mode = original_eval
+        managed.episode_length_buf.copy_(original_age)
+        managed.recovery_role.copy_(original_role)
+    env.reset()
+    transitions = 0
+    manager_newton = managed.randomization._newton_manager
+    start_time = manager_newton._sim_time if manager_newton is not None else None
+    self_contacts = 0
+    if manager_newton is not None:
+        import warp as wp
+        solver = manager_newton._solver
+        geom_bodies = torch.as_tensor(solver.mj_model.geom_bodyid.copy(), device=env.device)
+        armature = solver.mj_model.dof_armature[6:]
+        if delayed:
+            assert abs(armature - .03).max() < 1e-6
+    for step in range(205):
+        heads = [a.positions_delay_buffer._head for a in actuators] if delayed else []
+        tr = env.step(torch.zeros(env.N, 29, device=env.device))
+        assert torch.isfinite(tr["s1"]).all() and torch.isfinite(tr["r"]).all(), {"step":step, "bad_state_rows": (~torch.isfinite(tr["s1"]).all(-1)).nonzero().tolist(), "reward_finite":bool(torch.isfinite(tr["r"]).all()), "max_finite_state":tr["s1"][torch.isfinite(tr["s1"])].abs().max().item()}
+        assert tr["recovery_role"].dtype == torch.bool
+        transitions += int(tr["done"].sum())
+        for a, previous in zip(actuators, heads):
+            buf = a.positions_delay_buffer
+            assert buf._head == (previous + managed.cfg.decimation) % buf._capacity
+        if manager_newton is not None:
+            n = int(wp.to_torch(solver.mjw_data.nacon)[0])
+            geoms = wp.to_torch(solver.mjw_data.contact.geom)[:n].long()
+            bodies = geom_bodies[geoms]
+            self_contacts += int(((bodies > 0).all(-1) & (bodies[:, 0] != bodies[:, 1])).sum())
+    if manager_newton is not None and managed.cfg.self_collisions:
+        assert self_contacts > 0, "No robot-to-robot contact observed"
+    elapsed = manager_newton._sim_time - start_time if manager_newton is not None else None
+    if elapsed is not None:
+        assert abs(elapsed - 205 * .02) < 1e-6, elapsed
+    return {"backend": managed.cfg.backend, "num_envs": env.N, "recovery_reset_fraction": fraction,
+            "upside_down_resets": upside_down, "clearance_max_error_m": clearance_error,
+            "observed_delay_ticks": sorted(observed_lags), "manager_group_acceptance_rates": rates.tolist(),
+            "protected_boundary_passed": True, "deterministic_eval_passed": True,
+            "partial_reset_passed": True, "finite_rollout_steps": 205,
+            "simulated_seconds": elapsed, "terminal_transitions": transitions, "self_contact_samples": self_contacts,
+            "timeouts_bypass_protection": True}
