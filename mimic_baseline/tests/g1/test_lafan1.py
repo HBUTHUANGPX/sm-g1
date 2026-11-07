@@ -36,3 +36,19 @@ def test_original_motion_library_loads_g1_without_neck_padding(tmp_path):
     batch=StaticReference(motion).sample(torch.tensor([0]),torch.tensor([0]),goal_frames=2)
     assert batch.goal().shape == (1,146)
     assert motion.original_clip_len.tolist() == [6]
+
+
+def test_changed_source_rebuilds_cache_and_invalid_source_preserves_old_file(tmp_path):
+    import pytest
+    from mimic_baseline.tasks.supermimic.lafan1 import ensure_clip
+    source=tmp_path/'walk.csv';target=tmp_path/'walk.npz'
+    raw=np.zeros((4,36));raw[:,6]=1.
+    np.savetxt(source,raw,delimiter=',')
+    first=ensure_clip(source,target)
+    raw[:,35]=.7;np.savetxt(source,raw,delimiter=',')
+    second=ensure_clip(source,target)
+    assert first != second
+    with np.load(target) as data:np.testing.assert_allclose(data['joint_pos'][:,-1],.7)
+    saved=target.read_bytes();source.write_text('invalid')
+    with pytest.raises(ValueError):ensure_clip(source,target)
+    assert target.read_bytes() == saved

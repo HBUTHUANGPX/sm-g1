@@ -24,7 +24,7 @@ def main():
         p.add_argument('--'+name.replace('_','-'),type=int,default=None)
     args=p.parse_args()
     import torch
-    from mimic_baseline.tasks.supermimic.lafan1 import convert_clip
+    from mimic_baseline.tasks.supermimic.lafan1 import convert_clip, ensure_clip
     data=args.data_root.resolve(); args.log_dir.mkdir(parents=True,exist_ok=True)
     csvs=sorted((data/'lafan1_g1').glob('*.csv'))
     if args.clip_limit: csvs=csvs[:args.clip_limit]
@@ -33,7 +33,8 @@ def main():
     paths=[]
     for source in csvs:
         target=output/(source.stem+'.npz')
-        if args.mode=='prepare' or not target.exists(): convert_clip(source,target)
+        if args.mode=='prepare': convert_clip(source,target)
+        else: ensure_clip(source,target)
         paths.append(target)
     if args.mode=='prepare':
         print(json.dumps({'converted_clips':len(paths)}));return

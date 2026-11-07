@@ -7,6 +7,8 @@ the original MotionLib recomputes tracked-body quantities through its URDF FK.
 """
 from pathlib import Path
 import hashlib
+import io
+import tempfile
 import numpy as np
 import torch
 from .g1 import G1_JOINT_NAMES
@@ -15,7 +17,8 @@ from .rotations import quat_slerp, quat_to_mat, so3_log
 
 def convert_clip(source, destination):
     source, destination = Path(source), Path(destination)
-    raw = np.loadtxt(source, delimiter=',', dtype=np.float64)
+    source_bytes = source.read_bytes()
+    raw = np.loadtxt(io.BytesIO(source_bytes), delimiter=',', dtype=np.float64)
     if raw.ndim != 2 or raw.shape[1] != 36 or raw.shape[0] < 2 or not np.isfinite(raw).all():
         raise ValueError('Expected finite [T>=2,36] G1 LAFAN1 CSV')
     data = torch.from_numpy(raw)
@@ -40,9 +43,32 @@ def convert_clip(source, destination):
     omega[1:-1] = so3_log(R[2:] @ R[:-2].transpose(-1,-2)) / .04
     destination.parent.mkdir(parents=True,exist_ok=True)
     array = lambda x: x.numpy().astype(np.float32)
-    np.savez_compressed(destination, fps=np.float32(50),robot_name='unitree_g1',
+    payload = dict(fps=np.float32(50),robot_name='unitree_g1',
         quaternion_order='wxyz',joint_names=np.asarray(G1_JOINT_NAMES),body_names=np.asarray(['pelvis']),
         joint_pos=array(joints),joint_vel=array(joint_velocity),body_pos_w=array(pos[:,None]),
         body_quat_w=array(q[:,None]),body_lin_vel_w=array(velocity[:,None]),body_ang_vel_w=array(omega[:,None]),
-        source_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),schema_version=np.int32(1))
+        source_sha256=hashlib.sha256(source_bytes).hexdigest(),schema_version=np.int32(1))
+    with tempfile.NamedTemporaryFile(dir=destination.parent, suffix='.npz', delete=False) as stream:
+        temporary = Path(stream.name)
+    try:
+        np.savez_compressed(temporary, **payload)
+        temporary.replace(destination)
+    finally:
+        temporary.unlink(missing_ok=True)
     return count
+
+
+def ensure_clip(source, destination):
+    """Return the consumed source digest, refreshing stale or corrupt cache files."""
+    source, destination = Path(source), Path(destination)
+    digest = hashlib.sha256(source.read_bytes()).hexdigest()
+    try:
+        with np.load(destination, allow_pickle=False) as cache:
+            if (str(cache['source_sha256']) == digest and int(cache['schema_version']) == 1
+                    and str(cache['robot_name']) == 'unitree_g1'):
+                return digest
+    except (OSError, ValueError, KeyError, EOFError):
+        pass
+    convert_clip(source, destination)
+    with np.load(destination, allow_pickle=False) as cache:
+        return str(cache['source_sha256'])
