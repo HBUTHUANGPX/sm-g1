@@ -8,6 +8,18 @@ import sys
 from datetime import datetime, timezone
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+def verify_source(source_revision):
+    manifest = json.loads((PROJECT_ROOT / "release-manifest.json").read_text(encoding="utf-8"))
+    if manifest["source_revision"] != source_revision or not manifest["files"]:
+        raise ValueError("Deployment manifest revision mismatch")
+    for name, expected in manifest["files"].items():
+        path = (PROJECT_ROOT / name).resolve()
+        if not path.is_relative_to(PROJECT_ROOT.resolve()) or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+            raise ValueError(f"Deployed source differs from release manifest: {name}")
+    return manifest
+
 def write_json(path, value):
     temporary = path.with_suffix('.tmp')
     temporary.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
@@ -25,6 +37,7 @@ def run_experiment(data_root, run_dir, num_envs, iterations, source_revision):
         raise ValueError('num_envs and iterations must be positive')
     if len(source_revision) != 40 or any(c not in '0123456789abcdef' for c in source_revision):
         raise ValueError('source_revision must be a full Git SHA')
+    manifest = verify_source(source_revision)
     run_dir.mkdir(parents=True, exist_ok=False)
     entry = Path(__file__).with_name('train_g1.py')
     checkpoint = run_dir / 'train' / f'model_{iterations}.pt'
@@ -37,11 +50,12 @@ def run_experiment(data_root, run_dir, num_envs, iterations, source_revision):
                          '--log-dir', str(run_dir / 'evaluate')]
     write_json(run_dir / 'experiment.json', dict(source_revision=source_revision,
                num_envs=num_envs, iterations=iterations, train_command=train,
-               evaluate_command=evaluate, expected_clips=sorted(names)))
+               evaluate_command=evaluate, expected_clips=sorted(names), source_files=manifest["files"]))
     phase = 'training'
     status = {'phase': phase, 'target_iteration': iterations, 'source_revision': source_revision}
     try:
         for command, phase in [(train, 'training'), (evaluate, 'evaluating')]:
+            verify_source(source_revision)
             status.update(phase=phase, updated_utc=datetime.now(timezone.utc).isoformat())
             write_json(run_dir / 'status.json', status)
             with (run_dir / f'{phase}.log').open('w', encoding='utf-8') as log:
