@@ -1,0 +1,13 @@
+{
+  "evaluation_source_revision": "e52e8628cb2142944fd3e75aab30262656921bc5",
+  "active_training_source_revision": "61cdbfe36f1eb08d7294f5214ee25c204874762a",
+  "target_iteration": 20000,
+  "profiles": ["strict", "full_clean"],
+  "mac_cpu_tests": {"passed": 93},
+  "windows_cpu_tests": {"passed": 92, "skipped": 1, "skip_reason": "Git checkout-only release export test is not applicable to the exported archive"},
+  "windows_checkpoint_preflight": {"checkpoint_iteration": 3000, "profiles_passed": ["strict", "full_clean"], "simulator_started": false},
+  "deployment": {"manifest_files_verified": 153, "queue_phase": "waiting", "observed_utc": "2026-11-07T15:05:27.944349+00:00"},
+  "active_training_integrity": {"manifest_files_verified": 139, "unchanged": true, "interrupted": false},
+  "gpu_acceptance": "pending until existing training and original evaluation finish",
+  "final_checkpoint_evaluation": "pending; no 20000-iteration result exists at this observation"
+}
