@@ -14,11 +14,11 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--data-root',type=Path,required=True)
     p.add_argument('--mode',choices=['prepare','check','train','evaluate'],default='check')
-    p.add_argument('--num-envs',type=int,default=64)
-    p.add_argument('--iterations',type=int,default=10)
+    p.add_argument('--num-envs',type=int,default=None)
+    p.add_argument('--iterations',type=int,default=None)
     p.add_argument('--log-dir',type=Path,required=True)
     p.add_argument('--resume',type=Path)
-    p.add_argument('--small-model',action='store_true',help='64-wide WM/policy for integration checks, not quality claims')
+    p.add_argument('--small-model',action=argparse.BooleanOptionalAction,default=None,help='64-wide WM/policy for integration checks, not quality claims')
     p.add_argument('--clip-limit',type=int,default=0)
     for name in ('buffer_steps','wm_batch','wm_batches','policy_batch','horizon','warmup_steps','critic_epochs','critic_minibatches','save_every','log_every'):
         p.add_argument('--'+name.replace('_','-'),type=int,default=None)
@@ -49,16 +49,28 @@ def main():
     from mimic_baseline.tasks.supermimic.training import Trainer,TrainingConfig,JsonlLogger
     urdf=data/'g1_description/g1_29dof_rev_1_0.urdf'
     usd=data/'g1_usd/g1_29dof/g1_29dof.usda'
-    cfg=TrainingConfig(robot_name='g1',num_envs=args.num_envs,iterations=args.iterations,
-        device='cuda:0',perception=False,actuator_type='implicit',max_delay=0,
-        log_dir=str(args.log_dir),urdf=str(urdf),robot_usd=str(usd),motion_file=str(output),
-        save_every=max(1,args.iterations),log_every=1,eval_every=0)
-    if args.small_model:
-        cfg.buffer_steps=64;cfg.warmup_steps=16;cfg.wm_batches=1;cfg.wm_batch=32
-        cfg.policy_batch=32;cfg.horizon=8;cfg.critic_epochs=1;cfg.critic_minibatches=1
-    for name in ('buffer_steps','wm_batch','wm_batches','policy_batch','horizon','warmup_steps','critic_epochs','critic_minibatches','save_every','log_every'):
-        value=getattr(args,name)
-        if value is not None:setattr(cfg,name,value)
+    settings = ('num_envs','iterations','buffer_steps','wm_batch','wm_batches','policy_batch',
+                'horizon','warmup_steps','critic_epochs','critic_minibatches','save_every','log_every')
+    overrides = {name:getattr(args,name) for name in settings if getattr(args,name) is not None}
+    locations = dict(device='cuda:0',log_dir=str(args.log_dir),urdf=str(urdf),robot_usd=str(usd),motion_file=str(output))
+    if args.resume:
+        from mimic_baseline.tasks.supermimic.g1_run_config import restore_run_config
+        saved=torch.load(args.resume,map_location='cpu',weights_only=False)
+        restored,args.small_model=restore_run_config(saved,{**overrides,**locations},small_model=args.small_model)
+        cfg=TrainingConfig(**restored)
+        if args.mode=='train' and (args.iterations is None or cfg.iterations<=saved['iteration']):
+            raise ValueError('Resume requires --iterations greater than the saved iteration')
+        del saved
+    else:
+        cfg=TrainingConfig(robot_name='g1',num_envs=args.num_envs or 64,iterations=args.iterations or 10,
+            perception=False,actuator_type='implicit',max_delay=0,eval_every=0,log_every=1,**locations)
+        cfg.save_every=cfg.iterations
+        if args.small_model:
+            cfg.buffer_steps=64;cfg.warmup_steps=16;cfg.wm_batches=1;cfg.wm_batch=32
+            cfg.policy_batch=32;cfg.horizon=8;cfg.critic_epochs=1;cfg.critic_minibatches=1
+        for name,value in overrides.items():setattr(cfg,name,value)
+    if args.mode=='train' and not args.resume and (args.log_dir/'last.pt').exists():
+        raise ValueError('Output already contains a checkpoint; use --resume or a new log directory')
     cfg.validate()
     torch.manual_seed(cfg.seed)
     kin=G1Kinematics(urdf,cfg.device);motion=MotionLib(paths,kin,cfg.device)
@@ -103,7 +115,7 @@ def main():
                 provenance={'environment':'original SuperMimicRLEnv','robot':'g1','small_model':args.small_model})
             if args.resume:trainer.load_checkpoint(args.resume)
             trainer.train()
-            assert trainer.iteration==args.iterations
+            assert trainer.iteration==cfg.iterations
             for model in (wm,policy,critic):
                 assert all(torch.isfinite(v).all() for v in model.state_dict().values())
             print(json.dumps({'iteration':trainer.iteration,'finite_parameters':True}))
