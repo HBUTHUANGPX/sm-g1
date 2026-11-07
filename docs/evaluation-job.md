@@ -33,3 +33,9 @@ Strict completion uses native termination. Full-clean coverage measures reaching
 During rollout, `progress.json` reports vector steps, active clips, elapsed time and an upper-bound ETA every 256 steps. The parent command forwards these updates to the terminal; per-profile `elapsed_seconds` includes preflight/startup/rollout. The grouped mode batches PD and delay storage without sharing delays between joints, and keeps the original per-joint random draw order. Training actuators are unchanged.
 
 The validated fixed-job scope is the current G1 delayed-PD recovery checkpoint. Grouped execution rejects other actuator types instead of mislabelling a fallback. Source/model hashes do not fingerprint every installed runtime package or external asset; retain the pinned Isaac Lab/data setup. Native actuator parity checks are exact, but complete Newton rollouts are not promised bitwise reproducible; same-checkpoint result variation is not a learning improvement.
+
+## Measured acceptance
+
+On checkpoint6600 / RTX5070Ti / Windows Newton, the complete two-profile job took 437.625 seconds (7.3 minutes), compared with 1114.982 seconds (18.6 minutes) for the prior run: about 2.55x faster. Native CUDA checks compared 92,800 joint transitions exactly, including gains/limits, independent delays, partial resets and RNG state. See [benchmark evidence](results/2026-11-08-g1-evaluation-performance.json) and [the unedited generated report](results/2026-11-08-g1-fast-evaluation.md). This is a measured example, not a cross-machine guarantee.
+
+The operational entry point pins fully evaluated release `1c50bb87c19f2ffcffa1d737ef1a962670f345e9`; later unsupported-mode guards do not change the validated delayed-PD execution path. Upgrade a deployed release deliberately rather than modifying its verified files in place.

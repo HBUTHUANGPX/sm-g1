@@ -30,3 +30,10 @@ If validation or pushing fails, report it and retain local work. Verify local an
 - Download only LAFAN1 via the pinned script. Do not add SOMA.
 - Retain licenses and attribution.
 - Never publish passwords, tokens, private keys, machine-specific connection details or company infrastructure.
+
+## Fixed evaluation workflow
+- Use `scripts/run_g1_evaluation.py --config <local-config>` for the supported G1 delayed-PD recovery checkpoints; `--checkpoint` selects a specific saved model, otherwise the configured root supplies the latest numeric checkpoint.
+- Default: grouped execution, both strict and full_clean, all 40 clips at original lengths. `--execution reference` retains the original per-joint evaluation implementation for comparison. Training actuators remain unchanged.
+- Reuse the deployed, verified entry point and existing private local configuration. Do not invent per-request rollout/PowerShell/report scripts or manually assemble result tables when the fixed entry point suffices.
+- Require job `status.json` complete and validated `summary.json` / `report.md`; display those results. Full-clean coverage is not tracking success. Log failure artifacts honestly.
+- Machine paths, connections, data, checkpoints and full logs stay outside publication. Local `*.local.json` configuration must never be committed.
