@@ -1,6 +1,6 @@
 # SuperMimic G1
 
-The active G1 implementation now extends the original `mimic_baseline` ManagerBased SuperMimic environment and Trainer on Isaac Lab v3.0.0. It uses 29 G1 actions, proprioception only and the 40 G1-retargeted LAFAN1 clips. The verified runtime is OVPhysX. Multi-backend migration is deferred.
+The active G1 implementation now extends the original `mimic_baseline` ManagerBased SuperMimic environment and Trainer on Isaac Lab v3.0.0. It uses 29 G1 actions, proprioception only and the 40 G1-retargeted LAFAN1 clips. OVPhysX and Newton/MJWarp environment paths have been verified. The 512-environment Newton 3000-iteration experiment is in progress; its outcome is not yet claimed. Migration to other training platforms remains deferred.
 
 Start with the [ManagerBased G1 guide](docs/managerbased-g1.md). The separate `supermimic_g1/` trainer is retained as a historical implementation; it is not imported by the active training path.
 
