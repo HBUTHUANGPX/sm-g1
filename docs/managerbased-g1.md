@@ -10,8 +10,9 @@ The standalone `supermimic_g1/supermimic` package is not imported.
 
 Only proprioceptive G1 tracking and LAFAN1 are enabled by the new entry point.
 No ERP, PMG, PPO substitution, SOMA or cross-platform abstraction is introduced.
-The verified Isaac Lab 3 runtime is OVPhysX. Newton is not claimed as validated
-for this new ManagerBased task.
+The Isaac Lab 3 runtime supports `--backend ovphysx` (default) and
+`--backend newton` (MJWarp solver). Both have real GPU environment checks.
+Resume/evaluation infer the saved backend and reject incompatible overrides.
 
 ## What is reused versus changed
 
@@ -25,7 +26,7 @@ for this new ManagerBased task.
 | Analytic MDP | Same formulas for real and imagined rewards; observation width follows action width. |
 | Replay | Same episode-aware ring and sampling; action fields become configurable. |
 | Networks and Trainer | Original architectures, optimization and BPTT; input/output/goal widths account for 29 actions. |
-| EpisodeRandomization | Same sampling logic; OVPhysX GA material-property view is supported. |
+| EpisodeRandomization | Same sampling logic; OVPhysX material view and Newton model-change notification are supported. |
 | Evaluator | Original evaluator; G1 selects original unpadded clip endpoints. |
 | `g1_robot.py` | New robot configuration from URDF effort/velocity limits, explicit initial PD gains, self-collision enabled. Gains are engineering settings, not hardware calibration. |
 | `lafan1.py` | New CSV-to-original-NPZ converter; source digest/schema checks and atomic cache replacement. |
@@ -62,7 +63,7 @@ Large data, USD, logs and checkpoints are not committed.
 ## Commands
 
 Run from the repository root using the Python environment that contains Isaac Lab
-and OVPhysX. The commands below use `python` as that interpreter. In the validated
+and the selected physics backend. The commands below use `python` as that interpreter. In the validated
 Windows installation, its existing OVPhysX dependency directory must remain on
 `PYTHONPATH`; do not mix it with another simulator installation.
 
@@ -138,5 +139,29 @@ See [machine-readable evidence](results/2026-11-07-managerbased-g1.json).
   check, not a learned tracking result.
 
 The old standalone Newton 40/40 result must not be attributed to this ManagerBased
-migration. No new 3000-iteration convergence experiment or hardware validation has
-been performed. All training jobs launched for these checks are bounded.
+migration. No hardware validation has been performed. All training jobs are bounded.
+
+## Newton formal experiment
+
+The initial run was stopped at user request on 2026-11-07. Its latest saved checkpoint is model_2300.pt; the automatic final evaluation was cancelled. This is not a completed 3000-iteration or evaluated tracking result. The following commands document that initial run. It uses the
+original full networks and optimization settings (WM batch 2048, 10 WM updates,
+policy batch 4096, 32-step horizon, replay 1000 steps, seed 0). A 512-environment
+capacity trial passed three iterations at approximately 0.53 iterations/s after
+warmup, with 9.54 GiB peak PyTorch allocation. Physics uses 5 ms steps and the
+original manager decimation of four; measured action time is 20 ms.
+
+```bash
+python mimic_baseline/scripts/supermimic/train_g1.py --backend newton --mode train --data-root supermimic_g1/data --log-dir runs/newton-512-3000 --num-envs 512 --iterations 3000 --save-every 100 --log-every 10
+python mimic_baseline/scripts/supermimic/train_g1.py --mode evaluate --data-root supermimic_g1/data --log-dir runs/newton-512-3000-eval --resume runs/newton-512-3000/model_3000.pt
+```
+
+The second command must run only after training completes. Evaluation includes all
+40 source clips and uses their original unpadded endpoints. Newton validation
+checks actual MJWarp geometry friction after model updates, the ground coefficient,
+COM rebasing, partial resets, reward parity and pre-autoreset terminal states.
+See [Newton evidence](results/2026-11-07-managerbased-g1-newton.json).
+
+The formal run is pinned to source revision `282a555`. Its disabled recovery
+provenance contains legacy descriptive action/observation widths 27/91; actual
+policy, replay and observations are verified as G1 29/93. The subsequent metadata
+fix affects future checkpoints only. It does not change learning or this run.

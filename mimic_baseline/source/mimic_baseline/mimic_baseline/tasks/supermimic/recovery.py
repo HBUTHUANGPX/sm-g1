@@ -33,9 +33,8 @@ def _probabilities(dt: float) -> tuple[float, float]:
     return min(max(dt / ROOT_TIME_CONSTANT, 0.), 1.), min(max(dt / ENDPOINT_TIME_CONSTANT, 0.), 1.)
 
 
-def recovery_provenance(enabled: bool, term_height=.20, term_tilt=.8) -> dict:
+def recovery_provenance(enabled: bool, term_height=.20, term_tilt=.8, *, action_dim: int = 27) -> dict:
     """Describe the actual fixed scheme in checkpoints and the run config."""
-    from .mdp_legacy import ACT_DIM, OBS_DIM
 
     root_probability, endpoint_probability = _probabilities(CONTROL_DT)
     parameters = (
@@ -62,8 +61,8 @@ def recovery_provenance(enabled: bool, term_height=.20, term_tilt=.8) -> dict:
         "tracking_state": "post_step_state_and_next_reference",
         "critic_context": "role * clamp(200 - episode_age, 0, 200) / 200",
         "critic_extra_scalars": int(enabled),
-        "actor_observation_dim": OBS_DIM,
-        "action_dim": ACT_DIM,
+        "actor_observation_dim": 64 + action_dim,
+        "action_dim": action_dim,
         "actor_unchanged": True,
         "time_limit_semantics": "real_collection_truncation_only",
     }

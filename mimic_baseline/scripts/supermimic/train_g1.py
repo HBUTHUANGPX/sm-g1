@@ -16,6 +16,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--data-root", type=Path, required=True)
     p.add_argument("--mode", choices=["prepare", "check", "train", "evaluate"], default="check")
+    p.add_argument("--backend", choices=["ovphysx", "newton"], default=None)
     p.add_argument("--num-envs", type=int, default=None)
     p.add_argument("--iterations", type=int, default=None)
     p.add_argument("--log-dir", type=Path, required=True)
@@ -94,15 +95,19 @@ def main():
         device="cuda:0", log_dir=str(args.log_dir), urdf=str(urdf), robot_usd=str(usd), motion_file=str(output)
     )
     if args.resume:
-        from mimic_baseline.tasks.supermimic.g1_run_config import restore_run_config
+        from mimic_baseline.tasks.supermimic.g1_run_config import restore_run_config, resolve_backend
 
         saved = torch.load(args.resume, map_location="cpu", weights_only=False)
+        args.backend = resolve_backend(args.backend, saved)
         restored, args.small_model = restore_run_config(saved, {**overrides, **locations}, small_model=args.small_model)
         cfg = TrainingConfig(**restored)
         if args.mode == "train" and (args.iterations is None or cfg.iterations <= saved["iteration"]):
             raise ValueError("Resume requires --iterations greater than the saved iteration")
         del saved
     else:
+        from mimic_baseline.tasks.supermimic.g1_run_config import resolve_backend
+
+        args.backend = resolve_backend(args.backend, None)
         cfg = TrainingConfig(
             robot_name="g1",
             num_envs=args.num_envs or 64,
@@ -136,6 +141,7 @@ def main():
         cfg.num_envs = len(paths)
     mdp = MDP(kin, motion, torch.zeros(29, device=cfg.device))
     env_cfg = G1SuperMimicEnvCfg(
+        backend=args.backend,
         robot_usd=str(usd),
         robot_urdf=str(urdf),
         ground_usd=str(data / "ground/default_ground_plane.usda"),
@@ -186,7 +192,11 @@ def main():
                 records = evaluate_tracking(
                     env, motion, mdp, policy, goal_frames=cfg.goal_frames, hist=cfg.hist, use_original_lengths=True
                 )
-                write_results(args.log_dir, records, metadata={"robot": "g1", "environment": "SuperMimicRLEnv"})
+                write_results(
+                    args.log_dir,
+                    records,
+                    metadata={"robot": "g1", "environment": "SuperMimicRLEnv", "backend": args.backend},
+                )
                 print(json.dumps({"clips": len(records), "completed": sum(r["completed"] for r in records)}))
                 return
             replay = ReplayBuffer(cfg.buffer_steps, cfg.num_envs, cfg.device, action_dim=29)
@@ -202,7 +212,12 @@ def main():
                 normalize_xi,
                 cfg,
                 logger=JsonlLogger(args.log_dir / "train.jsonl"),
-                provenance={"environment": "original SuperMimicRLEnv", "robot": "g1", "small_model": args.small_model},
+                provenance={
+                    "environment": "original SuperMimicRLEnv",
+                    "robot": "g1",
+                    "small_model": args.small_model,
+                    "backend": args.backend,
+                },
             )
             if args.resume:
                 trainer.load_checkpoint(args.resume)

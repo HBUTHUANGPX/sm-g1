@@ -493,7 +493,10 @@ class Trainer:
             "reference_commit": _SOURCE_COMMIT,
             "implementation": "independent RX-P2 package",
         }
-        self.provenance["recovery"] = recovery_provenance(cfg.recovery_enabled, cfg.term_height, cfg.term_tilt)
+        self.provenance["recovery"] = recovery_provenance(
+            cfg.recovery_enabled, cfg.term_height, cfg.term_tilt,
+            action_dim=getattr(self.motion, "action_dim", 27),
+        )
         self.iteration = 0
         self.sim_steps = 0
         self.transitions = 0
