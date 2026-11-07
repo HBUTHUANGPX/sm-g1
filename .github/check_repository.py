@@ -9,7 +9,10 @@ for name in filter(None, paths):
     path = Path(name)
     if name not in allowed_files and name not in reviewed_mimic_files and path.parts[0] not in allowed_roots:
         raise SystemExit(f'Unreviewed publication path: {name}')
-    if {'data', 'logs'} & set(path.parts) or path.suffix.lower() in {'.pt', '.pth', '.ckpt', '.pem', '.key'}:
+    # A reviewed Python source package named data is not a generated dataset.
+    reviewed_source = (name in reviewed_mimic_files and name.startswith('mimic_baseline/source/')
+                       and path.suffix == '.py')
+    if ({'data', 'logs'} & set(path.parts) and not reviewed_source) or path.suffix.lower() in {'.pt', '.pth', '.ckpt', '.pem', '.key'}:
         raise SystemExit(f'Generated or sensitive file tracked: {name}')
     if path.is_file() and path.stat().st_size > 5 * 1024 * 1024:
         raise SystemExit(f'Large artifact tracked: {name}')

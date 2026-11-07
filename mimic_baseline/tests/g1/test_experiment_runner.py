@@ -3,12 +3,11 @@ import json
 import hashlib
 from pathlib import Path
 import subprocess
+import shutil
 import torch
 import pytest
 
-spec = importlib.util.spec_from_file_location('runner', Path(__file__).parents[2] / 'scripts/supermimic/run_g1_experiment.py')
-runner = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(runner)
+from mimic_baseline.tasks.supermimic.cli import experiment as runner
 
 
 @pytest.mark.parametrize('failure', [None, 'training', 'checkpoint', 'evaluating', 'clip_set', 'source_drift'])
@@ -63,6 +62,7 @@ def test_source_revision_mismatch_is_rejected(tmp_path, monkeypatch):
         runner.verify_source('0'*40)
 
 
+@pytest.mark.skipif(shutil.which("git") is None, reason="Release creation requires Git; deployed runtime does not")
 def test_release_export_uses_committed_allowlist_only(tmp_path):
     import tarfile
     spec = importlib.util.spec_from_file_location('exporter', Path(__file__).parents[2] / 'scripts/supermimic/export_g1_release.py')

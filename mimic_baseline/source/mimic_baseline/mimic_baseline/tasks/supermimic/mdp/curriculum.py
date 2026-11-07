@@ -1,7 +1,6 @@
-"""Read-only reset metrics for mastery-weighted motion sampling."""
-
-
-def update_motion_bin_returns(env, env_ids, command_name="motion"):
-    # Statistics are updated before reset on every rank, never in this callback.
-    cmd = env.command_manager.get_term(command_name)
-    return {"mean_bin_mastery": cmd.mean_bin_mastery(), "reset_frame_mean": cmd.mean_reset_frame()}
+"""Compatibility alias; canonical implementation: envs.mdp.curriculum."""
+from importlib import import_module as _import_module
+import sys as _sys
+_target = _import_module("mimic_baseline.tasks.supermimic.envs.mdp.curriculum")
+globals().update({name: value for name, value in vars(_target).items() if not name.startswith("__")})
+_sys.modules[__name__] = _target
