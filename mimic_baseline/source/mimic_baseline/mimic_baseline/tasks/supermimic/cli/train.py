@@ -12,6 +12,9 @@ import sys
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument(
+        "--evaluation-profile", choices=["strict", "full_clean"], default="strict"
+    )
     p.add_argument("--data-root", type=Path, required=True)
     p.add_argument(
         "--mode", choices=["prepare", "check", "train", "evaluate"], default="check"
@@ -50,6 +53,8 @@ def main():
     ):
         p.add_argument("--" + name.replace("_", "-"), type=int, default=None)
     args = p.parse_args()
+    if args.mode != "evaluate" and args.evaluation_profile != "strict":
+        p.error("--evaluation-profile is only valid in evaluate mode")
     import torch
     from mimic_baseline.tasks.supermimic.data.lafan1 import convert_clip, ensure_clip
 
@@ -199,7 +204,12 @@ def main():
         torch.zeros(29, device=cfg.device),
         recovery_enabled=cfg.recovery_enabled,
     )
-    env_cfg = G1SuperMimicEnvCfg(
+    env_cfg_type = G1SuperMimicEnvCfg
+    if args.mode == "evaluate":
+        from mimic_baseline.tasks.supermimic.envs.evaluation import G1EvaluationEnvCfg
+
+        env_cfg_type = G1EvaluationEnvCfg
+    env_cfg = env_cfg_type(
         backend=args.backend,
         self_collisions=cfg.self_collisions,
         recovery_enabled=cfg.recovery_enabled,
@@ -211,6 +221,11 @@ def main():
         ground_usd=str(data / "ground/default_ground_plane.usda"),
         eval_mode=args.mode == "evaluate",
     )
+    if args.mode == "evaluate":
+        env_cfg.evaluation_profile = args.evaluation_profile
+        env_cfg.evaluation_clip_steps = int(
+            (motion.original_clip_end - motion.clip_start).max().item()
+        )
     env_cfg.scene.num_envs = cfg.num_envs
     env_cfg.commands.motion.goal_frames = cfg.goal_frames
     env_cfg.commands.motion.gamma = cfg.gamma
@@ -226,6 +241,8 @@ def main():
             if cfg.recovery_enabled
             else "SuperMimic-Flat-G1-v0"
         )
+        if args.mode == "evaluate":
+            task = "SuperMimic-Evaluation-G1-v0"
         managed = gym.make(task, cfg=env_cfg, motion=motion, mdp=mdp).unwrapped
         env = SuperMimicTrainingEnv(managed)
         try:
@@ -266,6 +283,11 @@ def main():
                     write_results,
                 )
 
+                from mimic_baseline.tasks.supermimic.evaluation.profiles import (
+                    runtime_profile,
+                )
+
+                audit = runtime_profile(managed, args.evaluation_profile)
                 records = evaluate_tracking(
                     env,
                     motion,
@@ -274,11 +296,25 @@ def main():
                     goal_frames=cfg.goal_frames,
                     hist=cfg.hist,
                     use_original_lengths=True,
+                    no_termination=args.evaluation_profile == "full_clean",
                 )
+                audit["after_rollout"] = runtime_profile(
+                    managed, args.evaluation_profile
+                )
+                (args.log_dir / "runtime_profile.json").write_text(
+                    json.dumps(audit, indent=2), encoding="utf-8"
+                )
+                if args.evaluation_profile == "full_clean":
+                    from mimic_baseline.tasks.supermimic.evaluation.clean_reporting import (
+                        write_clean_results,
+                    )
+
+                    write_results = write_clean_results
                 write_results(
                     args.log_dir,
                     records,
                     metadata={
+                        "evaluation": audit,
                         "robot": "g1",
                         "environment": "SuperMimicRLEnv",
                         "backend": args.backend,
@@ -288,7 +324,11 @@ def main():
                     json.dumps(
                         {
                             "clips": len(records),
-                            "completed": sum(r["completed"] for r in records),
+                            (
+                                "covered_clips"
+                                if args.evaluation_profile == "full_clean"
+                                else "completed"
+                            ): sum(r["completed"] for r in records),
                         }
                     )
                 )

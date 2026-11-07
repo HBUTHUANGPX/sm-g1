@@ -1,0 +1,9 @@
+# Repository cleanup and dual evaluation
+
+User scope: remove redundant historical runtime from the current Git tree, retain useful asset tools and licensing, and add a complete-trajectory evaluation with all domain randomization, noise and termination disabled. Existing 20000-iteration training must not be interrupted. GPU acceptance and both new-protocol evaluations run automatically after the immutable current experiment completes.
+
+1. Move the three shared preparation tools to tools/assets with external --data-root support (default data/g1); remove tracked standalone training code, preserve license and historical Git references. Do not delete local/remote untracked datasets or logs. Validate CPU helpers/CLI and commit/push.
+2. Add an evaluation-only environment subclass: strict uses existing native hard tracking termination; full_clean uses an empty native termination manager, nominal physical parameters, no reset/observation noise and zero action delay. Reuse the original training environment and avoid changing training methods/configuration.
+3. Correct rollout completion to original unpadded endpoints. Emit coverage separately from tracking success; full_clean must take exactly T-1 transitions per T-frame clip. Keep genuine numerical failures explicit. Add meaningful CPU rollout/profile/CLI regression tests.
+4. Add strict/full_clean/both evaluation orchestration and result metadata/runtime assertions; stage independent immutable release. The active original runner remains untouched. A bounded background job waits for its complete status and verified final checkpoint before GPU acceptance and all-40 dual evaluation.
+5. Independent review, CI, publication checks, commit/push and PR integration. Record GPU checks as pending until artifacts actually exist; never call scheduled validation passed.

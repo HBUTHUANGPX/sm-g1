@@ -137,3 +137,17 @@ scripts/evaluate_g1.py
 scripts/export_g1_release.py
 scripts/run_g1_experiment.py
 scripts/train_g1.py
+tools/assets/download_lafan1.py
+tools/assets/urdf_to_mjcf.py
+tools/assets/mjcf_to_usd.py
+licenses/supermimic_vibed-MIT.txt
+mimic_baseline/tests/g1/test_asset_tools.py
+docs/repository-layout.md
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/profiles.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/evaluation/clean_reporting.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/evaluation.py
+mimic_baseline/tests/g1/test_evaluation_profiles.py
+mimic_baseline/tests/g1/test_evaluation_cli_profiles.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/cli/evaluate_after_run.py
+scripts/evaluate_after_run.py
+mimic_baseline/tests/g1/test_evaluate_after_run.py

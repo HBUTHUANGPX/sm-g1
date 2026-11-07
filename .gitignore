@@ -7,7 +7,6 @@
 !/README.md
 !/IsaacLab.upstream.md
 !/IsaacLab/
-!/supermimic_g1/
 !/.github/
 !/docs/
 /docs/*
@@ -40,3 +39,13 @@ __pycache__/
 !/docs/superpowers/plans/2026-11-07-g1-managerbased.md
 
 !/docs/managerbased-g1.md
+
+# Public preparation tools and attribution; datasets remain local.
+!/tools/
+/tools/*
+!/tools/assets/
+!/licenses/
+/licenses/*
+!/licenses/supermimic_vibed-MIT.txt
+!/docs/repository-layout.md
+/data/

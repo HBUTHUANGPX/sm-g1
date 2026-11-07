@@ -36,7 +36,7 @@ core math. Simulator APIs belong to robot assets and environment modules. Keep
 `core`, data math and model construction importable without Isaac Lab. The
 package initializer only registers explicit Gym entry points. Optional perception
 implementation remains separate and is outside the supported G1 entry point.
-`envs/legacy.py` and the root `supermimic_g1/` are historical implementations;
+`envs/legacy.py` is a historical implementation; the standalone `supermimic_g1/` is now retained only in Git history at `4727620`;
 ManagerBased G1 does not delegate its physics loop to them.
 
 ## Commands and compatibility
@@ -64,8 +64,8 @@ bitwise continuation of saved simulator state.
 ## All-40 evaluation
 
 ```bash
-python scripts/evaluate_g1.py --checkpoint runs/train/model_3000.pt --data-root supermimic_g1/data --output runs/eval-3000 --dry-run
-python scripts/evaluate_g1.py --checkpoint runs/train/model_3000.pt --data-root supermimic_g1/data --output runs/eval-3000
+python scripts/evaluate_g1.py --checkpoint runs/train/model_3000.pt --data-root data/g1 --output runs/eval-3000 --dry-run
+python scripts/evaluate_g1.py --checkpoint runs/train/model_3000.pt --data-root data/g1 --output runs/eval-3000
 ```
 
 Use a **new output directory**. Preflight checks all 40 finite 36-column source
@@ -78,8 +78,7 @@ The command infers backend/model configuration from the checkpoint. It evaluates
 from each clip's first frame to its original unpadded endpoint. Observation/reset
 noise and physical randomization are disabled; actuator delay follows the saved
 configuration and seeded reset behavior. Tracking failure termination is
-deterministic, with no training recovery protection period. This protocol is
-unchanged by the source reorganization.
+deterministic, with no training recovery protection period. Version 2 corrects the original endpoint boundary; see the [two evaluation profiles](evaluation-profiles.md) for clean full-trajectory evaluation and historical comparability limits.
 
 Outputs: `evaluation_manifest.json`, `evaluation.log`, `perclip.json`,
 `perclip.csv`, `by_category.csv`, and `summary.json` containing checkpoint SHA256,
@@ -116,7 +115,7 @@ commits record results and documentation only. See [machine-readable evidence](r
 
 - Mac CPU: 45 passed. Windows CPU: 44 passed, one Git-only export test skipped
   because Git is absent there; export was tested on Mac/CI. GPU regression: 5 passed.
-- Original function/configuration contracts: 395.
+- Original function/configuration contracts: 393 unchanged; two explicit evaluation-only exceptions retain their prior hashes and regression-test links in the contract manifest.
 - Newton recovery environment: 64 environments, 205 finite steps; delay ticks
   0–4, upside-down resets, collision clearance, self-contact, probabilistic groups,
   protection boundary, evaluation termination and partial reset checks passed.
