@@ -153,3 +153,54 @@ class G1BatchedKinematics(G1Kinematics):
     """
 
     forward = G1Kinematics.forward_fast
+
+
+class G1TrainingKinematics(G1Kinematics):
+    """Opt-in differentiable FK with bounded recomputation workspace.
+
+    The depth-batched implementation saves large per-link intermediates when
+    called on flattened policy horizons. Checkpoint each bounded chunk instead:
+    only the six inputs survive forward, and autograd recomputes one chunk's
+    intermediates at a time. Outputs and their gradients still scale with the
+    full input batch; ``chunk_size`` bounds FK workspace, not total training
+    memory. No policy samples or time steps are dropped or detached.
+
+    This trades a second FK forward during backward for reduced activation
+    storage. The reference and evaluation implementations remain unchanged.
+    """
+
+    def __init__(self, urdf_path, device, *, chunk_size=4096):
+        super().__init__(urdf_path, device)
+        if not isinstance(chunk_size, int) or isinstance(chunk_size, bool) or chunk_size <= 0:
+            raise ValueError("chunk_size must be a positive integer")
+        self.chunk_size = chunk_size
+
+    def forward(self, p, R, v, w, q, qd):
+        from torch.utils.checkpoint import checkpoint
+
+        if q.shape[-1] != len(self.joint_names) or qd.shape != q.shape:
+            raise ValueError(
+                f"Expected q and qd ending in {len(self.joint_names)}, got "
+                f"{tuple(q.shape)} and {tuple(qd.shape)}."
+            )
+        inputs = (p, R, v, w, q, qd)
+        tails = ((3,), (3, 3), (3,), (3,), (len(self.joint_names),), (len(self.joint_names),))
+        batch = torch.broadcast_shapes(*(x.shape[:-len(tail)] for x, tail in zip(inputs, tails)))
+        flattened = tuple(x.expand(*batch, *tail).reshape(-1, *tail)
+                          for x, tail in zip(inputs, tails))
+        count = flattened[0].shape[0]
+        # Initialize integer-only topology outside recomputation. Float transforms
+        # are always read from this instance (including MotionLib's double copy).
+        if not hasattr(self, '_fast_levels'):
+            self._initialize_fast_topology()
+        outputs = []
+        for start in range(0, max(count, 1), self.chunk_size):
+            chunk = tuple(x[start:start + self.chunk_size] for x in flattened)
+            if torch.is_grad_enabled() and any(x.requires_grad for x in chunk):
+                result = checkpoint(self.forward_fast, *chunk, use_reentrant=False,
+                                    preserve_rng_state=False)
+            else:
+                result = self.forward_fast(*chunk)
+            outputs.append(result)
+        return tuple(torch.cat(parts, dim=0).reshape(*batch, *parts[0].shape[1:])
+                     for parts in zip(*outputs))
