@@ -84,7 +84,9 @@ def main():
         print(json.dumps({"converted_clips": len(paths)}))
         return
     from isaaclab.app import launch_simulation
-    from mimic_baseline.tasks.supermimic.robots.g1.kinematics import G1Kinematics
+    from mimic_baseline.tasks.supermimic.robots.g1.kinematics import (
+        G1Kinematics, G1BatchedKinematics,
+    )
     from mimic_baseline.tasks.supermimic.envs.configs.g1 import G1SuperMimicEnvCfg
     from mimic_baseline.tasks.supermimic.envs.manager_based import (
         SuperMimicRLEnv,
@@ -200,9 +202,8 @@ def main():
         )
     cfg.validate()
     torch.manual_seed(cfg.seed)
-    kin = G1Kinematics(urdf, cfg.device)
-    if args.kinematics_execution == "batched":
-        kin.forward = kin.forward_fast
+    kin_type = G1BatchedKinematics if args.kinematics_execution == "batched" else G1Kinematics
+    kin = kin_type(urdf, cfg.device)
     motion = MotionLib(paths, kin, cfg.device)
     if args.mode == "evaluate":
         cfg.num_envs = len(paths)

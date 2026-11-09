@@ -142,3 +142,14 @@ class G1Kinematics(RXP2Kinematics):
             for values, dim in ((positions, -2), (rotations, -3),
                                 (velocities, -2), (angular_velocities, -2))
         )
+
+
+class G1BatchedKinematics(G1Kinematics):
+    """Opt-in batched FK whose method remains correctly bound after copying.
+
+    MotionLib shallow-copies kinematics before casting its URDF transforms to
+    double precision. A class method alias follows the copied instance, unlike
+    assigning an already-bound method to an instance attribute.
+    """
+
+    forward = G1Kinematics.forward_fast

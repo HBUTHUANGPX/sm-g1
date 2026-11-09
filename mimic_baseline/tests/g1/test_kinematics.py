@@ -98,3 +98,75 @@ def test_fast_forward_rejects_non_breadth_first_topology(tmp_path):
     kin.parent = tuple(parents)
     with pytest.raises(ValueError, match='breadth-first'):
         kin._initialize_fast_topology()
+
+
+def test_batched_copy_uses_copied_double_transforms(tmp_path):
+    from copy import copy
+    from mimic_baseline.tasks.supermimic.robots.g1.kinematics import G1BatchedKinematics
+
+    original = G1BatchedKinematics(make_urdf(tmp_path), 'cpu')
+    copied = copy(original)
+    for name in ('off_p', 'off_R', 'axes', 'q_lo', 'q_hi'):
+        setattr(copied, name, getattr(original, name).double())
+    assert copied.forward.__self__ is copied
+    assert original.forward.__self__ is original
+    assert original.off_R.dtype == torch.float32
+    assert copied.off_R.dtype == torch.float64
+    p = torch.zeros(2, 3, dtype=torch.float64)
+    R = torch.eye(3, dtype=torch.float64).expand(2, 3, 3)
+    q = torch.zeros(2, 29, dtype=torch.float64)
+    actual = copied.forward(p, R, p, p, q, q)
+    reference = RXP2Kinematics.forward(copied, p, R, p, p, q, q)
+    for a, b in zip(actual, reference):
+        assert a.dtype == torch.float64
+        torch.testing.assert_close(a, b)
+
+
+def test_native_g1_values_gradients_and_motionlib(tmp_path):
+    """Optional native-asset validation on CPU or the explicitly selected GPU."""
+    import os
+    import numpy as np
+    import pytest
+    from mimic_baseline.tasks.supermimic.robots.g1.kinematics import G1BatchedKinematics
+    from mimic_baseline.tasks.supermimic.data.lafan1 import convert_clip
+    from mimic_baseline.tasks.supermimic.data.motion import MotionLib
+    from mimic_baseline.tasks.supermimic.core.rotations import quat_to_mat
+
+    path = os.environ.get('G1_TEST_URDF')
+    if not path:
+        pytest.skip('Set G1_TEST_URDF to validate native G1 asset')
+    device = os.environ.get('G1_TEST_DEVICE', 'cpu')
+    kin = G1BatchedKinematics(path, device)
+    torch.manual_seed(19)
+    for batch in (40, 4096):
+        inputs = [torch.randn(batch, *shape, device=device, requires_grad=True)
+                  for shape in ((3,), (3, 3), (3,), (3,), (29,), (29,))]
+        inputs[1] = quat_to_mat(torch.nn.functional.normalize(
+            torch.randn(batch, 4, device=device), dim=-1)).detach().requires_grad_()
+        reference = RXP2Kinematics.forward(kin, *inputs)
+        actual = kin.forward(*inputs)
+        for a, b in zip(actual, reference):
+            assert torch.isfinite(a).all()
+            torch.testing.assert_close(a, b, rtol=2e-5, atol=2e-5)
+        weights = [torch.randn_like(x) for x in actual]
+        ref_grad = torch.autograd.grad(sum((x * z).sum() for x, z in zip(reference, weights)), inputs)
+        fast_grad = torch.autograd.grad(sum((x * z).sum() for x, z in zip(actual, weights)), inputs)
+        for a, b in zip(fast_grad, ref_grad):
+            assert torch.isfinite(a).all()
+            torch.testing.assert_close(a, b, rtol=1e-4, atol=1e-4)
+        print('native G1', device, 'batch', batch,
+              'output_max_abs', max((a-b).abs().max().item() for a, b in zip(actual, reference)),
+              'gradient_max_abs', max((a-b).abs().max().item() for a, b in zip(fast_grad, ref_grad)))
+    raw = np.zeros((5, 36))
+    raw[:, 2] = 0.8
+    raw[:, 6] = 1
+    raw[:, 7:] = np.linspace(0, 0.1, 5)[:, None]
+    source = tmp_path / 'native.csv'
+    target = source.with_suffix('.npz')
+    np.savetxt(source, raw, delimiter=',')
+    convert_clip(source, target)
+    motion = MotionLib([target], kin, device)
+    assert motion.kin.forward.__self__ is kin
+    assert motion.kin.off_R.dtype == torch.float32
+    assert motion.root_p.dtype == torch.float32
+    assert torch.isfinite(motion.root_p).all()
