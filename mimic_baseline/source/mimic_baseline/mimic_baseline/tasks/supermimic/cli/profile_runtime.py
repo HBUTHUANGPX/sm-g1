@@ -4,6 +4,7 @@ import argparse
 import cProfile
 import hashlib
 import json
+import os
 from pathlib import Path
 import pstats
 import runpy
@@ -27,6 +28,48 @@ def portable_function(filename, line, name):
         value = Path(value).name
     return f"{value}:{line}:{name}"
 
+
+
+
+def allocator_snapshot(cuda):
+    """Read allocator/device counters without releasing or allocating tensors.
+
+    Device free memory includes consumers outside PyTorch's allocator. Native
+    allocator counters may be unavailable or not meaningful with other backends;
+    retain the backend and missing values rather than inferring fragmentation.
+    Retry/OOM counters are cumulative, so compare the two snapshots as deltas.
+    """
+    stats = cuda.memory_stats()
+    free, total = cuda.mem_get_info()
+    backend = getattr(cuda, "get_allocator_backend", None)
+    known_settings = {
+        "backend:native", "backend:cudaMallocAsync",
+        "expandable_segments:True", "expandable_segments:False",
+    }
+    configuration = {}
+    for key in ("PYTORCH_ALLOC_CONF", "PYTORCH_CUDA_ALLOC_CONF"):
+        value = os.environ.get(key)
+        if value is not None:
+            parts = [part.strip() for part in value.split(",")]
+            configuration[key] = (
+                value if all(part in known_settings for part in parts)
+                else "<set: unrecognized settings omitted>"
+            )
+    return {
+        "backend": backend() if backend is not None else None,
+        "configuration": configuration,
+        "bytes": {
+            kind: {
+                field: stats.get(f"{kind}_bytes.all.{field}")
+                for field in ("current", "peak")
+            }
+            for kind in ("allocated", "active", "reserved", "inactive_split")
+        },
+        "allocation_retries": stats.get("num_alloc_retries"),
+        "out_of_memory_events": stats.get("num_ooms"),
+        "device_free_bytes": int(free),
+        "device_total_bytes": int(total),
+    }
 
 
 def run_training_window(trainer, original_train, kwargs, *, warmup_iterations,
@@ -108,7 +151,7 @@ def audit(
         raise ValueError("warmup iterations must satisfy 0 <= warmup < iterations")
     if target == "evaluation" and warmup_iterations:
         raise ValueError("Evaluation requires zero warmup iterations")
-    if actuators not in ("reference", "grouped") or kinematics not in ("reference", "batched", "bounded"):
+    if actuators not in ("reference", "grouped") or kinematics not in ("reference", "batched", "bounded", "lean"):
         raise ValueError("Unsupported actuator or kinematics execution")
     if not isinstance(fk_chunk_size, int) or isinstance(fk_chunk_size, bool) or fk_chunk_size < 1:
         raise ValueError("fk_chunk_size must be a positive integer")
@@ -156,6 +199,7 @@ def audit(
         torch.cuda.synchronize()
         timing["pre_measurement_peak_allocated_gib"] = torch.cuda.max_memory_allocated() / 2**30
         timing["pre_measurement_peak_reserved_gib"] = torch.cuda.max_memory_reserved() / 2**30
+        timing["allocator_before_measurement"] = allocator_snapshot(torch.cuda)
         torch.cuda.reset_peak_memory_stats()
         timing["start"] = time.perf_counter()
         if profiler is not None:
@@ -168,6 +212,7 @@ def audit(
         timing["measured_seconds"] = time.perf_counter() - timing.pop("start")
         timing["peak_allocated_gib"] = torch.cuda.max_memory_allocated() / 2**30
         timing["peak_reserved_gib"] = torch.cuda.max_memory_reserved() / 2**30
+        timing["allocator_after_measurement"] = allocator_snapshot(torch.cuda)
         for kind in ("allocated", "reserved"):
             timing[f"whole_audit_peak_{kind}_gib"] = max(
                 timing[f"pre_measurement_peak_{kind}_gib"], timing[f"peak_{kind}_gib"]
@@ -335,7 +380,7 @@ def main():
     p.add_argument("--cprofile", action=argparse.BooleanOptionalAction, default=True)
     p.add_argument("--actuators", choices=["reference", "grouped"], default="reference")
     p.add_argument(
-        "--kinematics", choices=["reference", "batched", "bounded"], default="reference"
+        "--kinematics", choices=["reference", "batched", "bounded", "lean"], default="reference"
     )
     p.add_argument("--verify-state-cache", action="store_true")
     p.add_argument("--profile", choices=["strict", "full_clean"], default="full_clean")

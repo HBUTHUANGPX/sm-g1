@@ -118,3 +118,23 @@ def test_profile_rejects_invalid_execution_before_creating_outputs(tmp_path, kwa
     with pytest.raises(ValueError):
         audit(tmp_path / 'missing', tmp_path, tmp_path / 'out', **kwargs)
     assert not (tmp_path / 'out').exists()
+
+
+def test_allocator_snapshot_records_backend_without_inferring_fragmentation(monkeypatch):
+    from types import SimpleNamespace
+    from mimic_baseline.tasks.supermimic.cli.profile_runtime import allocator_snapshot
+    monkeypatch.setenv("PYTORCH_ALLOC_CONF", "backend:cudaMallocAsync")
+    monkeypatch.setenv("PYTORCH_CUDA_ALLOC_CONF", "unreviewed:value")
+    cuda = SimpleNamespace(
+        memory_stats=lambda: {"allocated_bytes.all.current": 123, "num_ooms": 0},
+        mem_get_info=lambda: (456, 789),
+        get_allocator_backend=lambda: "cudaMallocAsync",
+    )
+    result = allocator_snapshot(cuda)
+    assert result["bytes"]["allocated"]["current"] == 123
+    assert result["bytes"]["inactive_split"]["current"] is None
+    assert result["device_free_bytes"] == 456
+    assert result["backend"] == "cudaMallocAsync"
+    assert result["out_of_memory_events"] == 0
+    assert result["configuration"]["PYTORCH_ALLOC_CONF"] == "backend:cudaMallocAsync"
+    assert "unreviewed" not in result["configuration"]["PYTORCH_CUDA_ALLOC_CONF"]
