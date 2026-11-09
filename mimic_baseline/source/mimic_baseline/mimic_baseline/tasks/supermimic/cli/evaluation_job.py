@@ -88,7 +88,7 @@ def run_job(
     checkpoint=None,
     profile="both",
     execution="grouped",
-    scheduling="sequential",
+    scheduling="parallel",
     kinematics_execution="batched",
 ):
     from ..evaluation.report import write_report
@@ -192,7 +192,7 @@ def main():
         "--execution", choices=("grouped", "reference"), default="grouped"
     )
     parser.add_argument(
-        "--scheduling", choices=("sequential", "parallel"), default="sequential"
+        "--scheduling", choices=("sequential", "parallel"), default="parallel"
     )
     run_job(**vars(parser.parse_args()))
 

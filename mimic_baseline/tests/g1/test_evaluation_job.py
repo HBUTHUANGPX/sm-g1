@@ -120,6 +120,7 @@ def test_job_status_and_unique_outputs(tmp_path, monkeypatch):
     first = job.run_job(config)
     second = job.run_job(config)
     assert json.loads((first / "status.json").read_text())["kinematics_execution"] == "batched"
+    assert json.loads((first / "status.json").read_text())["scheduling"] == "parallel"
     assert first != second
     assert json.loads((first / "status.json").read_text())["status"] == "complete"
 
