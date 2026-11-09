@@ -82,7 +82,15 @@ def select_checkpoint(explicit, checkpoint_root):
     return matches[0]
 
 
-def run_job(config, *, checkpoint=None, profile="both", execution="grouped"):
+def run_job(
+    config,
+    *,
+    checkpoint=None,
+    profile="both",
+    execution="grouped",
+    scheduling="parallel",
+    kinematics_execution="batched",
+):
     from ..evaluation.report import write_report
     from .evaluate import evaluate
 
@@ -114,6 +122,8 @@ def run_job(config, *, checkpoint=None, profile="both", execution="grouped"):
         "checkpoint_sha256": sha256(selected),
         "source": source,
         "execution": execution,
+        "kinematics_execution": kinematics_execution,
+        "scheduling": scheduling,
         "profile": profile,
     }
     output = resolve(settings["output_root"]) / (
@@ -148,6 +158,8 @@ def run_job(config, *, checkpoint=None, profile="both", execution="grouped"):
             else output / "evaluation" / profile,
             profile=profile,
             execution=execution,
+            scheduling=scheduling,
+            kinematics_execution=kinematics_execution,
         )
         if (
             sha256(selected) != identity["checkpoint_sha256"]
@@ -155,6 +167,10 @@ def run_job(config, *, checkpoint=None, profile="both", execution="grouped"):
         ):
             raise ValueError("Checkpoint or source changed during evaluation")
         results = result["profiles"] if profile == "both" else {profile: result}
+        identity["evaluation_wall_seconds"] = time.monotonic() - start
+        identity["profile_elapsed_seconds"] = {
+            name: summary.get("elapsed_seconds") for name, summary in results.items()
+        }
         write_report(output, results, identity)
         status("complete")
         print((output / "report.md").read_text(), flush=True)
@@ -166,6 +182,7 @@ def run_job(config, *, checkpoint=None, profile="both", execution="grouped"):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--kinematics-execution", choices=("reference", "batched"), default="batched")
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument("--checkpoint", type=Path)
     parser.add_argument(
@@ -173,6 +190,9 @@ def main():
     )
     parser.add_argument(
         "--execution", choices=("grouped", "reference"), default="grouped"
+    )
+    parser.add_argument(
+        "--scheduling", choices=("sequential", "parallel"), default="parallel"
     )
     run_job(**vars(parser.parse_args()))
 

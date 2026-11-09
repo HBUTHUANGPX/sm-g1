@@ -29,7 +29,19 @@ def runtime_profile(env, profile):
     """Check realized managers and reset state, not merely requested CLI flags."""
     import torch
 
+    from ..robots.g1.kinematics import G1Kinematics
+    from ..core.kinematics import RXP2Kinematics
+
+    method = getattr(env.mdp.kin.forward, "__func__", None)
+    if method is G1Kinematics.forward_fast:
+        kinematics_execution = "batched"
+    elif method is RXP2Kinematics.forward:
+        kinematics_execution = "reference"
+    else:
+        raise RuntimeError("Unknown realized kinematics implementation")
     cfg = env.cfg
+    if kinematics_execution != getattr(cfg, "kinematics_execution", "reference"):
+        raise RuntimeError("Realized kinematics execution differs from requested mode")
     command = env.command_manager.get_term("motion")
     groups = {
         name: bool(group.enable_corruption)
@@ -75,6 +87,7 @@ def runtime_profile(env, profile):
     return {
         "profile": profile,
         "execution": getattr(cfg, "evaluation_execution", "reference"),
+        "kinematics_execution": kinematics_execution,
         "protocol_version": PROTOCOL_VERSION,
         "domain_randomization": False,
         "reset_noise": False,

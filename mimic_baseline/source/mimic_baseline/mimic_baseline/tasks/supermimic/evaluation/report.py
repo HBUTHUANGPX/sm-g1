@@ -56,6 +56,12 @@ def validate_runtime(checks, profile, *, recovery_enabled=False):
 def build_report(results, payloads, identity):
     from ..cli.evaluate import validate_results
 
+    expected_profiles = PROFILES if identity.get("profile") == "both" else None
+    if expected_profiles is not None and set(results) != set(expected_profiles):
+        raise ValueError("Both-profile report requires strict and full_clean results")
+    requested_kinematics = identity.get("kinematics_execution", "reference")
+    if requested_kinematics not in ("reference", "batched"):
+        raise ValueError("Unknown requested kinematics execution")
     profiles = {}
     for profile, summary in results.items():
         if (
@@ -67,6 +73,12 @@ def build_report(results, payloads, identity):
         if summary.get("checkpoint_sha256") != identity["checkpoint_sha256"]:
             raise ValueError("Checkpoint hash changed during evaluation")
         payload = payloads[profile]
+        if summary.get("kinematics_execution", "reference") != requested_kinematics:
+            raise ValueError("Summary kinematics differs from requested execution")
+        runtime = payload.get("runtime_checks", {})
+        for sample in (runtime, runtime.get("after_rollout", {})):
+            if sample.get("kinematics_execution", "reference") != requested_kinematics:
+                raise ValueError("Observed kinematics differs from requested execution")
         metrics = validate_results(
             payload,
             summary["expected_clips"],
@@ -98,6 +110,9 @@ def build_report(results, payloads, identity):
         f"Checkpoint SHA256: `{identity['checkpoint_sha256']}`",
         f"Source revision: `{identity['source']['source_revision']}`",
         f"Execution: `{identity['execution']}`",
+        f"Kinematics execution: `{requested_kinematics}`",
+        f"Scheduling: `{identity.get('scheduling', 'sequential')}`",
+        f"Evaluation wall seconds: {identity.get('evaluation_wall_seconds', 'unrecorded')}",
         "",
         "Full-clean coverage is not tracking success. Strict completion uses native tracking termination.",
         "",
@@ -110,6 +125,8 @@ def build_report(results, payloads, identity):
         )
         lines += [
             f"## {profile}",
+            "",
+            f"Profile elapsed seconds: {summary.get('elapsed_seconds', 'unrecorded')}; log: `evaluation/{profile}/evaluation.log`",
             "",
             f"{rate}; mean normalized return: {summary['mean_normalized_return']:.6f}.",
             "",

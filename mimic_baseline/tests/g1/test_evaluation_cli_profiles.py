@@ -143,3 +143,29 @@ def test_grouped_rejects_unsupported_actuator_before_starting_job(tmp_path):
     with pytest.raises(ValueError,match='delayed_pd'):
         cli.evaluate(ck,data,out,execution='grouped',dry_run=True)
     assert not out.exists()
+
+
+def test_batched_kinematics_is_forwarded_to_both_profiles(tmp_path):
+    ck, data, out = fixture(tmp_path)
+    result = cli.evaluate(ck, data, out, profile='both', dry_run=True,
+                          kinematics_execution='batched')
+    for entry in result['profiles'].values():
+        assert entry['kinematics_execution'] == 'batched'
+        command = entry['command']
+        assert command[command.index('--kinematics-execution') + 1] == 'batched'
+
+
+def test_batched_kinematics_rejected_for_training_before_simulator(tmp_path):
+    import subprocess
+    import sys
+
+    root = Path(__file__).resolve().parents[3]
+    result = subprocess.run(
+        [sys.executable, str(root / 'scripts/train_g1.py'), '--mode', 'train',
+         '--data-root', str(tmp_path), '--log-dir', str(tmp_path / 'run'),
+         '--kinematics-execution', 'batched'],
+        text=True, capture_output=True, check=False,
+    )
+    assert result.returncode == 2
+    assert 'supported only in evaluate mode' in result.stderr
+    assert not (tmp_path / 'run').exists()

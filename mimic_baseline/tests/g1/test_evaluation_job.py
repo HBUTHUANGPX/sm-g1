@@ -106,6 +106,9 @@ def test_job_status_and_unique_outputs(tmp_path, monkeypatch):
             directory = output / profile
             directory.mkdir(parents=True)
             runtime = payload.pop("runtime_checks")
+            results[profile]["kinematics_execution"] = kwargs["kinematics_execution"]
+            runtime["kinematics_execution"] = kwargs["kinematics_execution"]
+            runtime["after_rollout"]["kinematics_execution"] = kwargs["kinematics_execution"]
             runtime["execution"] = kwargs["execution"]
             runtime["after_rollout"]["execution"] = kwargs["execution"]
             payload["metadata"] = {"evaluation": runtime}
@@ -116,6 +119,8 @@ def test_job_status_and_unique_outputs(tmp_path, monkeypatch):
     monkeypatch.setattr(evaluator, "evaluate", fake_evaluate)
     first = job.run_job(config)
     second = job.run_job(config)
+    assert json.loads((first / "status.json").read_text())["kinematics_execution"] == "batched"
+    assert json.loads((first / "status.json").read_text())["scheduling"] == "parallel"
     assert first != second
     assert json.loads((first / "status.json").read_text())["status"] == "complete"
 
@@ -141,3 +146,20 @@ def test_help_without_simulator():
     )
     assert result.returncode == 0, result.stderr
     assert "--execution" in result.stdout
+
+
+@pytest.mark.parametrize('after', [False, True])
+def test_report_rejects_kinematics_execution_mismatch(after):
+    results, payloads, identity = fixtures()
+    identity['kinematics_execution'] = 'batched'
+    for profile in results:
+        results[profile]['kinematics_execution'] = 'batched'
+        runtime = payloads[profile]['runtime_checks']
+        runtime['kinematics_execution'] = 'batched'
+        runtime['after_rollout']['kinematics_execution'] = 'batched'
+    target = payloads['strict']['runtime_checks']
+    if after:
+        target = target['after_rollout']
+    target['kinematics_execution'] = 'reference'
+    with pytest.raises(ValueError, match='kinematics'):
+        build_report(results, payloads, identity)

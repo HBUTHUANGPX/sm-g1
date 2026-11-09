@@ -12,6 +12,7 @@ import sys
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--kinematics-execution", choices=("reference", "batched"), default="reference")
     p.add_argument(
         "--evaluation-profile", choices=["strict", "full_clean"], default="strict"
     )
@@ -56,6 +57,8 @@ def main():
     ):
         p.add_argument("--" + name.replace("_", "-"), type=int, default=None)
     args = p.parse_args()
+    if args.kinematics_execution == "batched" and args.mode != "evaluate":
+        p.error("Batched kinematics is supported only in evaluate mode")
     if args.mode != "evaluate" and args.evaluation_profile != "strict":
         p.error("--evaluation-profile is only valid in evaluate mode")
     import torch
@@ -81,7 +84,9 @@ def main():
         print(json.dumps({"converted_clips": len(paths)}))
         return
     from isaaclab.app import launch_simulation
-    from mimic_baseline.tasks.supermimic.robots.g1.kinematics import G1Kinematics
+    from mimic_baseline.tasks.supermimic.robots.g1.kinematics import (
+        G1Kinematics, G1BatchedKinematics,
+    )
     from mimic_baseline.tasks.supermimic.envs.configs.g1 import G1SuperMimicEnvCfg
     from mimic_baseline.tasks.supermimic.envs.manager_based import (
         SuperMimicRLEnv,
@@ -197,7 +202,8 @@ def main():
         )
     cfg.validate()
     torch.manual_seed(cfg.seed)
-    kin = G1Kinematics(urdf, cfg.device)
+    kin_type = G1BatchedKinematics if args.kinematics_execution == "batched" else G1Kinematics
+    kin = kin_type(urdf, cfg.device)
     motion = MotionLib(paths, kin, cfg.device)
     if args.mode == "evaluate":
         cfg.num_envs = len(paths)
@@ -225,6 +231,7 @@ def main():
         eval_mode=args.mode == "evaluate",
     )
     if args.mode == "evaluate":
+        env_cfg.kinematics_execution = args.kinematics_execution
         env_cfg.evaluation_execution = args.evaluation_execution
         env_cfg.evaluation_profile = args.evaluation_profile
         env_cfg.evaluation_clip_steps = int(
@@ -327,6 +334,7 @@ def main():
                         "robot": "g1",
                         "environment": "SuperMimicRLEnv",
                         "backend": args.backend,
+                    "kinematics_execution": args.kinematics_execution,
                     },
                 )
                 print(
@@ -366,6 +374,7 @@ def main():
                     "robot": "g1",
                     "small_model": args.small_model,
                     "backend": args.backend,
+                    "kinematics_execution": args.kinematics_execution,
                 },
             )
             if args.resume:
