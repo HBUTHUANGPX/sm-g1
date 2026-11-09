@@ -39,8 +39,8 @@ class GroupedEvaluationPD(G1DelayedPDActuator):
             buffer.reset(ids)
 
 
-def group_evaluation_actuators(cfg):
-    if not cfg.eval_mode:
+def group_evaluation_actuators(cfg, *, allow_training=False):
+    if not cfg.eval_mode and not allow_training:
         raise ValueError("Grouped actuators are evaluation-only")
     if cfg.actuator_type != "delayed_pd":
         raise ValueError("Grouped evaluation requires delayed_pd actuators")
