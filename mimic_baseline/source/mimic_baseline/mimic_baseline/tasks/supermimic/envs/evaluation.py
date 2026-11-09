@@ -2,9 +2,10 @@
 
 from isaaclab.managers import TerminationManager
 from isaaclab.utils.configclass import configclass
-from .manager_based import SuperMimicRLEnv
-from .configs.g1 import G1SuperMimicEnvCfg
+
 from ..evaluation.profiles import configure_evaluation
+from .configs.g1 import G1SuperMimicEnvCfg
+from .manager_based import SuperMimicRLEnv
 
 
 @configclass
@@ -26,6 +27,14 @@ class G1EvaluationEnv(SuperMimicRLEnv):
         elif cfg.evaluation_execution != "reference":
             raise ValueError("Unknown evaluation execution mode")
         super().__init__(cfg, **kwargs)
+
+    def state(self):
+        # Native evaluation suppresses autoresets, so physics does not change
+        # between the post-step snapshot and observation-manager reads. Never
+        # reuse it outside step: explicit resets must see the newly written pose.
+        if self._stepping and self._post_state is not None:
+            return self._post_state
+        return super().state()
 
     @property
     def evaluation_profile(self):

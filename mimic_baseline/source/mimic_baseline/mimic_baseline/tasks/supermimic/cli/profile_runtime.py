@@ -39,6 +39,7 @@ def audit(
     actuators="reference",
     kinematics="reference",
     profile="full_clean",
+    verify_state_cache=False,
 ):
     if (
         target not in ("training", "evaluation")
@@ -48,6 +49,8 @@ def audit(
         raise ValueError(
             "Bounded audit requires 1..10 training iterations and 1..2048 evaluation steps"
         )
+    if verify_state_cache and target != "evaluation":
+        raise ValueError("State-cache validation requires evaluation")
     import torch
     from .evaluation_job import source_identity
     from ..runtime.paths import project_root
@@ -78,6 +81,22 @@ def audit(
             original_init(env, cfg, **kwargs)
 
         SuperMimicRLEnv.__init__ = init
+    state_checks = 0
+    from ..envs.evaluation import G1EvaluationEnv
+
+    original_state = G1EvaluationEnv.state
+    if verify_state_cache:
+        def checked_state(env):
+            nonlocal state_checks
+            actual = original_state(env)
+            if env._stepping and env._post_state is not None:
+                fresh = SuperMimicRLEnv.state(env)
+                for a, b in zip(actual, fresh, strict=True):
+                    torch.testing.assert_close(a, b, rtol=0, atol=0)
+                state_checks += 1
+            return actual
+
+        G1EvaluationEnv.state = checked_state
     profiler = cProfile.Profile()
     timing = {}
     old_argv = sys.argv
@@ -179,6 +198,7 @@ def audit(
         raise
     finally:
         sys.argv = old_argv
+        G1EvaluationEnv.state = original_state
         G1Kinematics.forward = original_fk
         SuperMimicRLEnv.__init__ = original_init
         if target == "training":
@@ -201,6 +221,7 @@ def audit(
             digest = hashlib.file_digest(f, "sha256").hexdigest()
         result = {
             "benchmark_only": True,
+            "state_cache_verification": {"enabled": verify_state_cache, "checked_reads": state_checks},
             "target": target,
             "source": source,
             "checkpoint_sha256": digest,
@@ -246,5 +267,6 @@ def main():
     p.add_argument(
         "--kinematics", choices=["reference", "batched"], default="reference"
     )
+    p.add_argument("--verify-state-cache", action="store_true")
     p.add_argument("--profile", choices=["strict", "full_clean"], default="full_clean")
     audit(**vars(p.parse_args()))

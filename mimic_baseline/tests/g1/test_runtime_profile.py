@@ -32,3 +32,12 @@ def test_profile_cli_help_without_simulator():
         [sys.executable, str(root / "scripts/profile_g1_runtime.py"), "--help"],
         text=True,
     )
+
+
+def test_state_cache_validation_is_evaluation_only(tmp_path):
+    import pytest
+    from mimic_baseline.tasks.supermimic.cli.profile_runtime import audit
+    with pytest.raises(ValueError, match="requires evaluation"):
+        audit(tmp_path / "missing.pt", tmp_path, tmp_path / "out",
+              target="training", verify_state_cache=True)
+    assert not (tmp_path / "out").exists()
