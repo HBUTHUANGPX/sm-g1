@@ -12,7 +12,9 @@ import sys
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--kinematics-execution", choices=("reference", "batched"), default="reference")
+    p.add_argument("--kinematics-execution", choices=("reference", "batched", "bounded"), default="reference")
+    p.add_argument("--training-execution", choices=("reference", "grouped"), default="reference")
+    p.add_argument("--fk-chunk-size", type=int, default=4096)
     p.add_argument(
         "--evaluation-profile", choices=["strict", "full_clean"], default="strict"
     )
@@ -61,6 +63,12 @@ def main():
         p.error("Batched kinematics is supported only in evaluate mode")
     if args.mode != "evaluate" and args.evaluation_profile != "strict":
         p.error("--evaluation-profile is only valid in evaluate mode")
+    if args.kinematics_execution == "bounded" and args.mode not in ("train", "check"):
+        p.error("bounded kinematics is only valid for training/check mode")
+    if args.training_execution != "reference" and args.mode not in ("train", "check"):
+        p.error("--training-execution is only valid for training/check mode")
+    if args.fk_chunk_size <= 0:
+        p.error("--fk-chunk-size must be positive")
     import torch
     from mimic_baseline.tasks.supermimic.data.lafan1 import convert_clip, ensure_clip
 
@@ -85,7 +93,7 @@ def main():
         return
     from isaaclab.app import launch_simulation
     from mimic_baseline.tasks.supermimic.robots.g1.kinematics import (
-        G1Kinematics, G1BatchedKinematics,
+        G1Kinematics, G1BatchedKinematics, G1TrainingKinematics,
     )
     from mimic_baseline.tasks.supermimic.envs.configs.g1 import G1SuperMimicEnvCfg
     from mimic_baseline.tasks.supermimic.envs.manager_based import (
@@ -203,7 +211,8 @@ def main():
     cfg.validate()
     torch.manual_seed(cfg.seed)
     kin_type = G1BatchedKinematics if args.kinematics_execution == "batched" else G1Kinematics
-    kin = kin_type(urdf, cfg.device)
+    kin = (G1TrainingKinematics(urdf, cfg.device, chunk_size=args.fk_chunk_size)
+           if args.kinematics_execution == "bounded" else kin_type(urdf, cfg.device))
     motion = MotionLib(paths, kin, cfg.device)
     if args.mode == "evaluate":
         cfg.num_envs = len(paths)
@@ -244,6 +253,9 @@ def main():
     if args.mode == "check" and not cfg.recovery_enabled:
         env_cfg.episode_length_s = 0.04
         env_cfg.reset_noise = False
+    if args.mode in ("train", "check") and args.training_execution == "grouped":
+        from mimic_baseline.tasks.supermimic.envs.grouped_actuators import group_g1_actuators
+        group_g1_actuators(env_cfg)
     with launch_simulation(env_cfg.sim, {"viz": "none", "device": cfg.device}):
         import gymnasium as gym
 
@@ -334,7 +346,7 @@ def main():
                         "robot": "g1",
                         "environment": "SuperMimicRLEnv",
                         "backend": args.backend,
-                    "kinematics_execution": args.kinematics_execution,
+                        "kinematics_execution": args.kinematics_execution,
                     },
                 )
                 print(
@@ -375,6 +387,8 @@ def main():
                     "small_model": args.small_model,
                     "backend": args.backend,
                     "kinematics_execution": args.kinematics_execution,
+                    "actuator_execution": args.training_execution,
+                    "fk_chunk_size": args.fk_chunk_size if args.kinematics_execution == "bounded" else None,
                 },
             )
             if args.resume:

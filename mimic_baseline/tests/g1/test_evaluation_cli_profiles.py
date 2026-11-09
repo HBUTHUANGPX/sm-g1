@@ -169,3 +169,30 @@ def test_batched_kinematics_rejected_for_training_before_simulator(tmp_path):
     assert result.returncode == 2
     assert 'supported only in evaluate mode' in result.stderr
     assert not (tmp_path / 'run').exists()
+
+
+def test_training_execution_flags_are_mode_checked():
+    import subprocess
+    import sys
+    from pathlib import Path
+    entry = Path(__file__).resolve().parents[3] / "scripts/train_g1.py"
+    common = [sys.executable, str(entry), "--data-root", "missing", "--log-dir", "unused"]
+    for extra, message in [
+        (["--mode", "prepare", "--training-execution", "grouped"], "training-execution"),
+        (["--mode", "evaluate", "--kinematics-execution", "bounded"], "bounded"),
+        (["--mode", "train", "--kinematics-execution", "bounded", "--fk-chunk-size", "0"], "positive"),
+    ]:
+        run = subprocess.run(common + extra, capture_output=True, text=True)
+        assert run.returncode != 0 and message in run.stderr
+        assert "Traceback" not in run.stderr
+
+
+def test_bounded_training_flags_are_documented():
+    import subprocess
+    import sys
+    from pathlib import Path
+    entry = Path(__file__).resolve().parents[3] / "scripts/train_g1.py"
+    help_text = subprocess.check_output([sys.executable, str(entry), "--help"], text=True)
+    assert "--training-execution" in help_text
+    assert "--fk-chunk-size" in help_text
+    assert "bounded" in help_text

@@ -80,12 +80,12 @@ def validate(urdf, device="cuda:0", *, training=False):
                 # Current training randomizes material/COM/calibration, not gains;
                 # this additionally guards future joint-indexed gain/limit writes.
                 rows = torch.tensor([1, 5, 13], device=device)
-                for field in ("stiffness", "damping", "effort_limit", "velocity_limit"):
+                for field in ("stiffness", "damping", "actuator_effort_limit", "actuator_velocity_limit"):
                     values = torch.rand(len(rows), j, device=device) * 10 + 0.1
                     getattr(grouped, field)[rows] = values
                     for k, name in enumerate(order):
                         getattr(old[name], field)[rows] = values[:, k:k+1]
-            for field in ("stiffness", "damping", "effort_limit", "velocity_limit", "armature"):
+            for field in ("stiffness", "damping", "actuator_effort_limit", "actuator_velocity_limit"):
                 torch.testing.assert_close(
                     getattr(grouped, field),
                     torch.cat([getattr(old[name], field) for name in order], 1),
