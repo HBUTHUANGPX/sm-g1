@@ -68,8 +68,6 @@ def audit(
     from ..robots.g1.kinematics import G1Kinematics
 
     original_fk = G1Kinematics.forward
-    if kinematics == "batched":
-        G1Kinematics.forward = G1Kinematics.forward_fast
     from ..envs.manager_based import SuperMimicRLEnv
 
     original_init = SuperMimicRLEnv.__init__
@@ -80,7 +78,6 @@ def audit(
             group_evaluation_actuators(cfg, allow_training=True)
             original_init(env, cfg, **kwargs)
 
-        SuperMimicRLEnv.__init__ = init
     state_checks = 0
     from ..envs.evaluation import G1EvaluationEnv
 
@@ -96,7 +93,6 @@ def audit(
                 state_checks += 1
             return actual
 
-        G1EvaluationEnv.state = checked_state
     profiler = cProfile.Profile()
     timing = {}
     old_argv = sys.argv
@@ -150,7 +146,6 @@ def audit(
                 if "start" in timing:
                     finish()
 
-        Trainer.train = train
         command += ["--iterations", str(start_iteration + iterations)]
     else:
         from .. import evaluation
@@ -177,7 +172,6 @@ def audit(
                 timing["measured_steps"] = count
                 env.step = original_step
 
-        evaluation.evaluate_tracking = evaluate
         command += [
             "--kinematics-execution",
             kinematics,
@@ -186,9 +180,21 @@ def audit(
             "--evaluation-profile",
             profile,
         ]
-    sys.argv = command
     error = None
     try:
+        # Install hooks only after all setup/imports have succeeded, inside the
+        # restoration scope. Import failures must not leak patches to callers.
+        sys.argv = command
+        if kinematics == "batched":
+            G1Kinematics.forward = G1Kinematics.forward_fast
+        if target == "training":
+            Trainer.train = train
+            if actuators == "grouped":
+                SuperMimicRLEnv.__init__ = init
+        else:
+            evaluation.evaluate_tracking = evaluate
+        if verify_state_cache:
+            G1EvaluationEnv.state = checked_state
         try:
             runpy.run_path(command[0], run_name="__main__")
         except BenchmarkComplete:
