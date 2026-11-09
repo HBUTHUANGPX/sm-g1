@@ -133,11 +133,12 @@ def test_clean_profile_requires_evaluation_and_disables_delay_noise():
         )
 
 
-def test_clean_runtime_audit_rejects_realized_delay_or_termination():
+def test_clean_runtime_audit_rejects_realized_delay_or_termination(tmp_path):
     from mimic_baseline.tasks.supermimic.evaluation.profiles import runtime_profile
 
     delay = SimpleNamespace(time_lags=torch.zeros(2, dtype=torch.long))
     env = SimpleNamespace(
+        mdp=SimpleNamespace(kin=G1Kinematics(make_urdf(tmp_path), "cpu")),
         cfg=SimpleNamespace(
             eval_mode=True,
             observations=SimpleNamespace(obs=SimpleNamespace(enable_corruption=False)),
@@ -160,6 +161,11 @@ def test_clean_runtime_audit_rejects_realized_delay_or_termination():
     )
     env.xi[:, 0] = 1
     assert runtime_profile(env, "full_clean")["action_delay_ticks"] == {"joints": [0]}
+    env.cfg.kinematics_execution = "batched"
+    with pytest.raises(RuntimeError, match="kinematics"):
+        runtime_profile(env, "full_clean")
+    env.mdp.kin.forward = env.mdp.kin.forward_fast
+    assert runtime_profile(env, "full_clean")["kinematics_execution"] == "batched"
     delay.time_lags[0] = 1
     with pytest.raises(RuntimeError, match="delay"):
         runtime_profile(env, "full_clean")

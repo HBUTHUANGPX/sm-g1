@@ -160,6 +160,8 @@ def audit(
 
         evaluation.evaluate_tracking = evaluate
         command += [
+            "--kinematics-execution",
+            kinematics,
             "--evaluation-execution",
             actuators,
             "--evaluation-profile",

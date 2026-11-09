@@ -141,3 +141,20 @@ def test_help_without_simulator():
     )
     assert result.returncode == 0, result.stderr
     assert "--execution" in result.stdout
+
+
+@pytest.mark.parametrize('after', [False, True])
+def test_report_rejects_kinematics_execution_mismatch(after):
+    results, payloads, identity = fixtures()
+    identity['kinematics_execution'] = 'batched'
+    for profile in results:
+        results[profile]['kinematics_execution'] = 'batched'
+        runtime = payloads[profile]['runtime_checks']
+        runtime['kinematics_execution'] = 'batched'
+        runtime['after_rollout']['kinematics_execution'] = 'batched'
+    target = payloads['strict']['runtime_checks']
+    if after:
+        target = target['after_rollout']
+    target['kinematics_execution'] = 'reference'
+    with pytest.raises(ValueError, match='kinematics'):
+        build_report(results, payloads, identity)

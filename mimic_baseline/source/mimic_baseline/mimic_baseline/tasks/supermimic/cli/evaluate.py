@@ -122,7 +122,10 @@ def evaluate(
     profile="strict",
     execution="reference",
     scheduling="sequential",
+    kinematics_execution="reference",
 ):
+    if kinematics_execution not in ("reference", "batched"):
+        raise ValueError("Unknown kinematics execution mode")
     started = time.perf_counter()
     if scheduling not in ("sequential", "parallel"):
         raise ValueError("Unknown evaluation scheduling mode")
@@ -148,6 +151,7 @@ def evaluate(
                 profile=selected,
                 execution=execution,
                 scheduling=scheduling,
+                kinematics_execution=kinematics_execution,
             )
 
         if scheduling == "parallel":
@@ -200,6 +204,7 @@ def evaluate(
         "expected_clips": names,
         "profile": profile,
         "execution": execution,
+        "kinematics_execution": kinematics_execution,
         "scheduling": scheduling,
         "protocol_version": PROTOCOL_VERSION,
         "protocol": (
@@ -232,6 +237,8 @@ def evaluate(
         str(output),
         "--evaluation-execution",
         execution,
+        "--kinematics-execution",
+        kinematics_execution,
         "--evaluation-profile",
         profile,
     ]
@@ -293,6 +300,7 @@ def evaluate(
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--kinematics-execution", choices=("reference", "batched"), default="reference")
     parser.add_argument(
         "--execution", choices=["reference", "grouped"], default="reference"
     )

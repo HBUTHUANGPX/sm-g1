@@ -89,6 +89,7 @@ def run_job(
     profile="both",
     execution="grouped",
     scheduling="sequential",
+    kinematics_execution="reference",
 ):
     from ..evaluation.report import write_report
     from .evaluate import evaluate
@@ -121,6 +122,7 @@ def run_job(
         "checkpoint_sha256": sha256(selected),
         "source": source,
         "execution": execution,
+        "kinematics_execution": kinematics_execution,
         "scheduling": scheduling,
         "profile": profile,
     }
@@ -157,6 +159,7 @@ def run_job(
             profile=profile,
             execution=execution,
             scheduling=scheduling,
+            kinematics_execution=kinematics_execution,
         )
         if (
             sha256(selected) != identity["checkpoint_sha256"]
@@ -179,6 +182,7 @@ def run_job(
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--kinematics-execution", choices=("reference", "batched"), default="reference")
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument("--checkpoint", type=Path)
     parser.add_argument(
