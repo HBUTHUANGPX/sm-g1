@@ -13,7 +13,7 @@ def test_benchmark_runs_real_backward_and_reports_every_tensor(tmp_path):
     )
     assert report['passed']
     assert report['batch'] == 7
-    assert [v['name'] for v in report['variants']] == ['reference', 'batched', 'chunk_3', 'chunk_5']
+    assert [v['name'] for v in report['variants']] == ['reference', 'batched', 'lean', 'chunk_3', 'chunk_5']
     for variant in report['variants']:
         assert variant['status'] == 'complete'
         sample = variant['runs'][0]

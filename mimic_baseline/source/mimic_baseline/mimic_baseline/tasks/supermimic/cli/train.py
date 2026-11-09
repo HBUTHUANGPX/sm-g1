@@ -12,7 +12,7 @@ import sys
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--kinematics-execution", choices=("reference", "batched", "bounded"), default="reference")
+    p.add_argument("--kinematics-execution", choices=("reference", "batched", "bounded", "lean"), default="reference")
     p.add_argument("--training-execution", choices=("reference", "grouped"), default="reference")
     p.add_argument("--fk-chunk-size", type=int, default=4096)
     p.add_argument(
@@ -63,8 +63,8 @@ def main():
         p.error("Batched kinematics is supported only in evaluate mode")
     if args.mode != "evaluate" and args.evaluation_profile != "strict":
         p.error("--evaluation-profile is only valid in evaluate mode")
-    if args.kinematics_execution == "bounded" and args.mode not in ("train", "check"):
-        p.error("bounded kinematics is only valid for training/check mode")
+    if args.kinematics_execution in ("bounded", "lean") and args.mode not in ("train", "check"):
+        p.error("bounded/lean kinematics is only valid for training/check mode")
     if args.training_execution != "reference" and args.mode not in ("train", "check"):
         p.error("--training-execution is only valid for training/check mode")
     if args.fk_chunk_size <= 0:
@@ -93,7 +93,7 @@ def main():
         return
     from isaaclab.app import launch_simulation
     from mimic_baseline.tasks.supermimic.robots.g1.kinematics import (
-        G1Kinematics, G1BatchedKinematics, G1TrainingKinematics,
+        G1Kinematics, G1BatchedKinematics, G1TrainingKinematics, G1LeanKinematics,
     )
     from mimic_baseline.tasks.supermimic.envs.configs.g1 import G1SuperMimicEnvCfg
     from mimic_baseline.tasks.supermimic.envs.manager_based import (
@@ -210,7 +210,8 @@ def main():
         )
     cfg.validate()
     torch.manual_seed(cfg.seed)
-    kin_type = G1BatchedKinematics if args.kinematics_execution == "batched" else G1Kinematics
+    kin_type = {"reference": G1Kinematics, "batched": G1BatchedKinematics,
+                "lean": G1LeanKinematics, "bounded": G1TrainingKinematics}[args.kinematics_execution]
     kin = (G1TrainingKinematics(urdf, cfg.device, chunk_size=args.fk_chunk_size)
            if args.kinematics_execution == "bounded" else kin_type(urdf, cfg.device))
     motion = MotionLib(paths, kin, cfg.device)

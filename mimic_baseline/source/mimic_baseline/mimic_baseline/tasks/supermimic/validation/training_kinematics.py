@@ -10,7 +10,9 @@ from pathlib import Path
 import torch
 
 from ..core.rotations import quat_to_mat
-from ..robots.g1.kinematics import G1BatchedKinematics, G1Kinematics, G1TrainingKinematics
+from ..robots.g1.kinematics import (
+    G1BatchedKinematics, G1Kinematics, G1LeanKinematics, G1TrainingKinematics,
+)
 
 
 _OUTPUT_NAMES = ('position', 'rotation', 'linear_velocity', 'angular_velocity')
@@ -157,7 +159,8 @@ def benchmark(urdf, device='cuda:0', *, batch=131072, chunks=_DEFAULT_CHUNKS,
     device = _validate(device, batch, chunks, repeats, dtype, seed)
     tensor_dtype = getattr(torch, dtype)
     fixture = _fixture(batch, tensor_dtype, seed)
-    variants = [('reference', G1Kinematics, None), ('batched', G1BatchedKinematics, None)]
+    variants = [('reference', G1Kinematics, None), ('batched', G1BatchedKinematics, None),
+                ('lean', G1LeanKinematics, None)]
     variants += [(f'chunk_{chunk}', G1TrainingKinematics, chunk) for chunk in chunks]
     results, reference = [], None
     for name, cls, chunk in variants:

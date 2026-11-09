@@ -204,3 +204,101 @@ class G1TrainingKinematics(G1Kinematics):
             outputs.append(result)
         return tuple(torch.cat(parts, dim=0).reshape(*batch, *parts[0].shape[1:])
                      for parts in zip(*outputs))
+
+
+class G1LeanKinematics(G1Kinematics):
+    """Opt-in depth batches restricted to ancestors of tracked bodies.
+
+    Unlike the evaluation batch path, this never concatenates all link states
+    before selecting tracked bodies. Each tracked state is selected directly
+    from its level, and unused leaf branches never enter the autograd graph.
+    Static-transform contractions keep URDF constants shared across states,
+    rather than materializing per-state copies for broadcast matrix products.
+    Only integer topology is cached, preserving copied/double URDF transforms.
+    """
+
+    def _initialize_lean_topology(self):
+        required = set(self.tracked_idx)
+        for link in self.tracked_idx:
+            while self.parent[link] >= 0:
+                link = self.parent[link]
+                required.add(link)
+        previous = [0]
+        levels = []
+        while True:
+            links = [i for i, parent in enumerate(self.parent) if i in required and parent in previous]
+            if not links:
+                break
+            moving = [slot for slot, link in enumerate(links) if self.joint_idx[link] >= 0]
+            parent_slots = [previous.index(self.parent[i]) for i in links]
+            parent_view = None
+            if parent_slots == list(range(parent_slots[0], parent_slots[0] + len(parent_slots))):
+                parent_view = (parent_slots[0], len(parent_slots))
+            elif len(set(parent_slots)) == 1:
+                parent_view = (parent_slots[0], 1)
+            def integer(values):
+                return torch.tensor(values, dtype=torch.long, device=self.device)
+            levels.append((
+                integer(links), integer(parent_slots), parent_view,
+                integer(moving), integer([self.joint_idx[links[slot]] for slot in moving]),
+                tuple((slot, self.tracked_idx.index(link)) for slot, link in enumerate(links)
+                      if link in self.tracked_idx),
+            ))
+            previous = links
+        self._lean_levels = tuple(levels)
+
+    def forward(self, p, R, v, w, q, qd):
+        if q.shape[-1] != len(self.joint_names) or qd.shape != q.shape:
+            raise ValueError(
+                f"Expected q and qd ending in {len(self.joint_names)}, got "
+                f"{tuple(q.shape)} and {tuple(qd.shape)}."
+            )
+        if not hasattr(self, '_lean_levels'):
+            self._initialize_lean_topology()
+        current = (p.unsqueeze(-2), R.unsqueeze(-3), v.unsqueeze(-2), w.unsqueeze(-2))
+        tracked = [None] * len(self.tracked_idx)
+        if 0 in self.tracked_idx:
+            tracked[self.tracked_idx.index(0)] = (p, R, v, w)
+        for links, parents, parent_view, moving, joints, selected in self._lean_levels:
+            gathered = []
+            for tensor, dim in zip(current, (-2, -3, -2, -2)):
+                if parent_view is None:
+                    parent_tensor = tensor.index_select(dim, parents)
+                else:
+                    start, count = parent_view
+                    parent_tensor = (tensor if start == 0 and count == tensor.shape[dim]
+                                     else tensor.narrow(dim, start, count))
+                    if count != parents.numel():
+                        shape = list(parent_tensor.shape)
+                        shape[dim] = parents.numel()
+                        parent_tensor = parent_tensor.expand(shape)
+                gathered.append(parent_tensor)
+            parent_p, parent_R, parent_v, parent_w = gathered
+            offset = torch.einsum("...kij,kj->...ki", parent_R, self.off_p[links])
+            link_p = parent_p + offset
+            fixed_R = torch.einsum("...kij,kjl->...kil", parent_R, self.off_R[links])
+            if moving.numel():
+                all_moving = moving.numel() == links.numel()
+                moving_R = fixed_R if all_moving else fixed_R.index_select(-3, moving)
+                axes = self.axes[links] if all_moving else self.axes[links[moving]]
+                joint_R = axis_angle_to_mat(axes, q.index_select(-1, joints))
+                rotated = moving_R @ joint_R
+                world_axis = torch.einsum("...kij,kj->...ki", moving_R, axes)
+                increment = world_axis * qd.index_select(-1, joints).unsqueeze(-1)
+                if all_moving:
+                    link_R = rotated
+                    link_w = parent_w + increment
+                else:
+                    link_R = fixed_R.index_copy(-3, moving, rotated)
+                    link_w = parent_w.index_copy(-2, moving,
+                                                parent_w.index_select(-2, moving) + increment)
+            else:
+                link_R, link_w = fixed_R, parent_w
+            # Retain reference subtraction semantics (including float rounding).
+            link_v = parent_v + torch.cross(parent_w, link_p - parent_p, dim=-1)
+            current = (link_p, link_R, link_v, link_w)
+            for slot, output_index in selected:
+                tracked[output_index] = tuple(tensor.select(dim, slot)
+                                              for tensor, dim in zip(current, (-2, -3, -2, -2)))
+        return tuple(torch.stack(fields, dim=dim)
+                     for fields, dim in zip(zip(*tracked), (-2, -3, -2, -2)))
