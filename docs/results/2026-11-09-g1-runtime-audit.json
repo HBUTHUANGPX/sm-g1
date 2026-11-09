@@ -1,0 +1,1246 @@
+{
+  "scope": "Original ManagerBased G1 recovery; Newton; LAFAN1 only; formal training remains stopped",
+  "hardware": "GeForce RTX 5070 Ti 16 GiB; Windows",
+  "runtime_pin": "Isaac Lab v3.0.0",
+  "dataset": {
+    "repository": "lvhaidong/LAFAN1_Retargeting_Dataset",
+    "pinned_revision": "ce1572906efe6157840e8474d5a0d7aa87481e74",
+    "clips": 40
+  },
+  "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+  "bounded_profiles": {
+    "train-reference": {
+      "benchmark_only": true,
+      "target": "training",
+      "source": {
+        "kind": "verified_release",
+        "source_revision": "1eb4899730d8c03258c88d0f7f236e36efd1968d",
+        "manifest_sha256": "e439019b7fb4ed92bb64cea8d2fcef515d79a721c0edc4fe0c83f6d5d60d3657"
+      },
+      "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+      "checkpoint_iteration": 6600,
+      "actuators": "reference",
+      "kinematics": "reference",
+      "profile": null,
+      "training_iterations": 5,
+      "training_shape": {
+        "num_envs": 2560,
+        "wm_batch": 2048,
+        "wm_batches": 10,
+        "policy_batch": 4096,
+        "horizon": 32,
+        "buffer_steps": 1000,
+        "warmup_steps": 64,
+        "log_every": 10
+      },
+      "timing": {
+        "refill_seconds": 6.234102699999994,
+        "measured_seconds": 20.38226880000002,
+        "peak_allocated_gib": 11.5597243309021,
+        "peak_reserved_gib": 14.11328125
+      },
+      "error": null,
+      "cpu_top": [
+        {
+          "function": "learning/world_model_update.py:352:update_world_model",
+          "calls": 50,
+          "self_seconds": 0.0083874,
+          "cumulative_seconds": 9.811079600000001
+        },
+        {
+          "function": "learning/policy_update.py:97:update_policy_and_critic",
+          "calls": 5,
+          "self_seconds": 0.0940865,
+          "cumulative_seconds": 7.1032096000000005
+        },
+        {
+          "function": "learning/collection.py:20:collect",
+          "calls": 5,
+          "self_seconds": 0.0025194,
+          "cumulative_seconds": 2.6233642
+        },
+        {
+          "function": "envs/manager_based.py:232:step",
+          "calls": 12,
+          "self_seconds": 0.0007238,
+          "cumulative_seconds": 2.573229
+        },
+        {
+          "function": "learning/trainer.py:410:_clip_gradient_norm",
+          "calls": 155,
+          "self_seconds": 0.0012535,
+          "cumulative_seconds": 1.9347652000000002
+        },
+        {
+          "function": "learning/replay.py:810:sample_windows",
+          "calls": 51,
+          "self_seconds": 0.0101452,
+          "cumulative_seconds": 1.2872544000000001
+        },
+        {
+          "function": "actuator_collection.py:196:compute",
+          "calls": 48,
+          "self_seconds": 0.0841105,
+          "cumulative_seconds": 1.2169173
+        },
+        {
+          "function": "learning/replay.py:361:_weighted_logical",
+          "calls": 55,
+          "self_seconds": 0.0055563,
+          "cumulative_seconds": 1.1091502
+        },
+        {
+          "function": "core/kinematics.py:258:forward",
+          "calls": 22,
+          "self_seconds": 0.07049580000000001,
+          "cumulative_seconds": 0.5295488
+        },
+        {
+          "function": "~:0:<method 'nonzero' of 'torch._C.TensorBase' objects>",
+          "calls": 36,
+          "self_seconds": 0.3672609,
+          "cumulative_seconds": 0.3672609
+        },
+        {
+          "function": "actuator_collection.py:516:_scatter_actuator_output",
+          "calls": 1392,
+          "self_seconds": 0.0034907000000000002,
+          "cumulative_seconds": 0.14771420000000002
+        }
+      ]
+    },
+    "train-grouped": {
+      "benchmark_only": true,
+      "target": "training",
+      "source": {
+        "kind": "verified_release",
+        "source_revision": "1eb4899730d8c03258c88d0f7f236e36efd1968d",
+        "manifest_sha256": "e439019b7fb4ed92bb64cea8d2fcef515d79a721c0edc4fe0c83f6d5d60d3657"
+      },
+      "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+      "checkpoint_iteration": 6600,
+      "actuators": "grouped",
+      "kinematics": "reference",
+      "profile": null,
+      "training_iterations": 5,
+      "training_shape": {
+        "num_envs": 2560,
+        "wm_batch": 2048,
+        "wm_batches": 10,
+        "policy_batch": 4096,
+        "horizon": 32,
+        "buffer_steps": 1000,
+        "warmup_steps": 64,
+        "log_every": 10
+      },
+      "timing": {
+        "refill_seconds": 4.4868406000000505,
+        "measured_seconds": 9.951020399999834,
+        "peak_allocated_gib": 11.558740615844727,
+        "peak_reserved_gib": 14.130859375
+      },
+      "error": null,
+      "cpu_top": [
+        {
+          "function": "learning/policy_update.py:97:update_policy_and_critic",
+          "calls": 5,
+          "self_seconds": 0.09295260000000001,
+          "cumulative_seconds": 5.236269
+        },
+        {
+          "function": "learning/world_model_update.py:352:update_world_model",
+          "calls": 50,
+          "self_seconds": 0.0077204000000000005,
+          "cumulative_seconds": 3.2623399
+        },
+        {
+          "function": "learning/trainer.py:410:_clip_gradient_norm",
+          "calls": 155,
+          "self_seconds": 0.0011209,
+          "cumulative_seconds": 1.7827879000000002
+        },
+        {
+          "function": "learning/collection.py:20:collect",
+          "calls": 5,
+          "self_seconds": 0.0024475,
+          "cumulative_seconds": 1.1374378
+        },
+        {
+          "function": "envs/manager_based.py:232:step",
+          "calls": 12,
+          "self_seconds": 0.0005851000000000001,
+          "cumulative_seconds": 1.0913793
+        },
+        {
+          "function": "~:0:<method 'nonzero' of 'torch._C.TensorBase' objects>",
+          "calls": 36,
+          "self_seconds": 0.4723778,
+          "cumulative_seconds": 0.4723778
+        },
+        {
+          "function": "core/kinematics.py:258:forward",
+          "calls": 22,
+          "self_seconds": 0.0647764,
+          "cumulative_seconds": 0.19457100000000002
+        },
+        {
+          "function": "learning/replay.py:810:sample_windows",
+          "calls": 51,
+          "self_seconds": 0.009791600000000001,
+          "cumulative_seconds": 0.06758310000000001
+        },
+        {
+          "function": "learning/replay.py:361:_weighted_logical",
+          "calls": 55,
+          "self_seconds": 0.004937400000000001,
+          "cumulative_seconds": 0.0461325
+        }
+      ]
+    },
+    "train-reference-repeat-first": {
+      "benchmark_only": true,
+      "target": "training",
+      "source": {
+        "kind": "verified_release",
+        "source_revision": "1eb4899730d8c03258c88d0f7f236e36efd1968d",
+        "manifest_sha256": "e439019b7fb4ed92bb64cea8d2fcef515d79a721c0edc4fe0c83f6d5d60d3657"
+      },
+      "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+      "checkpoint_iteration": 6600,
+      "actuators": "reference",
+      "kinematics": "reference",
+      "profile": null,
+      "training_iterations": 5,
+      "training_shape": {
+        "num_envs": 2560,
+        "wm_batch": 2048,
+        "wm_batches": 10,
+        "policy_batch": 4096,
+        "horizon": 32,
+        "buffer_steps": 1000,
+        "warmup_steps": 64,
+        "log_every": 10
+      },
+      "timing": {
+        "refill_seconds": 6.21740120000004,
+        "measured_seconds": 78.20060049999984,
+        "peak_allocated_gib": 11.5597243309021,
+        "peak_reserved_gib": 14.11328125
+      },
+      "error": null,
+      "cpu_top": [
+        {
+          "function": "learning/policy_update.py:97:update_policy_and_critic",
+          "calls": 5,
+          "self_seconds": 31.786288300000002,
+          "cumulative_seconds": 62.353959800000005
+        },
+        {
+          "function": "learning/world_model_update.py:352:update_world_model",
+          "calls": 50,
+          "self_seconds": 0.008047,
+          "cumulative_seconds": 13.724405
+        },
+        {
+          "function": "learning/trainer.py:410:_clip_gradient_norm",
+          "calls": 155,
+          "self_seconds": 0.0017858000000000001,
+          "cumulative_seconds": 9.9426506
+        },
+        {
+          "function": "learning/replay.py:810:sample_windows",
+          "calls": 51,
+          "self_seconds": 0.009967100000000001,
+          "cumulative_seconds": 1.2897228
+        },
+        {
+          "function": "learning/collection.py:20:collect",
+          "calls": 5,
+          "self_seconds": 0.0025506,
+          "cumulative_seconds": 1.2764673
+        },
+        {
+          "function": "envs/manager_based.py:232:step",
+          "calls": 12,
+          "self_seconds": 0.0005626,
+          "cumulative_seconds": 1.2261154
+        },
+        {
+          "function": "learning/replay.py:361:_weighted_logical",
+          "calls": 55,
+          "self_seconds": 0.0053206,
+          "cumulative_seconds": 1.1144047000000001
+        },
+        {
+          "function": "actuator_collection.py:196:compute",
+          "calls": 48,
+          "self_seconds": 0.08068750000000001,
+          "cumulative_seconds": 0.4762677
+        },
+        {
+          "function": "core/kinematics.py:258:forward",
+          "calls": 22,
+          "self_seconds": 0.06896680000000001,
+          "cumulative_seconds": 0.21283310000000003
+        },
+        {
+          "function": "actuator_collection.py:516:_scatter_actuator_output",
+          "calls": 1392,
+          "self_seconds": 0.0031259,
+          "cumulative_seconds": 0.144217
+        },
+        {
+          "function": "~:0:<method 'nonzero' of 'torch._C.TensorBase' objects>",
+          "calls": 36,
+          "self_seconds": 0.10813740000000001,
+          "cumulative_seconds": 0.10813740000000001
+        }
+      ]
+    },
+    "train-grouped-repeat": {
+      "benchmark_only": true,
+      "target": "training",
+      "source": {
+        "kind": "verified_release",
+        "source_revision": "1eb4899730d8c03258c88d0f7f236e36efd1968d",
+        "manifest_sha256": "e439019b7fb4ed92bb64cea8d2fcef515d79a721c0edc4fe0c83f6d5d60d3657"
+      },
+      "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+      "checkpoint_iteration": 6600,
+      "actuators": "grouped",
+      "kinematics": "reference",
+      "profile": null,
+      "training_iterations": 5,
+      "training_shape": {
+        "num_envs": 2560,
+        "wm_batch": 2048,
+        "wm_batches": 10,
+        "policy_batch": 4096,
+        "horizon": 32,
+        "buffer_steps": 1000,
+        "warmup_steps": 64,
+        "log_every": 10
+      },
+      "timing": {
+        "refill_seconds": 4.523650899999893,
+        "measured_seconds": 10.375930100000005,
+        "peak_allocated_gib": 11.558740615844727,
+        "peak_reserved_gib": 14.130859375
+      },
+      "error": null,
+      "cpu_top": [
+        {
+          "function": "learning/policy_update.py:97:update_policy_and_critic",
+          "calls": 5,
+          "self_seconds": 0.10487980000000001,
+          "cumulative_seconds": 5.347146
+        },
+        {
+          "function": "learning/world_model_update.py:352:update_world_model",
+          "calls": 50,
+          "self_seconds": 0.0078575,
+          "cumulative_seconds": 3.3276166000000003
+        },
+        {
+          "function": "learning/trainer.py:410:_clip_gradient_norm",
+          "calls": 155,
+          "self_seconds": 0.0013018,
+          "cumulative_seconds": 1.824967
+        },
+        {
+          "function": "learning/collection.py:20:collect",
+          "calls": 5,
+          "self_seconds": 0.0023657,
+          "cumulative_seconds": 1.3960211
+        },
+        {
+          "function": "envs/manager_based.py:232:step",
+          "calls": 12,
+          "self_seconds": 0.0005494,
+          "cumulative_seconds": 1.349974
+        },
+        {
+          "function": "~:0:<method 'nonzero' of 'torch._C.TensorBase' objects>",
+          "calls": 36,
+          "self_seconds": 0.7227956000000001,
+          "cumulative_seconds": 0.7227956000000001
+        },
+        {
+          "function": "core/kinematics.py:258:forward",
+          "calls": 22,
+          "self_seconds": 0.06837130000000001,
+          "cumulative_seconds": 0.20570660000000002
+        },
+        {
+          "function": "learning/replay.py:810:sample_windows",
+          "calls": 51,
+          "self_seconds": 0.0096846,
+          "cumulative_seconds": 0.0697963
+        },
+        {
+          "function": "learning/replay.py:361:_weighted_logical",
+          "calls": 55,
+          "self_seconds": 0.0054812,
+          "cumulative_seconds": 0.051141200000000005
+        }
+      ]
+    },
+    "train-reference-repeat": {
+      "benchmark_only": true,
+      "target": "training",
+      "source": {
+        "kind": "verified_release",
+        "source_revision": "1eb4899730d8c03258c88d0f7f236e36efd1968d",
+        "manifest_sha256": "e439019b7fb4ed92bb64cea8d2fcef515d79a721c0edc4fe0c83f6d5d60d3657"
+      },
+      "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+      "checkpoint_iteration": 6600,
+      "actuators": "reference",
+      "kinematics": "reference",
+      "profile": null,
+      "training_iterations": 5,
+      "training_shape": {
+        "num_envs": 2560,
+        "wm_batch": 2048,
+        "wm_batches": 10,
+        "policy_batch": 4096,
+        "horizon": 32,
+        "buffer_steps": 1000,
+        "warmup_steps": 64,
+        "log_every": 10
+      },
+      "timing": {
+        "refill_seconds": 9.673450700000103,
+        "measured_seconds": 10.537470200000143,
+        "peak_allocated_gib": 11.5597243309021,
+        "peak_reserved_gib": 14.11328125
+      },
+      "error": null,
+      "cpu_top": [
+        {
+          "function": "learning/policy_update.py:97:update_policy_and_critic",
+          "calls": 5,
+          "self_seconds": 0.10023370000000001,
+          "cumulative_seconds": 5.4375305
+        },
+        {
+          "function": "learning/world_model_update.py:352:update_world_model",
+          "calls": 50,
+          "self_seconds": 0.0076901,
+          "cumulative_seconds": 3.2652805000000003
+        },
+        {
+          "function": "learning/trainer.py:410:_clip_gradient_norm",
+          "calls": 155,
+          "self_seconds": 0.0015987000000000002,
+          "cumulative_seconds": 1.7844730000000002
+        },
+        {
+          "function": "learning/collection.py:20:collect",
+          "calls": 5,
+          "self_seconds": 0.0024533000000000003,
+          "cumulative_seconds": 1.520178
+        },
+        {
+          "function": "envs/manager_based.py:232:step",
+          "calls": 12,
+          "self_seconds": 0.0006370000000000001,
+          "cumulative_seconds": 1.4722183000000002
+        },
+        {
+          "function": "actuator_collection.py:196:compute",
+          "calls": 48,
+          "self_seconds": 0.082766,
+          "cumulative_seconds": 0.5919296000000001
+        },
+        {
+          "function": "core/kinematics.py:258:forward",
+          "calls": 22,
+          "self_seconds": 0.0754636,
+          "cumulative_seconds": 0.27072460000000004
+        },
+        {
+          "function": "actuator_collection.py:516:_scatter_actuator_output",
+          "calls": 1392,
+          "self_seconds": 0.0034028,
+          "cumulative_seconds": 0.1458805
+        },
+        {
+          "function": "~:0:<method 'nonzero' of 'torch._C.TensorBase' objects>",
+          "calls": 36,
+          "self_seconds": 0.1408617,
+          "cumulative_seconds": 0.1408617
+        },
+        {
+          "function": "learning/replay.py:810:sample_windows",
+          "calls": 51,
+          "self_seconds": 0.0098007,
+          "cumulative_seconds": 0.0681765
+        },
+        {
+          "function": "learning/replay.py:361:_weighted_logical",
+          "calls": 55,
+          "self_seconds": 0.0050826000000000005,
+          "cumulative_seconds": 0.0469706
+        }
+      ]
+    },
+    "eval-reference": {
+      "benchmark_only": true,
+      "target": "evaluation",
+      "source": {
+        "kind": "verified_release",
+        "source_revision": "1eb4899730d8c03258c88d0f7f236e36efd1968d",
+        "manifest_sha256": "e439019b7fb4ed92bb64cea8d2fcef515d79a721c0edc4fe0c83f6d5d60d3657"
+      },
+      "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+      "checkpoint_iteration": 6600,
+      "actuators": "grouped",
+      "kinematics": "reference",
+      "profile": "full_clean",
+      "training_iterations": null,
+      "training_shape": {
+        "num_envs": 2560,
+        "wm_batch": 2048,
+        "wm_batches": 10,
+        "policy_batch": 4096,
+        "horizon": 32,
+        "buffer_steps": 1000,
+        "warmup_steps": 64,
+        "log_every": 10
+      },
+      "timing": {
+        "measured_seconds": 31.021281799999997,
+        "peak_allocated_gib": 0.8495869636535645,
+        "peak_reserved_gib": 1.5703125,
+        "measured_steps": 1024
+      },
+      "error": null,
+      "cpu_top": [
+        {
+          "function": "envs/manager_based.py:232:step",
+          "calls": 1024,
+          "self_seconds": 0.026911300000000003,
+          "cumulative_seconds": 24.932462500000003
+        },
+        {
+          "function": "core/kinematics.py:258:forward",
+          "calls": 1024,
+          "self_seconds": 2.453284,
+          "cumulative_seconds": 7.852755200000001
+        },
+        {
+          "function": "actuator_collection.py:196:compute",
+          "calls": 4097,
+          "self_seconds": 0.06078,
+          "cumulative_seconds": 3.0540092000000003
+        },
+        {
+          "function": "envs/mdp/commands.py:425:canonical_state",
+          "calls": 6148,
+          "self_seconds": 0.34005610000000003,
+          "cumulative_seconds": 1.9560175000000002
+        },
+        {
+          "function": "actuator_collection.py:715:set_position_index",
+          "calls": 4097,
+          "self_seconds": 0.0025258000000000004,
+          "cumulative_seconds": 0.5892478
+        },
+        {
+          "function": "actuator_collection.py:826:_set_index",
+          "calls": 4097,
+          "self_seconds": 0.0189684,
+          "cumulative_seconds": 0.5867220000000001
+        },
+        {
+          "function": "actuator_collection.py:516:_scatter_actuator_output",
+          "calls": 4097,
+          "self_seconds": 0.011048800000000001,
+          "cumulative_seconds": 0.4565751
+        }
+      ]
+    },
+    "eval-batched": {
+      "benchmark_only": true,
+      "target": "evaluation",
+      "source": {
+        "kind": "verified_release",
+        "source_revision": "1eb4899730d8c03258c88d0f7f236e36efd1968d",
+        "manifest_sha256": "e439019b7fb4ed92bb64cea8d2fcef515d79a721c0edc4fe0c83f6d5d60d3657"
+      },
+      "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+      "checkpoint_iteration": 6600,
+      "actuators": "grouped",
+      "kinematics": "batched",
+      "profile": "full_clean",
+      "training_iterations": null,
+      "training_shape": {
+        "num_envs": 2560,
+        "wm_batch": 2048,
+        "wm_batches": 10,
+        "policy_batch": 4096,
+        "horizon": 32,
+        "buffer_steps": 1000,
+        "warmup_steps": 64,
+        "log_every": 10
+      },
+      "timing": {
+        "measured_seconds": 19.371784599999955,
+        "peak_allocated_gib": 0.848569393157959,
+        "peak_reserved_gib": 1.8203125,
+        "measured_steps": 1024
+      },
+      "error": null,
+      "cpu_top": [
+        {
+          "function": "envs/manager_based.py:232:step",
+          "calls": 1024,
+          "self_seconds": 0.026225500000000002,
+          "cumulative_seconds": 14.319617000000001
+        },
+        {
+          "function": "envs/mdp/commands.py:425:canonical_state",
+          "calls": 6148,
+          "self_seconds": 0.33814150000000004,
+          "cumulative_seconds": 1.9524868000000002
+        },
+        {
+          "function": "robots/g1/kinematics.py:106:forward_fast",
+          "calls": 1024,
+          "self_seconds": 1.1618493,
+          "cumulative_seconds": 1.8508055
+        },
+        {
+          "function": "actuator_collection.py:196:compute",
+          "calls": 4097,
+          "self_seconds": 0.058655700000000005,
+          "cumulative_seconds": 1.4524248000000002
+        },
+        {
+          "function": "actuator_collection.py:715:set_position_index",
+          "calls": 4097,
+          "self_seconds": 0.0022491,
+          "cumulative_seconds": 0.5450738
+        },
+        {
+          "function": "actuator_collection.py:826:_set_index",
+          "calls": 4097,
+          "self_seconds": 0.0179097,
+          "cumulative_seconds": 0.5428247
+        },
+        {
+          "function": "actuator_collection.py:516:_scatter_actuator_output",
+          "calls": 4097,
+          "self_seconds": 0.0109739,
+          "cumulative_seconds": 0.45422340000000005
+        },
+        {
+          "function": "~:0:<method 'nonzero' of 'torch._C.TensorBase' objects>",
+          "calls": 2048,
+          "self_seconds": 0.39567610000000003,
+          "cumulative_seconds": 0.39567610000000003
+        }
+      ]
+    }
+  },
+  "native_cuda_fk": {
+    "batches": [
+      40,
+      4096
+    ],
+    "max_output_abs": [
+      9.5367431640625e-07,
+      1.430511474609375e-06
+    ],
+    "max_gradient_abs": [
+      2.86102294921875e-06,
+      7.62939453125e-06
+    ],
+    "motionlib_copy_double_ingestion": "passed"
+  },
+  "state_cache": {
+    "strict": {
+      "steps": 128,
+      "exact_checked_reads": 384
+    },
+    "full_clean": {
+      "steps": 128,
+      "exact_checked_reads": 384
+    },
+    "tolerance": {
+      "rtol": 0,
+      "atol": 0
+    }
+  },
+  "unaccepted_training_batched_fk": {
+    "completed": false,
+    "stopped_after_minutes_without_five_iterations": true,
+    "sampled_device_memory_mib": 15966,
+    "causal_limit": "Reference FK repeat also exhibited near-capacity memory and throughput instability; this is not proof that batched FK alone caused the memory pressure."
+  },
+  "complete_jobs": {
+    "sequential": {
+      "checkpoint": "model_6600.pt",
+      "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+      "source": {
+        "kind": "verified_release",
+        "source_revision": "47055435fbef35d4ca564509cd218fe447abcc14",
+        "manifest_sha256": "cc0a8477a7a0553fbe0e719aa44ba72292286fc8f0ba4c39cf5b740bbb6a8932"
+      },
+      "execution": "grouped",
+      "kinematics_execution": "batched",
+      "scheduling": "sequential",
+      "profile": "both",
+      "evaluation_wall_seconds": 298.5160000000001,
+      "profile_elapsed_seconds": {
+        "strict": 150.34573460000024,
+        "full_clean": 147.9527478
+      },
+      "protocol_version": 2,
+      "full_trajectory_is_tracking_success": false,
+      "profiles": {
+        "strict": {
+          "clips": 40,
+          "completed": 7,
+          "completion_rate": 0.175,
+          "mean_normalized_return": 0.3356322088814803,
+          "failed_clips": [
+            "dance1_subject1",
+            "dance1_subject2",
+            "dance2_subject1",
+            "dance2_subject2",
+            "dance2_subject3",
+            "dance2_subject4",
+            "fallAndGetUp1_subject1",
+            "fallAndGetUp1_subject4",
+            "fallAndGetUp1_subject5",
+            "fallAndGetUp2_subject2",
+            "fallAndGetUp2_subject3",
+            "fallAndGetUp3_subject1",
+            "fight1_subject2",
+            "fight1_subject3",
+            "fight1_subject5",
+            "fightAndSports1_subject1",
+            "fightAndSports1_subject4",
+            "jumps1_subject1",
+            "jumps1_subject2",
+            "jumps1_subject5",
+            "run1_subject2",
+            "run1_subject5",
+            "run2_subject1",
+            "run2_subject4",
+            "sprint1_subject2",
+            "sprint1_subject4",
+            "walk1_subject1",
+            "walk1_subject2",
+            "walk2_subject3",
+            "walk2_subject4",
+            "walk3_subject1",
+            "walk3_subject3",
+            "walk3_subject4"
+          ],
+          "checkpoint": "model_6600.pt",
+          "checkpoint_iteration": 6600,
+          "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+          "backend": "newton",
+          "expected_clips": [
+            "dance1_subject1",
+            "dance1_subject2",
+            "dance1_subject3",
+            "dance2_subject1",
+            "dance2_subject2",
+            "dance2_subject3",
+            "dance2_subject4",
+            "dance2_subject5",
+            "fallAndGetUp1_subject1",
+            "fallAndGetUp1_subject4",
+            "fallAndGetUp1_subject5",
+            "fallAndGetUp2_subject2",
+            "fallAndGetUp2_subject3",
+            "fallAndGetUp3_subject1",
+            "fight1_subject2",
+            "fight1_subject3",
+            "fight1_subject5",
+            "fightAndSports1_subject1",
+            "fightAndSports1_subject4",
+            "jumps1_subject1",
+            "jumps1_subject2",
+            "jumps1_subject5",
+            "run1_subject2",
+            "run1_subject5",
+            "run2_subject1",
+            "run2_subject4",
+            "sprint1_subject2",
+            "sprint1_subject4",
+            "walk1_subject1",
+            "walk1_subject2",
+            "walk1_subject5",
+            "walk2_subject1",
+            "walk2_subject3",
+            "walk2_subject4",
+            "walk3_subject1",
+            "walk3_subject2",
+            "walk3_subject3",
+            "walk3_subject4",
+            "walk3_subject5",
+            "walk4_subject1"
+          ],
+          "profile": "strict",
+          "execution": "grouped",
+          "kinematics_execution": "batched",
+          "scheduling": "sequential",
+          "protocol_version": 2,
+          "protocol": "native tracking failure termination; original unpadded clip lengths",
+          "expected_steps": {
+            "dance1_subject1": 6573,
+            "dance1_subject2": 6573,
+            "dance1_subject3": 6573,
+            "dance2_subject1": 11283,
+            "dance2_subject2": 11283,
+            "dance2_subject3": 11283,
+            "dance2_subject4": 11283,
+            "dance2_subject5": 11283,
+            "fallAndGetUp1_subject1": 8410,
+            "fallAndGetUp1_subject4": 8410,
+            "fallAndGetUp1_subject5": 8410,
+            "fallAndGetUp2_subject2": 8195,
+            "fallAndGetUp2_subject3": 8195,
+            "fallAndGetUp3_subject1": 5108,
+            "fight1_subject2": 12243,
+            "fight1_subject3": 12243,
+            "fight1_subject5": 12243,
+            "fightAndSports1_subject1": 12256,
+            "fightAndSports1_subject4": 12256,
+            "jumps1_subject1": 12221,
+            "jumps1_subject2": 12221,
+            "jumps1_subject5": 12221,
+            "run1_subject2": 11890,
+            "run1_subject5": 11890,
+            "run2_subject1": 12240,
+            "run2_subject4": 12240,
+            "sprint1_subject2": 13655,
+            "sprint1_subject4": 13655,
+            "walk1_subject1": 13065,
+            "walk1_subject2": 13065,
+            "walk1_subject5": 13065,
+            "walk2_subject1": 11908,
+            "walk2_subject3": 11908,
+            "walk2_subject4": 11908,
+            "walk3_subject1": 12330,
+            "walk3_subject2": 12330,
+            "walk3_subject3": 12330,
+            "walk3_subject4": 12330,
+            "walk3_subject5": 12330,
+            "walk4_subject1": 8195
+          },
+          "recovery_enabled": true,
+          "action_delay": {
+            "actuator_type": "delayed_pd",
+            "max_delay": 4
+          },
+          "seed": 0,
+          "elapsed_seconds": 150.34573460000024,
+          "runtime_evidence_validated": true
+        },
+        "full_clean": {
+          "clips": 40,
+          "covered_clips": 40,
+          "coverage_rate": 1.0,
+          "tracking_success": null,
+          "full_trajectory_is_tracking_success": false,
+          "mean_normalized_return": 0.6967680962259759,
+          "checkpoint": "model_6600.pt",
+          "checkpoint_iteration": 6600,
+          "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+          "backend": "newton",
+          "expected_clips": [
+            "dance1_subject1",
+            "dance1_subject2",
+            "dance1_subject3",
+            "dance2_subject1",
+            "dance2_subject2",
+            "dance2_subject3",
+            "dance2_subject4",
+            "dance2_subject5",
+            "fallAndGetUp1_subject1",
+            "fallAndGetUp1_subject4",
+            "fallAndGetUp1_subject5",
+            "fallAndGetUp2_subject2",
+            "fallAndGetUp2_subject3",
+            "fallAndGetUp3_subject1",
+            "fight1_subject2",
+            "fight1_subject3",
+            "fight1_subject5",
+            "fightAndSports1_subject1",
+            "fightAndSports1_subject4",
+            "jumps1_subject1",
+            "jumps1_subject2",
+            "jumps1_subject5",
+            "run1_subject2",
+            "run1_subject5",
+            "run2_subject1",
+            "run2_subject4",
+            "sprint1_subject2",
+            "sprint1_subject4",
+            "walk1_subject1",
+            "walk1_subject2",
+            "walk1_subject5",
+            "walk2_subject1",
+            "walk2_subject3",
+            "walk2_subject4",
+            "walk3_subject1",
+            "walk3_subject2",
+            "walk3_subject3",
+            "walk3_subject4",
+            "walk3_subject5",
+            "walk4_subject1"
+          ],
+          "profile": "full_clean",
+          "execution": "grouped",
+          "kinematics_execution": "batched",
+          "scheduling": "sequential",
+          "protocol_version": 2,
+          "protocol": "full original trajectories; termination and random actuator delay disabled; coverage is not tracking success",
+          "expected_steps": {
+            "dance1_subject1": 6573,
+            "dance1_subject2": 6573,
+            "dance1_subject3": 6573,
+            "dance2_subject1": 11283,
+            "dance2_subject2": 11283,
+            "dance2_subject3": 11283,
+            "dance2_subject4": 11283,
+            "dance2_subject5": 11283,
+            "fallAndGetUp1_subject1": 8410,
+            "fallAndGetUp1_subject4": 8410,
+            "fallAndGetUp1_subject5": 8410,
+            "fallAndGetUp2_subject2": 8195,
+            "fallAndGetUp2_subject3": 8195,
+            "fallAndGetUp3_subject1": 5108,
+            "fight1_subject2": 12243,
+            "fight1_subject3": 12243,
+            "fight1_subject5": 12243,
+            "fightAndSports1_subject1": 12256,
+            "fightAndSports1_subject4": 12256,
+            "jumps1_subject1": 12221,
+            "jumps1_subject2": 12221,
+            "jumps1_subject5": 12221,
+            "run1_subject2": 11890,
+            "run1_subject5": 11890,
+            "run2_subject1": 12240,
+            "run2_subject4": 12240,
+            "sprint1_subject2": 13655,
+            "sprint1_subject4": 13655,
+            "walk1_subject1": 13065,
+            "walk1_subject2": 13065,
+            "walk1_subject5": 13065,
+            "walk2_subject1": 11908,
+            "walk2_subject3": 11908,
+            "walk2_subject4": 11908,
+            "walk3_subject1": 12330,
+            "walk3_subject2": 12330,
+            "walk3_subject3": 12330,
+            "walk3_subject4": 12330,
+            "walk3_subject5": 12330,
+            "walk4_subject1": 8195
+          },
+          "recovery_enabled": true,
+          "action_delay": {
+            "actuator_type": "delayed_pd",
+            "max_delay": 0
+          },
+          "seed": 0,
+          "elapsed_seconds": 147.9527478,
+          "runtime_evidence_validated": true
+        }
+      }
+    },
+    "parallel": {
+      "checkpoint": "model_6600.pt",
+      "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+      "source": {
+        "kind": "verified_release",
+        "source_revision": "47055435fbef35d4ca564509cd218fe447abcc14",
+        "manifest_sha256": "cc0a8477a7a0553fbe0e719aa44ba72292286fc8f0ba4c39cf5b740bbb6a8932"
+      },
+      "execution": "grouped",
+      "kinematics_execution": "batched",
+      "scheduling": "parallel",
+      "profile": "both",
+      "evaluation_wall_seconds": 279.4850000000001,
+      "profile_elapsed_seconds": {
+        "strict": 277.6535527000001,
+        "full_clean": 279.2763395000002
+      },
+      "protocol_version": 2,
+      "full_trajectory_is_tracking_success": false,
+      "profiles": {
+        "strict": {
+          "clips": 40,
+          "completed": 6,
+          "completion_rate": 0.15,
+          "mean_normalized_return": 0.33047983599757313,
+          "failed_clips": [
+            "dance1_subject1",
+            "dance1_subject2",
+            "dance2_subject1",
+            "dance2_subject2",
+            "dance2_subject3",
+            "dance2_subject4",
+            "dance2_subject5",
+            "fallAndGetUp1_subject1",
+            "fallAndGetUp1_subject4",
+            "fallAndGetUp1_subject5",
+            "fallAndGetUp2_subject2",
+            "fallAndGetUp2_subject3",
+            "fallAndGetUp3_subject1",
+            "fight1_subject2",
+            "fight1_subject3",
+            "fight1_subject5",
+            "fightAndSports1_subject1",
+            "fightAndSports1_subject4",
+            "jumps1_subject1",
+            "jumps1_subject2",
+            "jumps1_subject5",
+            "run1_subject2",
+            "run1_subject5",
+            "run2_subject1",
+            "run2_subject4",
+            "sprint1_subject2",
+            "sprint1_subject4",
+            "walk1_subject1",
+            "walk1_subject2",
+            "walk2_subject3",
+            "walk2_subject4",
+            "walk3_subject1",
+            "walk3_subject3",
+            "walk3_subject4"
+          ],
+          "checkpoint": "model_6600.pt",
+          "checkpoint_iteration": 6600,
+          "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+          "backend": "newton",
+          "expected_clips": [
+            "dance1_subject1",
+            "dance1_subject2",
+            "dance1_subject3",
+            "dance2_subject1",
+            "dance2_subject2",
+            "dance2_subject3",
+            "dance2_subject4",
+            "dance2_subject5",
+            "fallAndGetUp1_subject1",
+            "fallAndGetUp1_subject4",
+            "fallAndGetUp1_subject5",
+            "fallAndGetUp2_subject2",
+            "fallAndGetUp2_subject3",
+            "fallAndGetUp3_subject1",
+            "fight1_subject2",
+            "fight1_subject3",
+            "fight1_subject5",
+            "fightAndSports1_subject1",
+            "fightAndSports1_subject4",
+            "jumps1_subject1",
+            "jumps1_subject2",
+            "jumps1_subject5",
+            "run1_subject2",
+            "run1_subject5",
+            "run2_subject1",
+            "run2_subject4",
+            "sprint1_subject2",
+            "sprint1_subject4",
+            "walk1_subject1",
+            "walk1_subject2",
+            "walk1_subject5",
+            "walk2_subject1",
+            "walk2_subject3",
+            "walk2_subject4",
+            "walk3_subject1",
+            "walk3_subject2",
+            "walk3_subject3",
+            "walk3_subject4",
+            "walk3_subject5",
+            "walk4_subject1"
+          ],
+          "profile": "strict",
+          "execution": "grouped",
+          "kinematics_execution": "batched",
+          "scheduling": "parallel",
+          "protocol_version": 2,
+          "protocol": "native tracking failure termination; original unpadded clip lengths",
+          "expected_steps": {
+            "dance1_subject1": 6573,
+            "dance1_subject2": 6573,
+            "dance1_subject3": 6573,
+            "dance2_subject1": 11283,
+            "dance2_subject2": 11283,
+            "dance2_subject3": 11283,
+            "dance2_subject4": 11283,
+            "dance2_subject5": 11283,
+            "fallAndGetUp1_subject1": 8410,
+            "fallAndGetUp1_subject4": 8410,
+            "fallAndGetUp1_subject5": 8410,
+            "fallAndGetUp2_subject2": 8195,
+            "fallAndGetUp2_subject3": 8195,
+            "fallAndGetUp3_subject1": 5108,
+            "fight1_subject2": 12243,
+            "fight1_subject3": 12243,
+            "fight1_subject5": 12243,
+            "fightAndSports1_subject1": 12256,
+            "fightAndSports1_subject4": 12256,
+            "jumps1_subject1": 12221,
+            "jumps1_subject2": 12221,
+            "jumps1_subject5": 12221,
+            "run1_subject2": 11890,
+            "run1_subject5": 11890,
+            "run2_subject1": 12240,
+            "run2_subject4": 12240,
+            "sprint1_subject2": 13655,
+            "sprint1_subject4": 13655,
+            "walk1_subject1": 13065,
+            "walk1_subject2": 13065,
+            "walk1_subject5": 13065,
+            "walk2_subject1": 11908,
+            "walk2_subject3": 11908,
+            "walk2_subject4": 11908,
+            "walk3_subject1": 12330,
+            "walk3_subject2": 12330,
+            "walk3_subject3": 12330,
+            "walk3_subject4": 12330,
+            "walk3_subject5": 12330,
+            "walk4_subject1": 8195
+          },
+          "recovery_enabled": true,
+          "action_delay": {
+            "actuator_type": "delayed_pd",
+            "max_delay": 4
+          },
+          "seed": 0,
+          "elapsed_seconds": 277.6535527000001,
+          "runtime_evidence_validated": true
+        },
+        "full_clean": {
+          "clips": 40,
+          "covered_clips": 40,
+          "coverage_rate": 1.0,
+          "tracking_success": null,
+          "full_trajectory_is_tracking_success": false,
+          "mean_normalized_return": 0.7018513586564971,
+          "checkpoint": "model_6600.pt",
+          "checkpoint_iteration": 6600,
+          "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+          "backend": "newton",
+          "expected_clips": [
+            "dance1_subject1",
+            "dance1_subject2",
+            "dance1_subject3",
+            "dance2_subject1",
+            "dance2_subject2",
+            "dance2_subject3",
+            "dance2_subject4",
+            "dance2_subject5",
+            "fallAndGetUp1_subject1",
+            "fallAndGetUp1_subject4",
+            "fallAndGetUp1_subject5",
+            "fallAndGetUp2_subject2",
+            "fallAndGetUp2_subject3",
+            "fallAndGetUp3_subject1",
+            "fight1_subject2",
+            "fight1_subject3",
+            "fight1_subject5",
+            "fightAndSports1_subject1",
+            "fightAndSports1_subject4",
+            "jumps1_subject1",
+            "jumps1_subject2",
+            "jumps1_subject5",
+            "run1_subject2",
+            "run1_subject5",
+            "run2_subject1",
+            "run2_subject4",
+            "sprint1_subject2",
+            "sprint1_subject4",
+            "walk1_subject1",
+            "walk1_subject2",
+            "walk1_subject5",
+            "walk2_subject1",
+            "walk2_subject3",
+            "walk2_subject4",
+            "walk3_subject1",
+            "walk3_subject2",
+            "walk3_subject3",
+            "walk3_subject4",
+            "walk3_subject5",
+            "walk4_subject1"
+          ],
+          "profile": "full_clean",
+          "execution": "grouped",
+          "kinematics_execution": "batched",
+          "scheduling": "parallel",
+          "protocol_version": 2,
+          "protocol": "full original trajectories; termination and random actuator delay disabled; coverage is not tracking success",
+          "expected_steps": {
+            "dance1_subject1": 6573,
+            "dance1_subject2": 6573,
+            "dance1_subject3": 6573,
+            "dance2_subject1": 11283,
+            "dance2_subject2": 11283,
+            "dance2_subject3": 11283,
+            "dance2_subject4": 11283,
+            "dance2_subject5": 11283,
+            "fallAndGetUp1_subject1": 8410,
+            "fallAndGetUp1_subject4": 8410,
+            "fallAndGetUp1_subject5": 8410,
+            "fallAndGetUp2_subject2": 8195,
+            "fallAndGetUp2_subject3": 8195,
+            "fallAndGetUp3_subject1": 5108,
+            "fight1_subject2": 12243,
+            "fight1_subject3": 12243,
+            "fight1_subject5": 12243,
+            "fightAndSports1_subject1": 12256,
+            "fightAndSports1_subject4": 12256,
+            "jumps1_subject1": 12221,
+            "jumps1_subject2": 12221,
+            "jumps1_subject5": 12221,
+            "run1_subject2": 11890,
+            "run1_subject5": 11890,
+            "run2_subject1": 12240,
+            "run2_subject4": 12240,
+            "sprint1_subject2": 13655,
+            "sprint1_subject4": 13655,
+            "walk1_subject1": 13065,
+            "walk1_subject2": 13065,
+            "walk1_subject5": 13065,
+            "walk2_subject1": 11908,
+            "walk2_subject3": 11908,
+            "walk2_subject4": 11908,
+            "walk3_subject1": 12330,
+            "walk3_subject2": 12330,
+            "walk3_subject3": 12330,
+            "walk3_subject4": 12330,
+            "walk3_subject5": 12330,
+            "walk4_subject1": 8195
+          },
+          "recovery_enabled": true,
+          "action_delay": {
+            "actuator_type": "delayed_pd",
+            "max_delay": 0
+          },
+          "seed": 0,
+          "elapsed_seconds": 279.2763395000002,
+          "runtime_evidence_validated": true
+        }
+      }
+    }
+  },
+  "prior_fixed_job": {
+    "wall_seconds": 437.625,
+    "source_revision": "1c50bb87c19f2ffcffa1d737ef1a962670f345e9",
+    "artifact": "2026-11-08-g1-fast-evaluation.json"
+  },
+  "limits": [
+    "cProfile overhead and asynchronous GPU attribution apply",
+    "Training trials do not establish a stable speedup",
+    "Full-clean coverage is not tracking success",
+    "Newton full rollouts are not claimed bitwise identical"
+  ]
+}
