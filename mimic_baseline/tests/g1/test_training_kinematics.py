@@ -109,3 +109,26 @@ def test_training_native_g1(tmp_path):
              for out in (actual, reference)]
     for a, b in zip(*grads):
         torch.testing.assert_close(a, b, atol=2e-3, rtol=2e-4)
+
+
+def test_training_recomputation_excludes_untracked_leaf_branches(tmp_path):
+    kin = g1.G1TrainingKinematics(fixture_urdf(tmp_path), 'cpu', chunk_size=3)
+    inputs = inputs_for((7,), torch.float32)
+    required = set(kin.tracked_idx)
+    for link in kin.tracked_idx:
+        while kin.parent[link] >= 0:
+            link = kin.parent[link]
+            required.add(link)
+    unused = [joint for link, joint in enumerate(kin.joint_idx) if joint >= 0 and link not in required]
+    assert unused
+    with torch.no_grad():
+        inputs[4][:, unused] = float('nan')
+        inputs[5][:, unused] = float('nan')
+    outputs = kin.forward(*inputs)
+    gradients = torch.autograd.grad(sum(x.square().sum() for x in outputs), inputs)
+    # Computing every branch and selecting tracked outputs afterwards propagates
+    # zero*NaN through discarded branches during checkpoint recomputation.
+    assert all(torch.isfinite(x).all() for x in outputs)
+    assert all(torch.isfinite(x).all() for x in gradients)
+    assert not gradients[4][:, unused].count_nonzero()
+    assert not gradients[5][:, unused].count_nonzero()
