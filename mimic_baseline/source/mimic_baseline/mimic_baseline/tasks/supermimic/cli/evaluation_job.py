@@ -89,7 +89,7 @@ def run_job(
     profile="both",
     execution="grouped",
     scheduling="sequential",
-    kinematics_execution="reference",
+    kinematics_execution="batched",
 ):
     from ..evaluation.report import write_report
     from .evaluate import evaluate
@@ -182,7 +182,7 @@ def run_job(
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--kinematics-execution", choices=("reference", "batched"), default="reference")
+    parser.add_argument("--kinematics-execution", choices=("reference", "batched"), default="batched")
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument("--checkpoint", type=Path)
     parser.add_argument(

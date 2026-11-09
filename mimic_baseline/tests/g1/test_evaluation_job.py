@@ -106,6 +106,9 @@ def test_job_status_and_unique_outputs(tmp_path, monkeypatch):
             directory = output / profile
             directory.mkdir(parents=True)
             runtime = payload.pop("runtime_checks")
+            results[profile]["kinematics_execution"] = kwargs["kinematics_execution"]
+            runtime["kinematics_execution"] = kwargs["kinematics_execution"]
+            runtime["after_rollout"]["kinematics_execution"] = kwargs["kinematics_execution"]
             runtime["execution"] = kwargs["execution"]
             runtime["after_rollout"]["execution"] = kwargs["execution"]
             payload["metadata"] = {"evaluation": runtime}
@@ -116,6 +119,7 @@ def test_job_status_and_unique_outputs(tmp_path, monkeypatch):
     monkeypatch.setattr(evaluator, "evaluate", fake_evaluate)
     first = job.run_job(config)
     second = job.run_job(config)
+    assert json.loads((first / "status.json").read_text())["kinematics_execution"] == "batched"
     assert first != second
     assert json.loads((first / "status.json").read_text())["status"] == "complete"
 
