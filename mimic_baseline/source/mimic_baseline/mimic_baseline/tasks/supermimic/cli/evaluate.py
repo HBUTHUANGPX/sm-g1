@@ -1,16 +1,20 @@
 """Evaluate a ManagerBased G1 checkpoint on exactly all 40 LAFAN1 clips."""
 
-from pathlib import Path
 import argparse
 import hashlib
 import json
 import math
 import subprocess
 import sys
-import time
 import threading
-from ..runtime.paths import training_entry
+import time
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
 from ..evaluation.profiles import PROFILES, PROTOCOL_VERSION
+from ..runtime.paths import training_entry
+
+_PREFLIGHT_LOCK = threading.Lock()
 
 
 def validate_results(payload, expected_names, *, profile="strict", expected_steps=None):
@@ -64,9 +68,10 @@ def preflight_inputs(saved, data_root):
     """CPU validation of source data, required assets and strict policy ABI."""
     import numpy as np
     import torch
+
     from ..learning.config import TrainingConfig
     from ..learning.models import Policy
-    from ..runtime.configuration import restore_run_config, resolve_backend
+    from ..runtime.configuration import resolve_backend, restore_run_config
 
     values, small = restore_run_config(saved, {"device": "cpu"})
     cfg = TrainingConfig(**values)
@@ -116,8 +121,11 @@ def evaluate(
     dry_run=False,
     profile="strict",
     execution="reference",
+    scheduling="sequential",
 ):
     started = time.perf_counter()
+    if scheduling not in ("sequential", "parallel"):
+        raise ValueError("Unknown evaluation scheduling mode")
     if execution not in ("reference", "grouped"):
         raise ValueError("Unknown evaluation execution mode")
     import torch
@@ -130,18 +138,35 @@ def evaluate(
     if output.exists():
         raise FileExistsError(f"Refusing to reuse evaluation output: {output}")
     if profile == "both":
-        results = {}
-        for selected in PROFILES:
-            results[selected] = evaluate(
+
+        def run_profile(selected):
+            return evaluate(
                 checkpoint,
                 data_root,
                 output / selected,
                 dry_run=dry_run,
                 profile=selected,
                 execution=execution,
+                scheduling=scheduling,
             )
+
+        if scheduling == "parallel":
+            # Each worker launches its own simulator process and owns one directory.
+            # The context joins every running worker even if one profile fails: a
+            # failed job is never returned while a sibling still writes artifacts.
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                futures = {
+                    selected: pool.submit(run_profile, selected)
+                    for selected in PROFILES
+                }
+                results = {
+                    selected: future.result() for selected, future in futures.items()
+                }
+        else:
+            results = {selected: run_profile(selected) for selected in PROFILES}
         return {
             "profile": "both",
+            "scheduling": scheduling,
             "protocol_version": PROTOCOL_VERSION,
             "profiles": results,
             "elapsed_seconds": time.perf_counter() - started,
@@ -160,8 +185,13 @@ def evaluate(
     ):
         raise ValueError("Missing or nonfinite policy parameters")
     if execution == "grouped" and saved["config"].get("actuator_type") != "delayed_pd":
-        raise ValueError("Grouped evaluation requires delayed_pd; use reference for other actuators")
-    expected_steps = preflight_inputs(saved, data_root)
+        raise ValueError(
+            "Grouped evaluation requires delayed_pd; use reference for other actuators"
+        )
+    # Policy construction temporarily forks CPU RNG state; serialize this small
+    # preflight section, while simulator subprocesses remain independent.
+    with _PREFLIGHT_LOCK:
+        expected_steps = preflight_inputs(saved, data_root)
     metadata = {
         "checkpoint": checkpoint.name,
         "checkpoint_iteration": saved["iteration"],
@@ -170,6 +200,7 @@ def evaluate(
         "expected_clips": names,
         "profile": profile,
         "execution": execution,
+        "scheduling": scheduling,
         "protocol_version": PROTOCOL_VERSION,
         "protocol": (
             "native tracking failure termination; original unpadded clip lengths"
@@ -265,6 +296,9 @@ def main():
     parser.add_argument(
         "--execution", choices=["reference", "grouped"], default="reference"
     )
+    parser.add_argument(
+        "--scheduling", choices=["sequential", "parallel"], default="sequential"
+    )
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -272,7 +306,7 @@ def main():
         "--profile",
         choices=(*PROFILES, "both"),
         default="strict",
-        help="Strict tracking or full clean trajectory coverage; both runs sequentially",
+        help="Strict tracking or full clean trajectory coverage; both uses the selected scheduling mode",
     )
     parser.add_argument(
         "--dry-run",

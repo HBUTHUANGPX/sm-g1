@@ -56,6 +56,9 @@ def validate_runtime(checks, profile, *, recovery_enabled=False):
 def build_report(results, payloads, identity):
     from ..cli.evaluate import validate_results
 
+    expected_profiles = PROFILES if identity.get("profile") == "both" else None
+    if expected_profiles is not None and set(results) != set(expected_profiles):
+        raise ValueError("Both-profile report requires strict and full_clean results")
     profiles = {}
     for profile, summary in results.items():
         if (
@@ -98,6 +101,8 @@ def build_report(results, payloads, identity):
         f"Checkpoint SHA256: `{identity['checkpoint_sha256']}`",
         f"Source revision: `{identity['source']['source_revision']}`",
         f"Execution: `{identity['execution']}`",
+        f"Scheduling: `{identity.get('scheduling', 'sequential')}`",
+        f"Evaluation wall seconds: {identity.get('evaluation_wall_seconds', 'unrecorded')}",
         "",
         "Full-clean coverage is not tracking success. Strict completion uses native tracking termination.",
         "",
@@ -110,6 +115,8 @@ def build_report(results, payloads, identity):
         )
         lines += [
             f"## {profile}",
+            "",
+            f"Profile elapsed seconds: {summary.get('elapsed_seconds', 'unrecorded')}; log: `evaluation/{profile}/evaluation.log`",
             "",
             f"{rate}; mean normalized return: {summary['mean_normalized_return']:.6f}.",
             "",

@@ -163,3 +163,4 @@ mimic_baseline/tests/g1/test_evaluation_job.py
 docs/evaluation-job.md
 docs/results/2026-11-08-g1-6600-strict.json
 docs/results/2026-11-08-g1-6600-full-clean.json
+mimic_baseline/tests/g1/test_evaluation_parallel.py
