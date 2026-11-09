@@ -8,7 +8,7 @@
 - Historical RX-P2 code and company documents in this workspace are outside the publication allowlist.
 - On 2026-11-07 the user stopped the initial Newton run (last saved iteration 2300) and authorized G1 recovery migration: action delay, Newton self-collision, large-pose resets, four-group probabilistic termination/protection and dimension fixes. TN is explicitly excluded. The subsequent user request authorizes a NEW 3000-iteration Newton recovery run, the largest practical validated environment count, and automatic evaluation of all 40 LAFAN1 clips. Preserve the stopped flat experiment; do not resume it as recovery.
 
-- The latest request authorizes continuing the completed recovery checkpoint from iteration 3000 to an absolute target of 20000, preserving the 2560-environment Newton configuration and automatically evaluating all 40 clips at the end. Use a separate run directory and retain the original 3000-iteration results.
+- The recovery continuation toward 20000 was stopped at the user's request (last saved checkpoint 6600). The current request authorizes bounded training-performance comparisons only, preserving the 2560-environment training configuration. Do not resume formal training. Keep benchmark checkpoints in separate directories outside the production checkpoint-selection root.
 
 ## Required commit and push cycle
 The user explicitly authorizes ongoing commits and pushes for this project.
@@ -33,7 +33,12 @@ If validation or pushing fails, report it and retain local work. Verify local an
 
 ## Fixed evaluation workflow
 - Use `scripts/run_g1_evaluation.py --config <local-config>` for the supported G1 delayed-PD recovery checkpoints; `--checkpoint` selects a specific saved model, otherwise the configured root supplies the latest numeric checkpoint.
-- Default: grouped execution, both strict and full_clean, all 40 clips at original lengths. `--execution reference` retains the original per-joint evaluation implementation for comparison. Training actuators remain unchanged.
+- Default: grouped execution, both strict and full_clean, all 40 clips at original lengths. `--execution reference` retains the original per-joint evaluation implementation for comparison. Training execution is selected separately; evaluation defaults are unchanged by the training-performance work.
 - Reuse the deployed, verified entry point and existing private local configuration. Do not invent per-request rollout/PowerShell/report scripts or manually assemble result tables when the fixed entry point suffices.
 - Require job `status.json` complete and validated `summary.json` / `report.md`; display those results. Full-clean coverage is not tracking success. Log failure artifacts honestly.
 - Machine paths, connections, data, checkpoints and full logs stay outside publication. Local `*.local.json` configuration must never be committed.
+
+## Training performance workflow
+- Original training configuration and Trainer remain authoritative. Execution-only switches are `--training-execution grouped` with `--kinematics-execution lean`; use `bounded --fk-chunk-size 16384` when trading recomputation for lower FK memory. Explicit `reference` switches remain available; CLI defaults remain reference pending stable end-to-end acceptance.
+- Use `scripts/profile_g1_runtime.py` for bounded comparisons with the same checkpoint and original shapes. Use 10 iterations, 5 warmup iterations and `--no-cprofile` for throughput comparisons; this window includes final normal logging/checkpoint I/O.
+- Do not promote isolated FK speedups or one short training trial into a stable whole-training improvement. Record allocator settings, allocated versus reserved memory, runtime versions and numerical checks. See `docs/results/2026-11-09-g1-training-runtime.md`.

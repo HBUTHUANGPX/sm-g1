@@ -26,8 +26,8 @@ Review empty/partial/slice resets, simulator joint-order permutations, gain writ
 
 ## Tasks
 
-- [ ] Shared actuator API in envs/grouped_actuators.py; retain evaluation aliases. Test exact torque/parameters/delay/RNG with native CUDA validator before choosing training default. Commit/push independently.
-- [ ] G1TrainingKinematics in robots/g1/kinematics.py. Test values, all six gradients, float64 gradcheck, batch shapes, copy/dtype and saved storage; measure full 131072-state CUDA forward/backward at candidate chunk sizes. Commit/push independently.
-- [ ] Extend supported training CLI/profiler with recorded execution choices and bounded warmup/no-cProfile comparison. Keep TrainingConfig/checkpoint ABI and original Trainer methods intact.
-- [ ] Compare reference, grouped-only and grouped+bounded-FK under the same checkpoint/configuration, with repeat trials, peak allocated/reserved memory, finite parameters and numerical evidence. Do not infer training improvement from simulation nondeterminism.
-- [ ] Set only GPU-accepted execution defaults, retain reference switches, publish measurements, pass CPU/CI, merge PR and synchronize main.
+- [x] Shared actuator API in envs/grouped_actuators.py; retain evaluation aliases. Test exact torque/parameters/delay/RNG with native CUDA validator before choosing training default. Commit/push independently.
+- [x] G1TrainingKinematics in robots/g1/kinematics.py. Test values, all six gradients, float64 gradcheck, batch shapes, copy/dtype and saved storage; measure full 131072-state CUDA forward/backward at candidate chunk sizes. Commit/push independently.
+- [x] Extend supported training CLI/profiler with recorded execution choices and bounded warmup/no-cProfile comparison. Keep TrainingConfig/checkpoint ABI and original Trainer methods intact.
+- [x] Compare reference, grouped-only and grouped+bounded-FK under the same checkpoint/configuration, with repeat trials, peak allocated/reserved memory, finite parameters and numerical evidence. Do not infer training improvement from simulation nondeterminism.
+- [x] Retain reference CLI defaults: native equivalence passed, but default-allocator end-to-end throughput remains unstable. Publish explicit optimized execution choices and measurements; complete CPU/CI and PR integration.
