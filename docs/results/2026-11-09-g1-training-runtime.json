@@ -1,0 +1,1001 @@
+{
+  "source_revision": "a320c2342e91af42df49e17c16673b8f3c0170f3",
+  "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+  "checkpoint_iteration": 6600,
+  "formal_training_resumed": false,
+  "runtime": {
+    "torch": "2.11.0+cu130",
+    "cuda": "13.0",
+    "device_type": "cuda",
+    "device_name": "NVIDIA GeForce RTX 5070 Ti",
+    "cpu_threads": 8
+  },
+  "training_shape": {
+    "num_envs": 2560,
+    "wm_batch": 2048,
+    "wm_batches": 10,
+    "policy_batch": 4096,
+    "horizon": 32,
+    "buffer_steps": 1000,
+    "warmup_steps": 64,
+    "log_every": 10
+  },
+  "native_fk": {
+    "batch": 131072,
+    "variants": [
+      {
+        "name": "reference",
+        "chunk_size": null,
+        "runs": [
+          {
+            "seconds": 0.08927130000029138,
+            "peak_allocated_gib": 0.8717246055603027,
+            "peak_reserved_gib": 1.244140625,
+            "max_output_abs": 0.0,
+            "max_gradient_relative_l2": 0.0,
+            "passed": true,
+            "rng_unchanged": true
+          },
+          {
+            "seconds": 0.08676030000060564,
+            "peak_allocated_gib": 0.8717246055603027,
+            "peak_reserved_gib": 1.244140625,
+            "max_output_abs": 0.0,
+            "max_gradient_relative_l2": 0.0,
+            "passed": true,
+            "rng_unchanged": true
+          }
+        ]
+      },
+      {
+        "name": "batched",
+        "chunk_size": null,
+        "runs": [
+          {
+            "seconds": 0.1757966999994096,
+            "peak_allocated_gib": 1.6733598709106445,
+            "peak_reserved_gib": 2.32421875,
+            "max_output_abs": 2.682209014892578e-06,
+            "max_gradient_relative_l2": 2.169132485097297e-07,
+            "passed": true,
+            "rng_unchanged": true
+          },
+          {
+            "seconds": 0.1745362000001478,
+            "peak_allocated_gib": 1.6733598709106445,
+            "peak_reserved_gib": 2.32421875,
+            "max_output_abs": 2.682209014892578e-06,
+            "max_gradient_relative_l2": 2.169132485097297e-07,
+            "passed": true,
+            "rng_unchanged": true
+          }
+        ]
+      },
+      {
+        "name": "lean",
+        "chunk_size": null,
+        "runs": [
+          {
+            "seconds": 0.08184389999951236,
+            "peak_allocated_gib": 0.8887581825256348,
+            "peak_reserved_gib": 1.1953125,
+            "max_output_abs": 0.0,
+            "max_gradient_relative_l2": 2.0814815358381848e-07,
+            "passed": true,
+            "rng_unchanged": true
+          },
+          {
+            "seconds": 0.08186079999995854,
+            "peak_allocated_gib": 0.8887581825256348,
+            "peak_reserved_gib": 1.1953125,
+            "max_output_abs": 0.0,
+            "max_gradient_relative_l2": 2.0814815358381848e-07,
+            "passed": true,
+            "rng_unchanged": true
+          }
+        ]
+      },
+      {
+        "name": "chunk_4096",
+        "chunk_size": 4096,
+        "runs": [
+          {
+            "seconds": 0.5856665999999677,
+            "peak_allocated_gib": 0.47365713119506836,
+            "peak_reserved_gib": 0.68359375,
+            "max_output_abs": 2.384185791015625e-07,
+            "max_gradient_relative_l2": 2.0814815358381848e-07,
+            "passed": true,
+            "rng_unchanged": true
+          },
+          {
+            "seconds": 0.5921629000004032,
+            "peak_allocated_gib": 0.47365713119506836,
+            "peak_reserved_gib": 0.68359375,
+            "max_output_abs": 2.384185791015625e-07,
+            "max_gradient_relative_l2": 2.0814815358381848e-07,
+            "passed": true,
+            "rng_unchanged": true
+          }
+        ]
+      },
+      {
+        "name": "chunk_16384",
+        "chunk_size": 16384,
+        "runs": [
+          {
+            "seconds": 0.16312659999948664,
+            "peak_allocated_gib": 0.47365713119506836,
+            "peak_reserved_gib": 0.7421875,
+            "max_output_abs": 4.76837158203125e-07,
+            "max_gradient_relative_l2": 2.0814815358381848e-07,
+            "passed": true,
+            "rng_unchanged": true
+          },
+          {
+            "seconds": 0.1792304000000513,
+            "peak_allocated_gib": 0.47365713119506836,
+            "peak_reserved_gib": 0.7421875,
+            "max_output_abs": 4.76837158203125e-07,
+            "max_gradient_relative_l2": 2.0814815358381848e-07,
+            "passed": true,
+            "rng_unchanged": true
+          }
+        ]
+      }
+    ]
+  },
+  "actuator_validation": {
+    "passed": true,
+    "training": true,
+    "gain_and_limit_writes": true,
+    "empty_and_full_slice_resets": true,
+    "device": "cuda:0",
+    "exact_joint_transition_comparisons": 92800,
+    "delay_bounds": [
+      0,
+      4
+    ],
+    "partial_resets": true,
+    "reset_sync_only": true,
+    "rng_state_identical": true
+  },
+  "trials": [
+    {
+      "trial": "reference-a",
+      "source_revision": "890144124de691aabef89794381ba569f03cf4d7",
+      "actuators": "reference",
+      "kinematics": "reference",
+      "chunk_size": null,
+      "allocator": "default",
+      "timed_iterations": 5,
+      "seconds": 72.49526109999988,
+      "iterations_per_second": 0.06897002540763328,
+      "iteration_seconds": [
+        14.184357099999943,
+        14.018836199999896,
+        14.77830989999984,
+        14.418716900000618,
+        15.095031500000005
+      ],
+      "whole_audit_peak_allocated_gib": 11.5597243309021,
+      "whole_audit_peak_reserved_gib": 14.115234375,
+      "allocator_before": null,
+      "allocator_after": null
+    },
+    {
+      "trial": "grouped-a",
+      "source_revision": "890144124de691aabef89794381ba569f03cf4d7",
+      "actuators": "grouped",
+      "kinematics": "reference",
+      "chunk_size": null,
+      "allocator": "default",
+      "timed_iterations": 5,
+      "seconds": 67.95179590000043,
+      "iterations_per_second": 0.07358157255119681,
+      "iteration_seconds": [
+        13.433722599999783,
+        12.264210400000593,
+        13.2346179999995,
+        13.601271300000008,
+        15.417964400000528
+      ],
+      "whole_audit_peak_allocated_gib": 11.561466693878174,
+      "whole_audit_peak_reserved_gib": 14.130859375,
+      "allocator_before": null,
+      "allocator_after": null
+    },
+    {
+      "trial": "bounded-a",
+      "source_revision": "890144124de691aabef89794381ba569f03cf4d7",
+      "actuators": "grouped",
+      "kinematics": "bounded",
+      "chunk_size": 16384,
+      "allocator": "default",
+      "timed_iterations": 5,
+      "seconds": 56.89906679999967,
+      "iterations_per_second": 0.0878749034246029,
+      "iteration_seconds": [
+        12.32653399999981,
+        10.834705100000065,
+        10.722016099999564,
+        11.240206000000398,
+        11.775596000000405
+      ],
+      "whole_audit_peak_allocated_gib": 11.17162561416626,
+      "whole_audit_peak_reserved_gib": 13.671875,
+      "allocator_before": null,
+      "allocator_after": null
+    },
+    {
+      "trial": "lean-a",
+      "source_revision": "520146cf3143a43d170d696aca508e7680e1657d",
+      "actuators": "grouped",
+      "kinematics": "lean",
+      "chunk_size": null,
+      "allocator": "default",
+      "timed_iterations": 5,
+      "seconds": 62.33177109999997,
+      "iterations_per_second": 0.08021591416002621,
+      "iteration_seconds": [
+        11.518888900000093,
+        13.633884100000614,
+        13.291869299999234,
+        11.986638800000037,
+        11.900480500000413
+      ],
+      "whole_audit_peak_allocated_gib": 11.5855393409729,
+      "whole_audit_peak_reserved_gib": 14.01953125,
+      "allocator_before": {
+        "backend": "native",
+        "configuration": {},
+        "bytes": {
+          "allocated": {
+            "current": 3496623104,
+            "peak": 12438761984
+          },
+          "active": {
+            "current": 3496623104,
+            "peak": 12438761984
+          },
+          "reserved": {
+            "current": 15053357056,
+            "peak": 15053357056
+          },
+          "inactive_split": {
+            "current": 282444800,
+            "peak": 1090652160
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      },
+      "allocator_after": {
+        "backend": "native",
+        "configuration": {},
+        "bytes": {
+          "allocated": {
+            "current": 3494254592,
+            "peak": 12439878144
+          },
+          "active": {
+            "current": 3494254592,
+            "peak": 12439878144
+          },
+          "reserved": {
+            "current": 15053357056,
+            "peak": 15053357056
+          },
+          "inactive_split": {
+            "current": 272230400,
+            "peak": 1046533632
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      }
+    },
+    {
+      "trial": "lean-gc08",
+      "source_revision": "520146cf3143a43d170d696aca508e7680e1657d",
+      "actuators": "grouped",
+      "kinematics": "lean",
+      "chunk_size": null,
+      "allocator": "garbage_collection_threshold:0.8",
+      "timed_iterations": 5,
+      "seconds": 9.484349199999997,
+      "iterations_per_second": 0.5271843006370961,
+      "iteration_seconds": [
+        1.8759608999998818,
+        1.814533400000073,
+        1.9313603999999032,
+        1.7868845000002693,
+        2.0756008999996993
+      ],
+      "whole_audit_peak_allocated_gib": 11.585536479949951,
+      "whole_audit_peak_reserved_gib": 14.01953125,
+      "allocator_before": {
+        "backend": "native",
+        "configuration": {
+          "PYTORCH_ALLOC_CONF": "<set: unrecognized settings omitted>"
+        },
+        "bytes": {
+          "allocated": {
+            "current": 3496623104,
+            "peak": 12438761984
+          },
+          "active": {
+            "current": 3496623104,
+            "peak": 12438761984
+          },
+          "reserved": {
+            "current": 15053357056,
+            "peak": 15053357056
+          },
+          "inactive_split": {
+            "current": 282444800,
+            "peak": 1090652160
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      },
+      "allocator_after": {
+        "backend": "native",
+        "configuration": {
+          "PYTORCH_ALLOC_CONF": "<set: unrecognized settings omitted>"
+        },
+        "bytes": {
+          "allocated": {
+            "current": 3494254592,
+            "peak": 12439875072
+          },
+          "active": {
+            "current": 3494254592,
+            "peak": 12439875072
+          },
+          "reserved": {
+            "current": 15053357056,
+            "peak": 15053357056
+          },
+          "inactive_split": {
+            "current": 263841792,
+            "peak": 1046533632
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      }
+    },
+    {
+      "trial": "reference-b",
+      "source_revision": "a320c2342e91af42df49e17c16673b8f3c0170f3",
+      "actuators": "reference",
+      "kinematics": "reference",
+      "chunk_size": null,
+      "allocator": "default",
+      "timed_iterations": 5,
+      "seconds": 10.47911490000024,
+      "iterations_per_second": 0.47713953398868497,
+      "iteration_seconds": [
+        1.9929454000002806,
+        1.901207699999759,
+        2.003614500000367,
+        1.839237499999399,
+        2.7421002999999473
+      ],
+      "whole_audit_peak_allocated_gib": 11.5597243309021,
+      "whole_audit_peak_reserved_gib": 14.115234375,
+      "allocator_before": {
+        "backend": "native",
+        "configuration": {},
+        "bytes": {
+          "allocated": {
+            "current": 3494252544,
+            "peak": 12412159488
+          },
+          "active": {
+            "current": 3494252544,
+            "peak": 12412159488
+          },
+          "reserved": {
+            "current": 15154020352,
+            "peak": 15154020352
+          },
+          "inactive_split": {
+            "current": 324661248,
+            "peak": 1118956032
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      },
+      "allocator_after": {
+        "backend": "native",
+        "configuration": {},
+        "bytes": {
+          "allocated": {
+            "current": 3494834176,
+            "peak": 12410497024
+          },
+          "active": {
+            "current": 3494834176,
+            "peak": 12410497024
+          },
+          "reserved": {
+            "current": 15156117504,
+            "peak": 15156117504
+          },
+          "inactive_split": {
+            "current": 351342592,
+            "peak": 1099356672
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      }
+    },
+    {
+      "trial": "lean-b",
+      "source_revision": "a320c2342e91af42df49e17c16673b8f3c0170f3",
+      "actuators": "grouped",
+      "kinematics": "lean",
+      "chunk_size": null,
+      "allocator": "default",
+      "timed_iterations": 5,
+      "seconds": 63.05271389999962,
+      "iterations_per_second": 0.07929872785380662,
+      "iteration_seconds": [
+        11.714875599999687,
+        13.55653379999967,
+        13.828368800000135,
+        11.894291000000521,
+        12.058633899999222
+      ],
+      "whole_audit_peak_allocated_gib": 11.585535526275635,
+      "whole_audit_peak_reserved_gib": 14.01953125,
+      "allocator_before": {
+        "backend": "native",
+        "configuration": {},
+        "bytes": {
+          "allocated": {
+            "current": 3496623104,
+            "peak": 12438761984
+          },
+          "active": {
+            "current": 3496623104,
+            "peak": 12438761984
+          },
+          "reserved": {
+            "current": 15053357056,
+            "peak": 15053357056
+          },
+          "inactive_split": {
+            "current": 282444800,
+            "peak": 1090652160
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      },
+      "allocator_after": {
+        "backend": "native",
+        "configuration": {},
+        "bytes": {
+          "allocated": {
+            "current": 3494255616,
+            "peak": 12439874048
+          },
+          "active": {
+            "current": 3494255616,
+            "peak": 12439874048
+          },
+          "reserved": {
+            "current": 15053357056,
+            "peak": 15053357056
+          },
+          "inactive_split": {
+            "current": 259646464,
+            "peak": 1046535680
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      }
+    },
+    {
+      "trial": "bounded-lean-b",
+      "source_revision": "a320c2342e91af42df49e17c16673b8f3c0170f3",
+      "actuators": "grouped",
+      "kinematics": "bounded",
+      "chunk_size": 16384,
+      "allocator": "default",
+      "timed_iterations": 5,
+      "seconds": 50.43816049999987,
+      "iterations_per_second": 0.09913129167349419,
+      "iteration_seconds": [
+        10.091961699999956,
+        9.9466139999995,
+        10.0665398000001,
+        10.107195200000206,
+        10.22584040000038
+      ],
+      "whole_audit_peak_allocated_gib": 11.17334794998169,
+      "whole_audit_peak_reserved_gib": 13.640625,
+      "allocator_before": {
+        "backend": "native",
+        "configuration": {},
+        "bytes": {
+          "allocated": {
+            "current": 3495966720,
+            "peak": 11996025856
+          },
+          "active": {
+            "current": 3495966720,
+            "peak": 11996025856
+          },
+          "reserved": {
+            "current": 14644412416,
+            "peak": 14644412416
+          },
+          "inactive_split": {
+            "current": 320849920,
+            "peak": 1094923776
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      },
+      "allocator_after": {
+        "backend": "native",
+        "configuration": {},
+        "bytes": {
+          "allocated": {
+            "current": 3494822912,
+            "peak": 11997291008
+          },
+          "active": {
+            "current": 3494822912,
+            "peak": 11997291008
+          },
+          "reserved": {
+            "current": 14646509568,
+            "peak": 14646509568
+          },
+          "inactive_split": {
+            "current": 481377280,
+            "peak": 1115329024
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      }
+    },
+    {
+      "trial": "lean-gc09-08",
+      "source_revision": "a320c2342e91af42df49e17c16673b8f3c0170f3",
+      "actuators": "grouped",
+      "kinematics": "lean",
+      "chunk_size": null,
+      "allocator": "per_process_memory_fraction:0.9,garbage_collection_threshold:0.8",
+      "timed_iterations": 5,
+      "seconds": 8.87638159999915,
+      "iterations_per_second": 0.5632925921076308,
+      "iteration_seconds": [
+        1.7426725000004808,
+        1.7144955999992817,
+        1.7559719999999288,
+        1.698539900000469,
+        1.9646925999995801
+      ],
+      "whole_audit_peak_allocated_gib": 11.585573673248291,
+      "whole_audit_peak_reserved_gib": 11.953125,
+      "allocator_before": {
+        "backend": "native",
+        "configuration": {
+          "PYTORCH_ALLOC_CONF": "<set: unrecognized settings omitted>"
+        },
+        "bytes": {
+          "allocated": {
+            "current": 3495154688,
+            "peak": 12439915008
+          },
+          "active": {
+            "current": 3495154688,
+            "peak": 12439915008
+          },
+          "reserved": {
+            "current": 12746489856,
+            "peak": 12834570240
+          },
+          "inactive_split": {
+            "current": 854338560,
+            "peak": 2406871552
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 452947968,
+        "device_total_bytes": 17066033152
+      },
+      "allocator_after": {
+        "backend": "native",
+        "configuration": {
+          "PYTORCH_ALLOC_CONF": "<set: unrecognized settings omitted>"
+        },
+        "bytes": {
+          "allocated": {
+            "current": 3496066048,
+            "peak": 12438848000
+          },
+          "active": {
+            "current": 3496066048,
+            "peak": 12438848000
+          },
+          "reserved": {
+            "current": 12813598720,
+            "peak": 12813598720
+          },
+          "inactive_split": {
+            "current": 683557888,
+            "peak": 2776758272
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 385839104,
+        "device_total_bytes": 17066033152
+      }
+    },
+    {
+      "trial": "reference-gc09-08",
+      "source_revision": "a320c2342e91af42df49e17c16673b8f3c0170f3",
+      "actuators": "reference",
+      "kinematics": "reference",
+      "chunk_size": null,
+      "allocator": "per_process_memory_fraction:0.9,garbage_collection_threshold:0.8",
+      "timed_iterations": 5,
+      "seconds": 9.876323299999967,
+      "iterations_per_second": 0.5062612723502091,
+      "iteration_seconds": [
+        1.8413946000000578,
+        1.7937365999996473,
+        1.869829700000082,
+        1.7773872999996456,
+        2.5939657999997507
+      ],
+      "whole_audit_peak_allocated_gib": 11.561389923095703,
+      "whole_audit_peak_reserved_gib": 12.076171875,
+      "allocator_before": {
+        "backend": "native",
+        "configuration": {
+          "PYTORCH_ALLOC_CONF": "<set: unrecognized settings omitted>"
+        },
+        "bytes": {
+          "allocated": {
+            "current": 3494137856,
+            "peak": 12412596736
+          },
+          "active": {
+            "current": 3494137856,
+            "peak": 12412596736
+          },
+          "reserved": {
+            "current": 12853444608,
+            "peak": 12872318976
+          },
+          "inactive_split": {
+            "current": 1251717120,
+            "peak": 2354435584
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 345993216,
+        "device_total_bytes": 17066033152
+      },
+      "allocator_after": {
+        "backend": "native",
+        "configuration": {
+          "PYTORCH_ALLOC_CONF": "<set: unrecognized settings omitted>"
+        },
+        "bytes": {
+          "allocated": {
+            "current": 3494824960,
+            "peak": 12413947904
+          },
+          "active": {
+            "current": 3494824960,
+            "peak": 12413947904
+          },
+          "reserved": {
+            "current": 12905873408,
+            "peak": 12966690816
+          },
+          "inactive_split": {
+            "current": 745616384,
+            "peak": 3528360448
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 293564416,
+        "device_total_bytes": 17066033152
+      }
+    },
+    {
+      "trial": "lean-gc09-08-repeat",
+      "source_revision": "a320c2342e91af42df49e17c16673b8f3c0170f3",
+      "actuators": "grouped",
+      "kinematics": "lean",
+      "chunk_size": null,
+      "allocator": "per_process_memory_fraction:0.9,garbage_collection_threshold:0.8",
+      "timed_iterations": 5,
+      "seconds": 79.1480104000002,
+      "iterations_per_second": 0.06317278191493222,
+      "iteration_seconds": [
+        25.922384299999976,
+        11.269956699999966,
+        12.017178200000671,
+        13.241791999999805,
+        16.696689999999762
+      ],
+      "whole_audit_peak_allocated_gib": 11.585573673248291,
+      "whole_audit_peak_reserved_gib": 11.953125,
+      "allocator_before": {
+        "backend": "native",
+        "configuration": {
+          "PYTORCH_ALLOC_CONF": "<set: unrecognized settings omitted>"
+        },
+        "bytes": {
+          "allocated": {
+            "current": 3495154688,
+            "peak": 12439915008
+          },
+          "active": {
+            "current": 3495154688,
+            "peak": 12439915008
+          },
+          "reserved": {
+            "current": 12746489856,
+            "peak": 12834570240
+          },
+          "inactive_split": {
+            "current": 854338560,
+            "peak": 2406871552
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      },
+      "allocator_after": {
+        "backend": "native",
+        "configuration": {
+          "PYTORCH_ALLOC_CONF": "<set: unrecognized settings omitted>"
+        },
+        "bytes": {
+          "allocated": {
+            "current": 3496065024,
+            "peak": 12438844928
+          },
+          "active": {
+            "current": 3496065024,
+            "peak": 12438844928
+          },
+          "reserved": {
+            "current": 12813598720,
+            "peak": 12813598720
+          },
+          "inactive_split": {
+            "current": 683558912,
+            "peak": 2776761344
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      }
+    }
+  ],
+  "checkpoint_validation": [
+    {
+      "trial": "grouped-a",
+      "config_changed_keys": [
+        "iterations",
+        "log_dir"
+      ],
+      "finite": true,
+      "model_shapes_match": true,
+      "count_deltas": {
+        "iteration": 10,
+        "optimizer_steps": 310,
+        "sim_steps": 227840,
+        "transitions": 227840,
+        "windows": 204800
+      }
+    },
+    {
+      "trial": "reference-a",
+      "config_changed_keys": [
+        "iterations",
+        "log_dir"
+      ],
+      "finite": true,
+      "model_shapes_match": true,
+      "count_deltas": {
+        "iteration": 10,
+        "optimizer_steps": 310,
+        "sim_steps": 227840,
+        "transitions": 227840,
+        "windows": 204800
+      }
+    },
+    {
+      "trial": "bounded-a",
+      "config_changed_keys": [
+        "iterations",
+        "log_dir"
+      ],
+      "finite": true,
+      "model_shapes_match": true,
+      "count_deltas": {
+        "iteration": 10,
+        "optimizer_steps": 310,
+        "sim_steps": 227840,
+        "transitions": 227840,
+        "windows": 204800
+      }
+    },
+    {
+      "trial": "lean-a",
+      "config_changed_keys": [
+        "iterations",
+        "log_dir"
+      ],
+      "finite": true,
+      "model_shapes_match": true,
+      "count_deltas": {
+        "iteration": 10,
+        "optimizer_steps": 310,
+        "sim_steps": 227840,
+        "transitions": 227840,
+        "windows": 204800
+      }
+    },
+    {
+      "trial": "lean-gc08",
+      "config_changed_keys": [
+        "iterations",
+        "log_dir"
+      ],
+      "finite": true,
+      "model_shapes_match": true,
+      "count_deltas": {
+        "iteration": 10,
+        "optimizer_steps": 310,
+        "sim_steps": 227840,
+        "transitions": 227840,
+        "windows": 204800
+      }
+    },
+    {
+      "trial": "reference-b",
+      "config_changed_keys": [
+        "iterations",
+        "log_dir"
+      ],
+      "finite": true,
+      "model_shapes_match": true,
+      "count_deltas": {
+        "iteration": 10,
+        "optimizer_steps": 310,
+        "sim_steps": 227840,
+        "transitions": 227840,
+        "windows": 204800
+      }
+    },
+    {
+      "trial": "lean-b",
+      "config_changed_keys": [
+        "iterations",
+        "log_dir"
+      ],
+      "finite": true,
+      "model_shapes_match": true,
+      "count_deltas": {
+        "iteration": 10,
+        "optimizer_steps": 310,
+        "sim_steps": 227840,
+        "transitions": 227840,
+        "windows": 204800
+      }
+    },
+    {
+      "trial": "bounded-lean-b",
+      "config_changed_keys": [
+        "iterations",
+        "log_dir"
+      ],
+      "finite": true,
+      "model_shapes_match": true,
+      "count_deltas": {
+        "iteration": 10,
+        "optimizer_steps": 310,
+        "sim_steps": 227840,
+        "transitions": 227840,
+        "windows": 204800
+      }
+    },
+    {
+      "trial": "lean-gc09-08",
+      "config_changed_keys": [
+        "iterations",
+        "log_dir"
+      ],
+      "finite": true,
+      "model_shapes_match": true,
+      "count_deltas": {
+        "iteration": 10,
+        "optimizer_steps": 310,
+        "sim_steps": 227840,
+        "transitions": 227840,
+        "windows": 204800
+      }
+    },
+    {
+      "trial": "reference-gc09-08",
+      "config_changed_keys": [
+        "iterations",
+        "log_dir"
+      ],
+      "finite": true,
+      "model_shapes_match": true,
+      "count_deltas": {
+        "iteration": 10,
+        "optimizer_steps": 310,
+        "sim_steps": 227840,
+        "transitions": 227840,
+        "windows": 204800
+      }
+    },
+    {
+      "trial": "lean-gc09-08-repeat",
+      "config_changed_keys": [
+        "iterations",
+        "log_dir"
+      ],
+      "finite": true,
+      "model_shapes_match": true,
+      "count_deltas": {
+        "iteration": 10,
+        "optimizer_steps": 310,
+        "sim_steps": 227840,
+        "transitions": 227840,
+        "windows": 204800
+      }
+    }
+  ]
+}

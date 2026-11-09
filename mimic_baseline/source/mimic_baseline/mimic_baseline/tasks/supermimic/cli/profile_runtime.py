@@ -4,6 +4,7 @@ import argparse
 import cProfile
 import hashlib
 import json
+import os
 from pathlib import Path
 import pstats
 import runpy
@@ -28,6 +29,100 @@ def portable_function(filename, line, name):
     return f"{value}:{line}:{name}"
 
 
+
+
+def allocator_snapshot(cuda):
+    """Read allocator/device counters without releasing or allocating tensors.
+
+    Device free memory includes consumers outside PyTorch's allocator. Native
+    allocator counters may be unavailable or not meaningful with other backends;
+    retain the backend and missing values rather than inferring fragmentation.
+    Retry/OOM counters are cumulative, so compare the two snapshots as deltas.
+    """
+    stats = cuda.memory_stats()
+    free, total = cuda.mem_get_info()
+    backend = getattr(cuda, "get_allocator_backend", None)
+    known_settings = {
+        "backend:native", "backend:cudaMallocAsync",
+        "expandable_segments:True", "expandable_segments:False",
+    }
+    configuration = {}
+    for key in ("PYTORCH_ALLOC_CONF", "PYTORCH_CUDA_ALLOC_CONF"):
+        value = os.environ.get(key)
+        if value is not None:
+            parts = [part.strip() for part in value.split(",")]
+            configuration[key] = (
+                value if all(part in known_settings for part in parts)
+                else "<set: unrecognized settings omitted>"
+            )
+    return {
+        "backend": backend() if backend is not None else None,
+        "configuration": configuration,
+        "bytes": {
+            kind: {
+                field: stats.get(f"{kind}_bytes.all.{field}")
+                for field in ("current", "peak")
+            }
+            for kind in ("allocated", "active", "reserved", "inactive_split")
+        },
+        "allocation_retries": stats.get("num_alloc_retries"),
+        "out_of_memory_events": stats.get("num_ooms"),
+        "device_free_bytes": int(free),
+        "device_total_bytes": int(total),
+    }
+
+
+def run_training_window(trainer, original_train, kwargs, *, warmup_iterations,
+                        timing, start, finish, synchronize, clock=time.perf_counter):
+    """Observe original iteration boundaries; retain refill/log/save behavior."""
+    original_collect = trainer.collect
+    original_set_lr = trainer._set_lr
+    previous = {name: trainer.__dict__.get(name) for name in ("collect", "_set_lr")}
+    existed = {name: name in trainer.__dict__ for name in previous}
+    first_iteration = trainer.iteration
+    boundary = None
+    measured_start = None
+    timing["iteration_seconds"] = []
+
+    def refill(count):
+        begin = clock()
+        result = original_collect(count)
+        synchronize()
+        timing["refill_seconds"] = clock() - begin
+        trainer.collect = original_collect
+        return result
+
+    def set_lr(iteration):
+        nonlocal boundary, measured_start
+        if iteration >= first_iteration + warmup_iterations:
+            if boundary is None:
+                start()
+                boundary = clock()
+                measured_start = iteration
+            else:
+                synchronize()
+                now = clock()
+                timing["iteration_seconds"].append(now - boundary)
+                boundary = now
+        return original_set_lr(iteration)
+
+    trainer.collect = refill
+    trainer._set_lr = set_lr
+    try:
+        return original_train(trainer, **kwargs)
+    finally:
+        for name in previous:
+            if existed[name]:
+                setattr(trainer, name, previous[name])
+            else:
+                delattr(trainer, name)
+        if boundary is not None:
+            synchronize()
+            timing["iteration_seconds"].append(clock() - boundary)
+            timing["measured_training_iterations"] = trainer.iteration - measured_start
+            finish()
+
+
 def audit(
     checkpoint,
     data_root,
@@ -40,6 +135,9 @@ def audit(
     kinematics="reference",
     profile="full_clean",
     verify_state_cache=False,
+    warmup_iterations=0,
+    cprofile=True,
+    fk_chunk_size=4096,
 ):
     if (
         target not in ("training", "evaluation")
@@ -49,6 +147,14 @@ def audit(
         raise ValueError(
             "Bounded audit requires 1..10 training iterations and 1..2048 evaluation steps"
         )
+    if not 0 <= warmup_iterations < iterations:
+        raise ValueError("warmup iterations must satisfy 0 <= warmup < iterations")
+    if target == "evaluation" and warmup_iterations:
+        raise ValueError("Evaluation requires zero warmup iterations")
+    if actuators not in ("reference", "grouped") or kinematics not in ("reference", "batched", "bounded", "lean"):
+        raise ValueError("Unsupported actuator or kinematics execution")
+    if not isinstance(fk_chunk_size, int) or isinstance(fk_chunk_size, bool) or fk_chunk_size < 1:
+        raise ValueError("fk_chunk_size must be a positive integer")
     if verify_state_cache and target != "evaluation":
         raise ValueError("State-cache validation requires evaluation")
     import torch
@@ -70,14 +176,6 @@ def audit(
     original_fk = G1Kinematics.forward
     from ..envs.manager_based import SuperMimicRLEnv
 
-    original_init = SuperMimicRLEnv.__init__
-    if target == "training" and actuators == "grouped":
-        from ..envs.evaluation_actuators import group_evaluation_actuators
-
-        def init(env, cfg, **kwargs):
-            group_evaluation_actuators(cfg, allow_training=True)
-            original_init(env, cfg, **kwargs)
-
     state_checks = 0
     from ..envs.evaluation import G1EvaluationEnv
 
@@ -93,22 +191,32 @@ def audit(
                 state_checks += 1
             return actual
 
-    profiler = cProfile.Profile()
+    profiler = cProfile.Profile() if cprofile else None
     timing = {}
     old_argv = sys.argv
 
     def start():
         torch.cuda.synchronize()
+        timing["pre_measurement_peak_allocated_gib"] = torch.cuda.max_memory_allocated() / 2**30
+        timing["pre_measurement_peak_reserved_gib"] = torch.cuda.max_memory_reserved() / 2**30
+        timing["allocator_before_measurement"] = allocator_snapshot(torch.cuda)
         torch.cuda.reset_peak_memory_stats()
         timing["start"] = time.perf_counter()
-        profiler.enable()
+        if profiler is not None:
+            profiler.enable()
 
     def finish():
-        profiler.disable()
+        if profiler is not None:
+            profiler.disable()
         torch.cuda.synchronize()
         timing["measured_seconds"] = time.perf_counter() - timing.pop("start")
         timing["peak_allocated_gib"] = torch.cuda.max_memory_allocated() / 2**30
         timing["peak_reserved_gib"] = torch.cuda.max_memory_reserved() / 2**30
+        timing["allocator_after_measurement"] = allocator_snapshot(torch.cuda)
+        for kind in ("allocated", "reserved"):
+            timing[f"whole_audit_peak_{kind}_gib"] = max(
+                timing[f"pre_measurement_peak_{kind}_gib"], timing[f"peak_{kind}_gib"]
+            )
 
     command = [
         str(training_entry()),
@@ -127,26 +235,18 @@ def audit(
         original_train = Trainer.train
 
         def train(trainer, **kwargs):
-            collect = trainer.collect
+            return run_training_window(
+                trainer, original_train, kwargs, warmup_iterations=warmup_iterations,
+                timing=timing, start=start, finish=finish,
+                synchronize=torch.cuda.synchronize,
+            )
 
-            def refill(n):
-                begin = time.perf_counter()
-                result = collect(n)
-                torch.cuda.synchronize()
-                timing["refill_seconds"] = time.perf_counter() - begin
-                trainer.collect = collect
-                start()
-                return result
-
-            trainer.collect = refill
-            try:
-                return original_train(trainer, **kwargs)
-            finally:
-                trainer.collect = collect
-                if "start" in timing:
-                    finish()
-
-        command += ["--iterations", str(start_iteration + iterations)]
+        command += [
+            "--iterations", str(start_iteration + iterations),
+            "--training-execution", actuators,
+            "--kinematics-execution", "reference" if kinematics == "batched" else kinematics,
+            "--fk-chunk-size", str(fk_chunk_size),
+        ]
     else:
         from .. import evaluation
 
@@ -175,6 +275,7 @@ def audit(
         command += [
             "--kinematics-execution",
             kinematics,
+            "--fk-chunk-size", str(fk_chunk_size),
             "--evaluation-execution",
             actuators,
             "--evaluation-profile",
@@ -185,12 +286,10 @@ def audit(
         # Install hooks only after all setup/imports have succeeded, inside the
         # restoration scope. Import failures must not leak patches to callers.
         sys.argv = command
-        if kinematics == "batched":
+        if target == "training" and kinematics == "batched":
             G1Kinematics.forward = G1Kinematics.forward_fast
         if target == "training":
             Trainer.train = train
-            if actuators == "grouped":
-                SuperMimicRLEnv.__init__ = init
         else:
             evaluation.evaluate_tracking = evaluate
         if verify_state_cache:
@@ -206,27 +305,34 @@ def audit(
         sys.argv = old_argv
         G1EvaluationEnv.state = original_state
         G1Kinematics.forward = original_fk
-        SuperMimicRLEnv.__init__ = original_init
         if target == "training":
             Trainer.train = original_train
         else:
             evaluation.evaluate_tracking = original_evaluate
-        profiler.dump_stats(str(output / "cpu.prof"))
-        stats = pstats.Stats(profiler)
-        rows = [
-            {
-                "function": portable_function(*key),
-                "calls": value[1],
-                "self_seconds": value[2],
-                "cumulative_seconds": value[3],
-            }
-            for key, value in stats.stats.items()
-        ]
-        rows.sort(key=lambda r: r["cumulative_seconds"], reverse=True)
+        rows = []
+        if profiler is not None:
+            profiler.create_stats()
+            if profiler.stats:
+                profiler.dump_stats(str(output / "cpu.prof"))
+                stats = pstats.Stats(profiler)
+                rows = [
+                    {
+                        "function": portable_function(*key),
+                        "calls": value[1],
+                        "self_seconds": value[2],
+                        "cumulative_seconds": value[3],
+                    }
+                    for key, value in stats.stats.items()
+                ]
+                rows.sort(key=lambda r: r["cumulative_seconds"], reverse=True)
         with checkpoint.open("rb") as f:
             digest = hashlib.file_digest(f, "sha256").hexdigest()
         result = {
             "benchmark_only": True,
+            "cprofile_enabled": cprofile,
+            "warmup_iterations": warmup_iterations,
+            "fk_chunk_size": fk_chunk_size,
+            "experimental_training_batched_patch": target == "training" and kinematics == "batched",
             "state_cache_verification": {"enabled": verify_state_cache, "checked_reads": state_checks},
             "target": target,
             "source": source,
@@ -269,9 +375,12 @@ def main():
     p.add_argument("--target", choices=["training", "evaluation"], default="training")
     p.add_argument("--iterations", type=int, default=5)
     p.add_argument("--steps", type=int, default=256)
+    p.add_argument("--warmup-iterations", type=int, default=0)
+    p.add_argument("--fk-chunk-size", type=int, default=4096)
+    p.add_argument("--cprofile", action=argparse.BooleanOptionalAction, default=True)
     p.add_argument("--actuators", choices=["reference", "grouped"], default="reference")
     p.add_argument(
-        "--kinematics", choices=["reference", "batched"], default="reference"
+        "--kinematics", choices=["reference", "batched", "bounded", "lean"], default="reference"
     )
     p.add_argument("--verify-state-cache", action="store_true")
     p.add_argument("--profile", choices=["strict", "full_clean"], default="full_clean")
