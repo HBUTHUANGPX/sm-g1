@@ -168,3 +168,5 @@ mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/cli/profile
 scripts/profile_g1_runtime.py
 mimic_baseline/tests/g1/test_runtime_profile.py
 mimic_baseline/tests/g1/test_evaluation_state_cache.py
+mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/envs/grouped_actuators.py
+mimic_baseline/tests/g1/test_grouped_training_actuators.py
