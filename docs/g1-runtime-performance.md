@@ -102,6 +102,8 @@ This provides direct evidence of repeated FK dispatch cost in evaluation and a s
 
 State extraction is now a measured evaluation target: approximately six canonical-state calls per control step, totaling about 10% of the batched-FK measured interval in cumulative host time. Reference gathering adds another inspectable repeated cost. Cache proposals must distinguish pre-physics, post-physics and post-reset states and preserve observation-noise/RNG behavior and transition ownership. This elevates state/reference reuse for evaluation; the training top-100 profile still does not show it as a dominant training cost.
 
+A final 1024-step profile of the cached evaluation implementation measured **12.7355 s** (peak Torch allocated 0.8486 GiB). Canonical-state calls dropped from **6148 to 3076**, and their cumulative host time from **1.9525 to 1.0278 s**. FK remained essentially unchanged at 1.8508 versus 1.8464 s. The call-count reduction directly confirms the intended ManagerBased optimization; the larger total-wall difference cannot be attributed solely to those host function times because asynchronous scheduling and run-to-run effects still apply.
+
 ## Complete-trajectory acceptance
 
 All jobs use checkpoint 6600, protocol version 2, all 40 original LAFAN1 clips, 40 environments per profile, the original first-to-last resampled frames, and a maximum of 13655 control steps. Strict retains native failure termination; full-clean disables termination, truncation, domain randomization, observation/reset noise and action delay. Two concurrent profiles mean two isolated 40-environment simulators, not a split of the 40 clips.
@@ -111,6 +113,7 @@ All jobs use checkpoint 6600, protocol version 2, all 40 original LAFAN1 clips, 
 | Previous fixed grouped-PD job | 437.625 s | 7/40 / 0.342636 | 40/40 / 0.674870 |
 | Batched FK + state reuse, sequential | 298.516 s | 7/40 / 0.335632 | 40/40 / 0.696768 |
 | Same implementation, parallel | 279.485 s | 6/40 / 0.330480 | 40/40 / 0.701851 |
+| Deployed fixed command, parallel repeat | 280.313 s | 7/40 / 0.327054 | 40/40 / 0.697699 |
 
 The new parallel job is about **36% shorter** than the previous fixed-job measurement. Parallelism itself contributes only **6.4%** versus the new sequential job; both processes slow down while sharing the GPU. These are measured examples, not a universal throughput guarantee. Five-second device samples reached 2688 MiB in the observed sequential interval and 4930 MiB across parallel execution; sampling is not a precise allocation-peak measurement.
 

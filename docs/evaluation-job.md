@@ -52,3 +52,5 @@ python scripts/profile_g1_runtime.py --checkpoint /local/model_6600.pt --data-ro
 ```
 
 For training, use `--target training --iterations 5 --actuators grouped --kinematics reference`. It preserves checkpoint batch sizes, horizon, update counts and log cadence and writes a separate run. The profiler's experimental training FK switch is not a production training recommendation: the tested full shape was not accepted. `--verify-state-cache` is an evaluation-only exact snapshot check; its extra reads/synchronization make it unsuitable for timing comparisons. Original and grouped training short trials showed substantial run-to-run variation, so no stable training speedup is claimed.
+
+The deployed fixed command was then invoked directly and completed both protocols again in **280.313 s**, with strict 7/40 and full-clean 40/40 coverage. Its [generated report](results/2026-11-09-g1-deployed-evaluation.md) preserves all 40 rows per protocol.

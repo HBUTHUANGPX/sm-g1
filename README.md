@@ -23,7 +23,7 @@ Existing local datasets and checkpoints are preserved; pass their existing direc
 
 ## Fixed evaluation command
 
-Use `python scripts/run_g1_evaluation.py --config /local/evaluation.json` for the current G1 recovery policy. It selects the latest checkpoint (or accepts `--checkpoint`), runs both full 40-clip protocols, reports progress and writes/prints the validated result table. See [configuration and outputs](docs/evaluation-job.md). Keep machine paths in the ignored local config.
+Use `python scripts/run_g1_evaluation.py --config /local/evaluation.json` for the current G1 recovery policy. It selects the latest checkpoint (or accepts `--checkpoint`), runs both full 40-clip protocols, reports progress and writes/prints the validated result table. It defaults to grouped actuators, batched FK and isolated parallel profiles. The verified fixed command took about 4.7 minutes on the current GPU; see the [training/evaluation performance audit](docs/g1-runtime-performance.md) and [configuration and outputs](docs/evaluation-job.md). Keep machine paths in the ignored local config.
 
 ## Results and management
 
