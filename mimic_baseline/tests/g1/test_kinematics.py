@@ -32,3 +32,69 @@ def test_g1_uses_original_fk_and_all_policy_joints(tmp_path):
     assert torch.isfinite(out[0]).all()
     out[1][:, -1, 1, 0].sum().backward()
     assert torch.all(q.grad[:, -1].abs() > 0.9)
+
+
+def test_fast_forward_values_and_gradients(tmp_path):
+    """Branching, fixed links, nontrivial origins and every input gradient."""
+    import xml.etree.ElementTree as ET
+
+    path = make_urdf(tmp_path)
+    tree = ET.parse(path)
+    root = tree.getroot()
+    joints = root.findall('joint')
+    for i, joint in enumerate(joints):
+        # Mix chains and siblings; retain all canonical/tracked names.
+        if i % 3 == 0:
+            joint.find('parent').set('link', 'pelvis')
+        joint.find('origin').set('rpy', '0.12 -0.21 0.33')
+        joint.find('origin').set('xyz', '0.13 -0.08 0.04')
+        joint.find('axis').set('xyz', ('1 0 0', '0 1 0', '0 0 1')[i % 3])
+    fixed = ET.SubElement(root, 'joint', name='fixed_test', type='fixed')
+    ET.SubElement(root, 'link', name='fixed_test_link')
+    ET.SubElement(fixed, 'parent', link='pelvis')
+    ET.SubElement(fixed, 'child', link='fixed_test_link')
+    ET.SubElement(fixed, 'origin', xyz='0.2 0.1 -0.1', rpy='0.2 0.3 -0.1')
+    joints[0].find('parent').set('link', 'fixed_test_link')
+    tree.write(path)
+    kin = G1Kinematics(path, 'cpu')
+    assert not hasattr(kin, '_fast_levels')
+    for name in ('off_p', 'off_R', 'axes'):
+        setattr(kin, name, getattr(kin, name).double())
+    generator = torch.Generator().manual_seed(91)
+    for batch in ((), (4,), (2, 3)):
+        inputs = [torch.randn(*batch, *shape, generator=generator, dtype=torch.float64,
+                              requires_grad=True)
+                  for shape in ((3,), (3, 3), (3,), (3,), (29,), (29,))]
+        reference = kin.forward(*inputs)
+        actual = kin.forward_fast(*inputs)
+        for a, b in zip(actual, reference):
+            torch.testing.assert_close(a, b, rtol=1e-12, atol=1e-12)
+        weights = [torch.randn(x.shape, generator=generator, dtype=x.dtype) for x in actual]
+        ref_grad = torch.autograd.grad(sum((x * z).sum() for x, z in zip(reference, weights)), inputs)
+        fast_grad = torch.autograd.grad(sum((x * z).sum() for x, z in zip(actual, weights)), inputs)
+        for a, b in zip(fast_grad, ref_grad):
+            torch.testing.assert_close(a, b, rtol=1e-11, atol=1e-11)
+    assert torch.autograd.gradcheck(kin.forward_fast, inputs, fast_mode=True)
+
+
+def test_fast_forward_rejects_invalid_joint_dimensions(tmp_path):
+    import pytest
+
+    kin = G1Kinematics(make_urdf(tmp_path), 'cpu')
+    p = torch.zeros(3)
+    with pytest.raises(ValueError, match='Expected q and qd'):
+        kin.forward_fast(p, torch.eye(3), p, p, torch.zeros(28), torch.zeros(28))
+    with pytest.raises(ValueError, match='Expected q and qd'):
+        kin.forward_fast(p, torch.eye(3), p, p, torch.zeros(29), torch.zeros(1, 29))
+
+
+def test_fast_forward_rejects_non_breadth_first_topology(tmp_path):
+    import pytest
+
+    kin = G1Kinematics(make_urdf(tmp_path), 'cpu')
+    # Keep a connected tree but visit body 3 before body 2 by depth.
+    parents = list(kin.parent)
+    parents[3] = 0
+    kin.parent = tuple(parents)
+    with pytest.raises(ValueError, match='breadth-first'):
+        kin._initialize_fast_topology()
