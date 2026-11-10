@@ -1,0 +1,32 @@
+{
+  "local_instantiated": {
+    "wm_input": 162,
+    "wm_output": 73,
+    "actor_sensor": 93,
+    "actor_history": 10,
+    "actor_goal": 730,
+    "actor_decoder_input": 968,
+    "critic_input": 915,
+    "wm_parameters": 8888393,
+    "policy_parameters": 9005885,
+    "critic_parameters": 267521
+  },
+  "official_architecture_arithmetic": {
+    "assumption": "29 joints; gencoord; rep_state; history1; 33 sim-context channels; default motion-only slot allocation",
+    "wm_input": 130,
+    "wm_output": 35,
+    "actor_sensor": 68,
+    "actor_history": 1,
+    "actor_goal": 640,
+    "actor_decoder_input": 100,
+    "critic_input": 771,
+    "wm_parameters": 8744995,
+    "motion_encoder_parameters": 4082976,
+    "velocity_encoder_parameters": 2778400,
+    "decoder_parameters": 2976285,
+    "critic_parameters": 231425,
+    "active_motion_path_parameters": 7059261,
+    "all_actor_parameters": 9837661
+  },
+  "limitation": "Official parameter arithmetic is not an instantiated official runtime or training equivalence test."
+}
