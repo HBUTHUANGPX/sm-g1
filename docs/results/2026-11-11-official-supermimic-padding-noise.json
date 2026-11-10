@@ -1,0 +1,9 @@
+{
+  "seed": 17,
+  "batch": 128,
+  "history": 10,
+  "dimension": 93,
+  "real_reset_padding_max_difference": 0.0,
+  "imagined_padding_max_difference": 0.9983969330787659,
+  "scope": "CPU reproduction of local noise-before-repeat versus repeat-before-noise using production MDP.add_noise; no simulator or training-quality claim."
+}
