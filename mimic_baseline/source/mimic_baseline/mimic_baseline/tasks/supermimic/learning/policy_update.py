@@ -37,6 +37,22 @@ from .common import _valid_depth
 class PolicyUpdateMixin:
     """Original Trainer methods; state is owned by Trainer."""
 
+    def _initial_observation_history(self, history):
+        """Reconstruct the actor's sensor history from sampled replay states."""
+        with torch.no_grad():
+            observation = self._obs(
+                self._as_state(history["s"]), history["a_prev"], history["xi"]
+            )
+        noisy = self.mdp.add_noise(observation)
+        # Replay clamps missing predecessors to the oldest retained frame.
+        # Reuse that frame's noisy observation, including when it is the seed,
+        # just as collection repeats one already-noisy observation on reset.
+        # Keep the original draw shape/RNG budget; real history slots retain
+        # their exact draws. Episode steps also handle an overwritten ring edge.
+        episode_steps = history["ep_step"].long()
+        source = noisy.shape[1] - 1 - (episode_steps[:, -1:] - episode_steps)
+        return noisy.gather(1, source[..., None].expand_as(noisy))
+
     def _critic_input(
         self,
         state: tuple[torch.Tensor, ...],
@@ -119,11 +135,7 @@ class PolicyUpdateMixin:
             state = state0
             goal0 = self._goal(reference0, state0)
             goal = goal0
-            with torch.no_grad():
-                obs_history = self._obs(
-                    self._as_state(history["s"]), history["a_prev"], history["xi"]
-                )
-            obs_history = self.mdp.add_noise(obs_history)
+            obs_history = self._initial_observation_history(history)
             states = []
             actions = []
             action_clip_counts = []
