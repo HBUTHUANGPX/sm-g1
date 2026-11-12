@@ -138,3 +138,60 @@ def test_allocator_snapshot_records_backend_without_inferring_fragmentation(monk
     assert result["out_of_memory_events"] == 0
     assert result["configuration"]["PYTORCH_ALLOC_CONF"] == "backend:cudaMallocAsync"
     assert "unreviewed" not in result["configuration"]["PYTORCH_CUDA_ALLOC_CONF"]
+
+
+def test_training_health_checks_observe_and_restore():
+    import torch
+    from mimic_baseline.tasks.supermimic.cli.profile_runtime import training_health_checks
+
+    class Trainer:
+        _obs_history = None
+        def collect(self, count):
+            self._obs_history = torch.ones(2, 3, 1)
+        def _initial_observation_history(self, history):
+            return history['observations']
+        @staticmethod
+        def _clip_gradient_norm(stage, modules):
+            return torch.tensor(2.0)
+        def _accumulate(self, metrics, **kwargs):
+            return 'unchanged'
+    trainer, result = Trainer(), {}
+    with training_health_checks(trainer, result):
+        history = dict(ep_step=torch.tensor([[0, 0, 1], [4, 5, 6]]),
+                       observations=torch.tensor([[[1.], [1.], [2.]], [[3.], [4.], [5.]]]))
+        trainer.collect(1)
+        assert trainer._initial_observation_history(history) is history['observations']
+        assert trainer._clip_gradient_norm('actor update', None) == 2
+        assert trainer._accumulate({'Model/loss': torch.tensor(3.)}) == 'unchanged'
+    assert set(trainer.__dict__) == {"_obs_history"}
+    assert result["real_history_checks"] == 1
+    assert result['passed'] and result['history']['padded_pairs'] == 1
+    assert result['gradient_norms']['actor update']['max'] == 2
+    assert result['losses']['Model/loss']['min'] == 3
+
+
+@pytest.mark.parametrize('bad', ['padding', 'observation', 'loss', 'gradient'])
+def test_training_health_checks_reject_invalid_values_and_restore(bad):
+    import torch
+    from types import SimpleNamespace
+    from mimic_baseline.tasks.supermimic.cli.profile_runtime import training_health_checks
+    trainer = SimpleNamespace(
+        _initial_observation_history=lambda h: h['observations'],
+        _clip_gradient_norm=lambda *a: torch.tensor(float('nan')),
+        _accumulate=lambda *a, **k: None,
+        collect=lambda count: None,
+    )
+    originals = dict(trainer.__dict__)
+    result = {}
+    with pytest.raises((AssertionError, FloatingPointError)):
+        with training_health_checks(trainer, result):
+            if bad in ('padding', 'observation'):
+                trainer._initial_observation_history(dict(
+                    ep_step=torch.tensor([[0, 0]]),
+                    observations=torch.tensor([[[1.], [2. if bad == 'padding' else float('inf')]]])))
+            elif bad == 'loss':
+                trainer._accumulate({'Loss/actor': torch.tensor(float('nan'))})
+            else:
+                trainer._clip_gradient_norm('actor update', None)
+    assert trainer.__dict__ == originals
+    assert not result['passed']

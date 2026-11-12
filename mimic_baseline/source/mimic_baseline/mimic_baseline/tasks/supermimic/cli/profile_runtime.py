@@ -2,6 +2,7 @@
 
 import argparse
 import cProfile
+from contextlib import contextmanager, nullcontext
 import hashlib
 import json
 import os
@@ -123,6 +124,78 @@ def run_training_window(trainer, original_train, kwargs, *, warmup_iterations,
             finish()
 
 
+@contextmanager
+def training_health_checks(trainer, result):
+    """Opt-in synchronized diagnostics; never use these timings as throughput.
+
+    Observe existing outputs without extra random draws or changing updates.
+    Restore instance hooks even when validation or the training loop raises.
+    """
+    import torch
+
+    result.update(passed=False, history={"calls": 0, "rows": 0, "padded_pairs": 0},
+                  losses={}, gradient_norms={}, real_history_checks=0)
+    names = ("_initial_observation_history", "_clip_gradient_norm", "_accumulate", "collect")
+    original = {name: getattr(trainer, name) for name in names}
+    owned = {name: trainer.__dict__[name] for name in names if name in trainer.__dict__}
+
+    def record(table, name, value):
+        value = torch.as_tensor(value).detach()
+        if not torch.isfinite(value).all().item():
+            raise FloatingPointError(f"Nonfinite training diagnostic: {name}")
+        lo, hi = value.min().item(), value.max().item()
+        row = table.setdefault(name, {"calls": 0, "min": lo, "max": hi})
+        row.update(calls=row["calls"] + 1, min=min(row["min"], lo), max=max(row["max"], hi))
+
+    def history_check(history):
+        actual = original["_initial_observation_history"](history)
+        if not torch.isfinite(actual).all().item():
+            raise FloatingPointError("Nonfinite imagined observation history")
+        duplicate = history["ep_step"][:, :-1] == history["ep_step"][:, 1:]
+        torch.testing.assert_close(actual[:, :-1][duplicate], actual[:, 1:][duplicate],
+                                   rtol=0, atol=0)
+        row = result["history"]
+        row["calls"] += 1
+        row["rows"] += actual.shape[0]
+        row["padded_pairs"] += int(duplicate.sum().item())
+        row["shape"] = list(actual.shape)
+        return actual
+
+    def gradient_check(stage, modules):
+        norm = original["_clip_gradient_norm"](stage, modules)
+        record(result["gradient_norms"], stage, norm)
+        return norm
+
+    def metrics_check(metrics, **kwargs):
+        for name, value in metrics.items():
+            if "loss" in name.lower():
+                record(result["losses"], name, value)
+        return original["_accumulate"](metrics, **kwargs)
+
+    def collect_check(count):
+        value = original["collect"](count)
+        actual = trainer._obs_history
+        if actual is not None:
+            if not torch.isfinite(actual).all().item():
+                raise FloatingPointError("Nonfinite collected observation history")
+            result["real_history_checks"] += 1
+        return value
+
+    trainer.collect = collect_check
+    trainer._initial_observation_history = history_check
+    trainer._clip_gradient_norm = gradient_check
+    trainer._accumulate = metrics_check
+    try:
+        yield
+        result["passed"] = True
+    finally:
+        for name in names:
+            if name in owned:
+                setattr(trainer, name, owned[name])
+            else:
+                delattr(trainer, name)
+
+
 def audit(
     checkpoint,
     data_root,
@@ -135,6 +208,7 @@ def audit(
     kinematics="reference",
     profile="full_clean",
     verify_state_cache=False,
+    verify_training_health=False,
     warmup_iterations=0,
     cprofile=True,
     fk_chunk_size=4096,
@@ -157,6 +231,8 @@ def audit(
         raise ValueError("fk_chunk_size must be a positive integer")
     if verify_state_cache and target != "evaluation":
         raise ValueError("State-cache validation requires evaluation")
+    if verify_training_health and target != "training":
+        raise ValueError("Training health checks require training target")
     import torch
     from .evaluation_job import source_identity
     from ..runtime.paths import project_root
@@ -193,6 +269,7 @@ def audit(
 
     profiler = cProfile.Profile() if cprofile else None
     timing = {}
+    health = {"enabled": verify_training_health}
     old_argv = sys.argv
 
     def start():
@@ -235,11 +312,13 @@ def audit(
         original_train = Trainer.train
 
         def train(trainer, **kwargs):
-            return run_training_window(
-                trainer, original_train, kwargs, warmup_iterations=warmup_iterations,
-                timing=timing, start=start, finish=finish,
-                synchronize=torch.cuda.synchronize,
-            )
+            context = training_health_checks(trainer, health) if verify_training_health else nullcontext()
+            with context:
+                return run_training_window(
+                    trainer, original_train, kwargs, warmup_iterations=warmup_iterations,
+                    timing=timing, start=start, finish=finish,
+                    synchronize=torch.cuda.synchronize,
+                )
 
         command += [
             "--iterations", str(start_iteration + iterations),
@@ -334,6 +413,7 @@ def audit(
             "fk_chunk_size": fk_chunk_size,
             "experimental_training_batched_patch": target == "training" and kinematics == "batched",
             "state_cache_verification": {"enabled": verify_state_cache, "checked_reads": state_checks},
+            "training_health": health,
             "target": target,
             "source": source,
             "checkpoint_sha256": digest,
@@ -383,5 +463,6 @@ def main():
         "--kinematics", choices=["reference", "batched", "bounded", "lean"], default="reference"
     )
     p.add_argument("--verify-state-cache", action="store_true")
+    p.add_argument("--verify-training-health", action="store_true")
     p.add_argument("--profile", choices=["strict", "full_clean"], default="full_clean")
     audit(**vars(p.parse_args()))
