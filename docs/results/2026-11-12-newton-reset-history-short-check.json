@@ -1,0 +1,200 @@
+{
+  "date": "2026-11-12",
+  "formal_training_resumed": false,
+  "profile": {
+    "benchmark_only": true,
+    "cprofile_enabled": false,
+    "warmup_iterations": 5,
+    "fk_chunk_size": 4096,
+    "experimental_training_batched_patch": false,
+    "state_cache_verification": {
+      "enabled": false,
+      "checked_reads": 0
+    },
+    "training_health": {
+      "enabled": true,
+      "passed": true,
+      "history": {
+        "calls": 10,
+        "rows": 40960,
+        "padded_pairs": 39259,
+        "shape": [
+          4096,
+          10,
+          93
+        ]
+      },
+      "losses": {
+        "Model/loss": {
+          "calls": 100,
+          "min": 63.375003421650035,
+          "max": 103.53076942868938
+        },
+        "Loss/actor": {
+          "calls": 10,
+          "min": -5.747607699829132,
+          "max": -5.5627475854324615
+        },
+        "Loss/critic": {
+          "calls": 10,
+          "min": 1.1353942110641368,
+          "max": 2.0431738069018914
+        }
+      },
+      "gradient_norms": {
+        "world model update": {
+          "calls": 100,
+          "min": 111.79255676269531,
+          "max": 227.4992218017578
+        },
+        "actor update": {
+          "calls": 10,
+          "min": 2.7713465690612793,
+          "max": 4.7245893478393555
+        },
+        "critic update": {
+          "calls": 200,
+          "min": 7.8898749351501465,
+          "max": 96.66456604003906
+        }
+      },
+      "real_history_checks": 11
+    },
+    "target": "training",
+    "source": {
+      "kind": "verified_release",
+      "source_revision": "3d0ad90155521ffa34b12eda47c530be7e3f7b74",
+      "manifest_sha256": "a0990697368afc881997624900653bb86bb1c83f8d29aa94fa246ec0c1c828f3"
+    },
+    "checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+    "checkpoint_iteration": 6600,
+    "actuators": "reference",
+    "kinematics": "reference",
+    "profile": null,
+    "training_iterations": 10,
+    "training_shape": {
+      "num_envs": 2560,
+      "wm_batch": 2048,
+      "wm_batches": 10,
+      "policy_batch": 4096,
+      "horizon": 32,
+      "buffer_steps": 1000,
+      "warmup_steps": 64,
+      "log_every": 10
+    },
+    "timing": {
+      "iteration_seconds": [
+        2.25767309999992,
+        2.0705153000001246,
+        2.2724683999999797,
+        2.0553557999999157,
+        2.487914900000078
+      ],
+      "refill_seconds": 15.141495999999961,
+      "pre_measurement_peak_allocated_gib": 11.5597243309021,
+      "pre_measurement_peak_reserved_gib": 14.11328125,
+      "allocator_before_measurement": {
+        "backend": "native",
+        "configuration": {},
+        "bytes": {
+          "allocated": {
+            "current": 3494252544,
+            "peak": 12412159488
+          },
+          "active": {
+            "current": 3494252544,
+            "peak": 12412159488
+          },
+          "reserved": {
+            "current": 15154020352,
+            "peak": 15154020352
+          },
+          "inactive_split": {
+            "current": 324661248,
+            "peak": 1118956032
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      },
+      "measured_training_iterations": 5,
+      "measured_seconds": 11.143937800000003,
+      "peak_allocated_gib": 11.558176040649414,
+      "peak_reserved_gib": 14.115234375,
+      "allocator_after_measurement": {
+        "backend": "native",
+        "configuration": {},
+        "bytes": {
+          "allocated": {
+            "current": 3494834176,
+            "peak": 12410497024
+          },
+          "active": {
+            "current": 3494834176,
+            "peak": 12410497024
+          },
+          "reserved": {
+            "current": 15156117504,
+            "peak": 15156117504
+          },
+          "inactive_split": {
+            "current": 347148288,
+            "peak": 1099359744
+          }
+        },
+        "allocation_retries": 0,
+        "out_of_memory_events": 0,
+        "device_free_bytes": 0,
+        "device_total_bytes": 17066033152
+      },
+      "whole_audit_peak_allocated_gib": 11.5597243309021,
+      "whole_audit_peak_reserved_gib": 14.115234375
+    },
+    "error": null,
+    "cpu_top": []
+  },
+  "artifacts": {
+    "configuration_changed_keys": [
+      "iterations",
+      "log_dir"
+    ],
+    "models_and_optimizers_finite": {
+      "wm": true,
+      "policy": true,
+      "critic": true,
+      "opt_wm": true,
+      "opt_policy": true,
+      "opt_critic": true
+    },
+    "model_shapes_unchanged": true,
+    "count_deltas": {
+      "iteration": 10,
+      "optimizer_steps": 310,
+      "transitions": 227840,
+      "windows": 204800
+    },
+    "starting_checkpoint_sha256": "c4d4c8188f91c4683464e64bf7ccb5c4c99047386f906950e5e7e4253705cf51",
+    "ending_checkpoint_sha256": "3b4f4328e0356014b8e46c6f53ab7fea22990bae56cc778489d22ccd156dec4a",
+    "runtime": {
+      "python": "3.12.16",
+      "torch": "2.11.0+cu130",
+      "isaaclab": "28.0.0",
+      "newton": "1.6.1",
+      "warp-lang": "1.17.0",
+      "mujoco": "3.12.0"
+    }
+  },
+  "shutdown": {
+    "remaining_python_processes": 0,
+    "idle_gpu_memory_mib": 446
+  },
+  "limitations": [
+    "Health checks synchronize and are not a throughput benchmark.",
+    "Real history finiteness checked at 11 collection boundaries, imagined history checked on all 10 policy updates.",
+    "Loss/critic exposes the original metric from each policy/critic update, while all 200 critic gradient steps are checked.",
+    "Short-run checks do not establish long-run convergence or tracking improvement.",
+    "isaaclab 28.0.0 is installed distribution metadata; source tree remains pinned Isaac Lab v3.0.0."
+  ]
+}
