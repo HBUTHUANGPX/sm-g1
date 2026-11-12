@@ -894,7 +894,9 @@
     {
       "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/policy_update.py",
       "symbol": "PolicyUpdateMixin.update_policy_and_critic",
-      "sha256": "70a7ea0a4922e37667e31b72a33c4c75e455db14467568b7825fa10e994dad57"
+      "sha256": "347428e113153d1b6af03bdb1398f9748cf2f06cf5c6714bf10f6390946bbe95",
+      "previous_sha256": "70a7ea0a4922e37667e31b72a33c4c75e455db14467568b7825fa10e994dad57",
+      "change_reason": "2026-11-12 user-authorized reset-history noise fix: share padded observations, preserve nonpadding draws and RNG budget; regression test_reset_history_noise.py."
     },
     {
       "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/world_model_update.py",
@@ -1965,6 +1967,12 @@
       "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/config.py",
       "symbol": "TrainingConfig",
       "sha256": "876939784fcce7f8ad7a76e1d1caabaacc39f40d58f6ab7ef1e495675da9733d"
+    },
+    {
+      "file": "mimic_baseline/source/mimic_baseline/mimic_baseline/tasks/supermimic/learning/policy_update.py",
+      "symbol": "PolicyUpdateMixin._initial_observation_history",
+      "sha256": "a9f64612fa54dd5db15782b582b4355395e1b1ecc05ba72523910fc56c1a7f50",
+      "change_reason": "2026-11-12 user-authorized reset-history noise fix: share padded observations, preserve nonpadding draws and RNG budget; regression test_reset_history_noise.py."
     }
   ],
   "intentional_evaluation_changes": [
